@@ -1,4 +1,4 @@
-package gov.uk.companieshouse.ocrapiconsumer;
+package uk.gov.companieshouse.ocrapiconsumer;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
