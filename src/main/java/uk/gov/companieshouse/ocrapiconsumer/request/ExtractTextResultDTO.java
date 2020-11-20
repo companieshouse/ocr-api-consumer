@@ -2,6 +2,10 @@ package uk.gov.companieshouse.ocrapiconsumer.request;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+/**
+ * This class is the extracted text result returned by the ocr-api
+ * Can import this class from the ocr-api for drop 2
+ */
 public class ExtractTextResultDTO {
 
     /**

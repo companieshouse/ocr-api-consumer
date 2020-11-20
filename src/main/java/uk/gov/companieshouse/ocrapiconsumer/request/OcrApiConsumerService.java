@@ -19,7 +19,6 @@ public class OcrApiConsumerService {
     private static final String RESPONSE_ID_REQUEST_PARAMETER_NAME = "responseId";
     private static final String FILE_REQUEST_PARAMETER_NAME = "file";
     private static final Logger LOG = LoggerFactory.getLogger(OcrApiConsumerApplication.APPLICATION_NAME_SPACE);
-
     private final RestTemplate restTemplate;
 
     @Autowired
@@ -34,7 +33,6 @@ public class OcrApiConsumerService {
                         externalReferenceID, imageEndpoint, convertedTextEndpoint),
                 null);
 
-
         LOG.debugContext(externalReferenceID, "Getting the TIFF image", null);
         byte[] image = getTiffImage(imageEndpoint);
 
@@ -42,7 +40,7 @@ public class OcrApiConsumerService {
         ExtractTextResultDTO extractedText = sendRequestToOcrMicroservice(externalReferenceID, image).getBody();
 
         LOG.debugContext(externalReferenceID, "Sending the converted text response for the articles of association", null);
-        sendConvertedText(convertedTextEndpoint, extractedText);
+        sendTextResult(convertedTextEndpoint, extractedText);
     }
 
     private byte[] getTiffImage(String imageEndpoint) {
@@ -53,8 +51,10 @@ public class OcrApiConsumerService {
 
         MultipartTiff multipartTiff = convertByteArrayToMultipartTiff(image);
 
-        LOG.debug("Building URI with URL: " + OCR_MICROSERVICE_ENDPOINT
-                + ", Query Params: " + RESPONSE_ID_REQUEST_PARAMETER_NAME + ", " + FILE_REQUEST_PARAMETER_NAME);
+        LOG.debugContext(externalReferenceID,
+                String.format("Building URI with URL: %s, Query Params: %s, %s",
+                        OCR_MICROSERVICE_ENDPOINT, RESPONSE_ID_REQUEST_PARAMETER_NAME, FILE_REQUEST_PARAMETER_NAME),
+                null);
 
         UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(OCR_MICROSERVICE_ENDPOINT)
                 .queryParam(RESPONSE_ID_REQUEST_PARAMETER_NAME, externalReferenceID)
@@ -64,7 +64,7 @@ public class OcrApiConsumerService {
         return restTemplate.postForEntity(builder.toUriString(), entity, ExtractTextResultDTO.class);
     }
 
-    private void sendConvertedText(String convertedTextEndpoint, ExtractTextResultDTO extractedText) {
+    private void sendTextResult(String convertedTextEndpoint, ExtractTextResultDTO extractedText) {
         HttpEntity<ExtractTextResultDTO> entity = new HttpEntity<>(extractedText);
         restTemplate.postForEntity(convertedTextEndpoint, entity, String.class);
     }

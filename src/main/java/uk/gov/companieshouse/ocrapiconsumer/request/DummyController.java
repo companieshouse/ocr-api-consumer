@@ -4,6 +4,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -18,8 +19,10 @@ public class DummyController {
         return HttpStatus.OK;
     }
 
-    @PostMapping(OCR_MICROSERVICE_ENDPOINT + RESPONSE_ID_REQUEST_PARAMETER_NAME + FILE_REQUEST_PARAMETER_NAME)
-    public ResponseEntity<ExtractTextResultDTO> dummyPostResponse() {
+    @PostMapping(OCR_MICROSERVICE_ENDPOINT)
+    public ResponseEntity<ExtractTextResultDTO> dummyPostResponse(
+            @RequestParam(RESPONSE_ID_REQUEST_PARAMETER_NAME) String responseId,
+            @RequestParam(FILE_REQUEST_PARAMETER_NAME) String file) {
         ExtractTextResultDTO result = new ExtractTextResultDTO();
         result.setAverageConfidenceScore(50);
         result.setLowestConfidenceScore(25);
