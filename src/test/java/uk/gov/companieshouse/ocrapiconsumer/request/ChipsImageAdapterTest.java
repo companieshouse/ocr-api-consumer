@@ -1,8 +1,8 @@
 package uk.gov.companieshouse.ocrapiconsumer.request;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.mockito.Mockito.when;
 import static org.hamcrest.Matchers.is;
-import static org.mockito.Mockito.verify;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -10,29 +10,30 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.client.RestTemplate;
 import uk.gov.companieshouse.ocrapiconsumer.groups.Unit;
 
 @Unit
 @ExtendWith(MockitoExtension.class)
-class OcrApiConsumerControllerTest extends TestParent {
+class ChipsImageAdapterTest extends TestParent {
 
     @Mock
-    private OcrApiConsumerService service;
+    private RestTemplate restTemplate;
 
     @InjectMocks
-    private OcrApiConsumerController controller;
+    private ChipsImageAdapter chipsImageAdapter;
 
     @Test
-    void testReceiveOcrRequestReturns202() {
+    void testGetTiffImageSuccessfully() {
         // given
-        var expected = new ResponseEntity<HttpStatus>(HttpStatus.ACCEPTED);
+        byte[] expected = MOCK_TIFF_CONTENT;
+        when(restTemplate.getForEntity(IMAGE_ENDPOINT, byte[].class))
+                .thenReturn(new ResponseEntity<>(MOCK_TIFF_CONTENT, HttpStatus.OK));
 
         // when
-        var actual = controller
-                .receiveOcrRequest(EXTERNAL_REFERENCE_ID,IMAGE_ENDPOINT, EXTRACTED_TEXT_ENDPOINT);
+        byte[] actual = chipsImageAdapter.getTiffImageFromChips(IMAGE_ENDPOINT);
 
         // then
-        verify(service).logOcrRequest(EXTERNAL_REFERENCE_ID, IMAGE_ENDPOINT, EXTRACTED_TEXT_ENDPOINT);
         assertThat(actual, is(expected));
     }
 }

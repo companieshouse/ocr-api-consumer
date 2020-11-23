@@ -17,7 +17,7 @@ public class MultipartTiff implements MultipartFile {
     private final byte[] tiffContent;
 
     public MultipartTiff(byte[] tiffContent) {
-        this("no-filename-provided", tiffContent);
+        this("", tiffContent);
     }
 
     public MultipartTiff(String filename, byte[] tiffContent) {
@@ -32,7 +32,7 @@ public class MultipartTiff implements MultipartFile {
 
     @Override
     public String getOriginalFilename() {
-        return null;
+        return "";
     }
 
     @Override
