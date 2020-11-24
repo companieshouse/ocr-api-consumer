@@ -11,6 +11,13 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import uk.gov.companieshouse.ocrapiconsumer.groups.Unit;
+import uk.gov.companieshouse.ocrapiconsumer.request.extractedtext.ChipsExtractedTextAdapter;
+import uk.gov.companieshouse.ocrapiconsumer.request.extractedtext.ExtractTextResultDTO;
+import uk.gov.companieshouse.ocrapiconsumer.request.extractedtext.ExtractedTextEndpointNotFoundException;
+import uk.gov.companieshouse.ocrapiconsumer.request.image.ChipsImageAdapter;
+import uk.gov.companieshouse.ocrapiconsumer.request.image.TiffImageNotFoundException;
+import uk.gov.companieshouse.ocrapiconsumer.request.ocr.OcrApiRequestAdapter;
+import uk.gov.companieshouse.ocrapiconsumer.request.ocr.OcrServiceUnavailableException;
 
 @Unit
 @ExtendWith(MockitoExtension.class)
@@ -41,7 +48,8 @@ class OcrApiConsumerServiceTest extends TestParent {
     }
 
     @Test
-    void testOcrApiServiceLogsSuccessfully() {
+    void testOcrApiServiceLogsSuccessfully() throws TiffImageNotFoundException,
+            OcrServiceUnavailableException, ExtractedTextEndpointNotFoundException {
         // given
         when(chipsImageAdapter.getTiffImageFromChips(IMAGE_ENDPOINT)).thenReturn(MOCK_TIFF_CONTENT);
         when(ocrApiRequestAdapter.sendOcrRequestToOcrApi(EXTERNAL_REFERENCE_ID, MOCK_TIFF_CONTENT)).thenReturn(response);
@@ -50,6 +58,7 @@ class OcrApiConsumerServiceTest extends TestParent {
         ocrApiConsumerService.logOcrRequest(EXTERNAL_REFERENCE_ID, IMAGE_ENDPOINT, EXTRACTED_TEXT_ENDPOINT);
 
         // then
+        verify(chipsImageAdapter).getTiffImageFromChips(IMAGE_ENDPOINT);
         verify(ocrApiRequestAdapter).sendOcrRequestToOcrApi(EXTERNAL_REFERENCE_ID, MOCK_TIFF_CONTENT);
         verify(chipsExtractedTextAdapter).sendTextResult(EXTRACTED_TEXT_ENDPOINT, extractTextResultDTO);
     }

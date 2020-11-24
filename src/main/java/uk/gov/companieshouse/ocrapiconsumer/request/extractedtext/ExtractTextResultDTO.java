@@ -1,4 +1,4 @@
-package uk.gov.companieshouse.ocrapiconsumer.request;
+package uk.gov.companieshouse.ocrapiconsumer.request.extractedtext;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 

@@ -116,7 +116,7 @@ class MultipartTiffTest {
         MultipartTiff multipartTiff = new MultipartTiff(tiffContent);
 
         // then
-        NullPointerException expected = assertThrows(NullPointerException.class, multipartTiff::getSize);
+        assertThrows(NullPointerException.class, multipartTiff::getSize);
     }
 
     @Test

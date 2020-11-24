@@ -1,7 +1,8 @@
-package uk.gov.companieshouse.ocrapiconsumer.request;
+package uk.gov.companieshouse.ocrapiconsumer.request.ocr;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
@@ -10,6 +11,7 @@ import uk.gov.companieshouse.logging.Logger;
 import uk.gov.companieshouse.logging.LoggerFactory;
 import uk.gov.companieshouse.ocrapiconsumer.OcrApiConsumerApplication;
 import uk.gov.companieshouse.ocrapiconsumer.common.MultipartTiff;
+import uk.gov.companieshouse.ocrapiconsumer.request.extractedtext.ExtractTextResultDTO;
 
 @Component
 public class OcrApiRequestAdapter {
@@ -27,7 +29,8 @@ public class OcrApiRequestAdapter {
         this.restTemplate = restTemplate;
     }
 
-    public ResponseEntity<ExtractTextResultDTO> sendOcrRequestToOcrApi(String externalReferenceID, byte[] tiffContent) {
+    public ResponseEntity<ExtractTextResultDTO> sendOcrRequestToOcrApi(String externalReferenceID, byte[] tiffContent)
+            throws OcrServiceUnavailableException {
 
         MultipartTiff multipartTiff = convertByteArrayToMultipartTiff(externalReferenceID, tiffContent);
 
@@ -41,7 +44,17 @@ public class OcrApiRequestAdapter {
                 .queryParam(FILE_REQUEST_PARAMETER_NAME, multipartTiff);
 
         HttpEntity<String> entity = new HttpEntity<>("");
-        return restTemplate.postForEntity(builder.toUriString(), entity, ExtractTextResultDTO.class);
+        ResponseEntity<ExtractTextResultDTO> response
+                = restTemplate.postForEntity(builder.toUriString(), entity, ExtractTextResultDTO.class);
+
+        // check if the response was 404 NOT FOUND, throw exception if it is
+        if(response.getStatusCode().equals(HttpStatus.NOT_FOUND)) {
+            OcrServiceUnavailableException exception = new OcrServiceUnavailableException();
+            LOG.error(exception);
+            throw exception;
+        }
+
+        return response;
     }
 
     private MultipartTiff convertByteArrayToMultipartTiff(String externalReferenceID, byte[] tiffContent) {

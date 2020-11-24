@@ -1,6 +1,7 @@
 package uk.gov.companieshouse.ocrapiconsumer.request;
 
 import org.springframework.http.ResponseEntity;
+import uk.gov.companieshouse.ocrapiconsumer.request.extractedtext.ExtractTextResultDTO;
 
 public class TestParent {
     protected static final String EXTERNAL_REFERENCE_ID = "ABC";

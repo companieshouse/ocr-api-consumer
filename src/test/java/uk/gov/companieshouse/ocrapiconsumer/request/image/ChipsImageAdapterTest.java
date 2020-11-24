@@ -1,8 +1,9 @@
-package uk.gov.companieshouse.ocrapiconsumer.request;
+package uk.gov.companieshouse.ocrapiconsumer.request.image;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.mockito.Mockito.when;
 import static org.hamcrest.Matchers.is;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.when;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -12,6 +13,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestTemplate;
 import uk.gov.companieshouse.ocrapiconsumer.groups.Unit;
+import uk.gov.companieshouse.ocrapiconsumer.request.TestParent;
 
 @Unit
 @ExtendWith(MockitoExtension.class)
@@ -24,7 +26,7 @@ class ChipsImageAdapterTest extends TestParent {
     private ChipsImageAdapter chipsImageAdapter;
 
     @Test
-    void testGetTiffImageSuccessfully() {
+    void testGetTiffImageSuccessfully() throws TiffImageNotFoundException {
         // given
         byte[] expected = MOCK_TIFF_CONTENT;
         when(restTemplate.getForEntity(IMAGE_ENDPOINT, byte[].class))
@@ -35,5 +37,16 @@ class ChipsImageAdapterTest extends TestParent {
 
         // then
         assertThat(actual, is(expected));
+    }
+
+    @Test
+    void testGetTiffImageNotFound() {
+        // given
+        when(restTemplate.getForEntity(IMAGE_ENDPOINT, byte[].class))
+                .thenReturn(new ResponseEntity<>(HttpStatus.NOT_FOUND));
+
+        // then
+        assertThrows(TiffImageNotFoundException.class, () -> chipsImageAdapter.getTiffImageFromChips(IMAGE_ENDPOINT));
+
     }
 }

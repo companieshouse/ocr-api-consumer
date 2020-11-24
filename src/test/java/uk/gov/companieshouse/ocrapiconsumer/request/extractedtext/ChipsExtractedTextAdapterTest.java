@@ -1,5 +1,6 @@
-package uk.gov.companieshouse.ocrapiconsumer.request;
+package uk.gov.companieshouse.ocrapiconsumer.request.extractedtext;
 
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
@@ -14,6 +15,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestTemplate;
 import uk.gov.companieshouse.ocrapiconsumer.groups.Unit;
+import uk.gov.companieshouse.ocrapiconsumer.request.TestParent;
 
 @Unit
 @ExtendWith(MockitoExtension.class)
@@ -39,7 +41,7 @@ class ChipsExtractedTextAdapterTest extends TestParent {
     }
 
     @Test
-    void testSendExtractedTextSuccessfully() {
+    void testSendExtractedTextSuccessfully() throws ExtractedTextEndpointNotFoundException {
         // given
         when(restTemplate.postForEntity(eq(EXTRACTED_TEXT_ENDPOINT), any(), any()))
                 .thenReturn(new ResponseEntity<>(HttpStatus.OK));
@@ -49,5 +51,17 @@ class ChipsExtractedTextAdapterTest extends TestParent {
 
         // then
         verify(restTemplate).postForEntity(eq(EXTRACTED_TEXT_ENDPOINT), any(), any());
+    }
+
+    @Test
+    void testSendExtractedTextNotFoundException() {
+        // given
+        when(restTemplate.postForEntity(eq(EXTRACTED_TEXT_ENDPOINT), any(), eq(String.class)))
+                .thenReturn(new ResponseEntity<>(HttpStatus.NOT_FOUND));
+
+        // then
+        assertThrows(ExtractedTextEndpointNotFoundException.class, () ->
+                chipsExtractedTextAdapter.sendTextResult(EXTRACTED_TEXT_ENDPOINT, extractTextResultDTO));
+
     }
 }
