@@ -15,10 +15,13 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 import uk.gov.companieshouse.ocrapiconsumer.groups.Unit;
 import uk.gov.companieshouse.ocrapiconsumer.request.TestParent;
 import uk.gov.companieshouse.ocrapiconsumer.request.extractedtext.ExtractTextResultDTO;
+
+import java.io.IOException;
 
 @Unit
 @ExtendWith(MockitoExtension.class)
@@ -43,7 +46,7 @@ class OcrApiRequestAdapterTest extends TestParent {
     }
 
     @Test
-    void testSendOcrRequestSuccessful() throws OcrServiceUnavailableException {
+    void testSendOcrRequestSuccessful() throws IOException {
         // given
         ResponseEntity<ExtractTextResultDTO> expected = response;
         when(restTemplate.postForEntity(anyString(), any(), eq(ExtractTextResultDTO.class))).thenReturn(response);
@@ -54,17 +57,5 @@ class OcrApiRequestAdapterTest extends TestParent {
 
         // then
         assertThat(actual, is(expected));
-    }
-
-    @Test
-    void testSendOcrRequestServiceUnavailableException() {
-        // given
-        when(restTemplate.postForEntity(anyString(), any(), eq(ExtractTextResultDTO.class)))
-                .thenReturn(new ResponseEntity<>(HttpStatus.NOT_FOUND));
-
-        // then
-        assertThrows(OcrServiceUnavailableException.class, () ->
-                ocrApiRequestAdapter.sendOcrRequestToOcrApi(EXTERNAL_REFERENCE_ID, MOCK_TIFF_CONTENT));
-
     }
 }

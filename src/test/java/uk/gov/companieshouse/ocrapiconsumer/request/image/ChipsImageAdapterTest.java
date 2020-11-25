@@ -15,6 +15,8 @@ import org.springframework.web.client.RestTemplate;
 import uk.gov.companieshouse.ocrapiconsumer.groups.Unit;
 import uk.gov.companieshouse.ocrapiconsumer.request.TestParent;
 
+import java.io.IOException;
+
 @Unit
 @ExtendWith(MockitoExtension.class)
 class ChipsImageAdapterTest extends TestParent {
@@ -26,7 +28,7 @@ class ChipsImageAdapterTest extends TestParent {
     private ChipsImageAdapter chipsImageAdapter;
 
     @Test
-    void testGetTiffImageSuccessfully() throws TiffImageNotFoundException {
+    void testGetTiffImageSuccessfully() throws IOException {
         // given
         byte[] expected = MOCK_TIFF_CONTENT;
         when(restTemplate.getForEntity(IMAGE_ENDPOINT, byte[].class))
@@ -40,13 +42,13 @@ class ChipsImageAdapterTest extends TestParent {
     }
 
     @Test
-    void testGetTiffImageNotFound() {
+    void testGetTiffImageThrowsIOException() {
         // given
         when(restTemplate.getForEntity(IMAGE_ENDPOINT, byte[].class))
                 .thenReturn(new ResponseEntity<>(HttpStatus.NOT_FOUND));
 
         // then
-        assertThrows(TiffImageNotFoundException.class, () -> chipsImageAdapter.getTiffImageFromChips(IMAGE_ENDPOINT));
+        assertThrows(IOException.class, () -> chipsImageAdapter.getTiffImageFromChips(IMAGE_ENDPOINT));
 
     }
 }

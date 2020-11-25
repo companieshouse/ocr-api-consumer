@@ -17,6 +17,8 @@ import org.springframework.web.client.RestTemplate;
 import uk.gov.companieshouse.ocrapiconsumer.groups.Unit;
 import uk.gov.companieshouse.ocrapiconsumer.request.TestParent;
 
+import java.io.IOException;
+
 @Unit
 @ExtendWith(MockitoExtension.class)
 class ChipsExtractedTextAdapterTest extends TestParent {
@@ -41,7 +43,7 @@ class ChipsExtractedTextAdapterTest extends TestParent {
     }
 
     @Test
-    void testSendExtractedTextSuccessfully() throws ExtractedTextEndpointNotFoundException {
+    void testSendExtractedTextSuccessfully() throws IOException {
         // given
         when(restTemplate.postForEntity(eq(EXTRACTED_TEXT_ENDPOINT), any(), any()))
                 .thenReturn(new ResponseEntity<>(HttpStatus.OK));
@@ -54,13 +56,13 @@ class ChipsExtractedTextAdapterTest extends TestParent {
     }
 
     @Test
-    void testSendExtractedTextNotFoundException() {
+    void testSendExtractedTextThrowsIOException() {
         // given
         when(restTemplate.postForEntity(eq(EXTRACTED_TEXT_ENDPOINT), any(), eq(String.class)))
                 .thenReturn(new ResponseEntity<>(HttpStatus.NOT_FOUND));
 
         // then
-        assertThrows(ExtractedTextEndpointNotFoundException.class, () ->
+        assertThrows(IOException.class, () ->
                 chipsExtractedTextAdapter.sendTextResult(EXTRACTED_TEXT_ENDPOINT, extractTextResultDTO));
 
     }

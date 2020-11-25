@@ -9,6 +9,8 @@ import uk.gov.companieshouse.logging.Logger;
 import uk.gov.companieshouse.logging.LoggerFactory;
 import uk.gov.companieshouse.ocrapiconsumer.OcrApiConsumerApplication;
 
+import java.io.IOException;
+
 @Component
 public class ChipsImageAdapter {
 
@@ -25,13 +27,14 @@ public class ChipsImageAdapter {
      * Gets a byte array of tiff contents from CHIPS.
      * @param   imageEndpoint               The endpoint that the image is retrieved from.
      * @return  A byte array of tiff image contents used for the OCR text extraction.
-     * @throws  TiffImageNotFoundException  When the endpoint returns a 404 NOT FOUND.
+     * @throws  IOException  When the endpoint returns a 404 NOT FOUND.
      */
-    public byte[] getTiffImageFromChips(String imageEndpoint) throws TiffImageNotFoundException {
+    public byte[] getTiffImageFromChips(String imageEndpoint) throws IOException {
+
         ResponseEntity<byte[]> responseEntity = restTemplate.getForEntity(imageEndpoint, byte[].class);
 
         if(responseEntity.getStatusCode().equals(HttpStatus.NOT_FOUND)) {
-            TiffImageNotFoundException exception = new TiffImageNotFoundException();
+            IOException exception = new IOException();
             LOG.error(exception);
             throw exception;
         }

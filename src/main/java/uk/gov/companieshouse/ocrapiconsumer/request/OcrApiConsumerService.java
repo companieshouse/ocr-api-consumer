@@ -9,11 +9,10 @@ import uk.gov.companieshouse.logging.LoggerFactory;
 import uk.gov.companieshouse.ocrapiconsumer.OcrApiConsumerApplication;
 import uk.gov.companieshouse.ocrapiconsumer.request.extractedtext.ChipsExtractedTextAdapter;
 import uk.gov.companieshouse.ocrapiconsumer.request.extractedtext.ExtractTextResultDTO;
-import uk.gov.companieshouse.ocrapiconsumer.request.extractedtext.ExtractedTextEndpointNotFoundException;
-import uk.gov.companieshouse.ocrapiconsumer.request.image.TiffImageNotFoundException;
 import uk.gov.companieshouse.ocrapiconsumer.request.image.ChipsImageAdapter;
 import uk.gov.companieshouse.ocrapiconsumer.request.ocr.OcrApiRequestAdapter;
-import uk.gov.companieshouse.ocrapiconsumer.request.ocr.OcrServiceUnavailableException;
+
+import java.io.IOException;
 
 @Service
 public class OcrApiConsumerService {
@@ -35,7 +34,7 @@ public class OcrApiConsumerService {
     @Async
     public void logOcrRequest(String externalReferenceID, String imageEndpoint, String extractedTextEndpoint) {
         LOG.infoContext(externalReferenceID,
-                String.format("Request received with ID: %s, Image Endpoint: %s, Extractedß Text Endpoint: %s",
+                String.format("Request received with ID: %s, Image Endpoint: %s, Extracted Text Endpoint: %s",
                         externalReferenceID, imageEndpoint, extractedTextEndpoint),
                 null);
 
@@ -44,7 +43,12 @@ public class OcrApiConsumerService {
 
         LOG.debugContext(externalReferenceID, "Sending image to ocr microservice for conversion", null);
 
-        ResponseEntity<ExtractTextResultDTO> response = sendRequestToOcrMicroservice(externalReferenceID, image);
+        ResponseEntity<ExtractTextResultDTO> response = null;
+        try {
+            response = sendRequestToOcrMicroservice(externalReferenceID, image);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
         ExtractTextResultDTO extractedText = null;
         if(response != null) {
             extractedText = response.getBody();
@@ -59,29 +63,25 @@ public class OcrApiConsumerService {
 
         try {
             tiffContent = chipsImageAdapter.getTiffImageFromChips(imageEndpoint);
-        } catch(TiffImageNotFoundException e) {
+        } catch(IOException e) {
             e.printStackTrace();
         }
 
         return tiffContent;
     }
 
-    private ResponseEntity<ExtractTextResultDTO> sendRequestToOcrMicroservice(String externalReferenceID, byte[] image) {
+    private ResponseEntity<ExtractTextResultDTO> sendRequestToOcrMicroservice(String externalReferenceID, byte[] image) throws IOException {
         ResponseEntity<ExtractTextResultDTO> response = null;
 
-        try {
-            response = ocrApiRequestAdapter.sendOcrRequestToOcrApi(externalReferenceID, image);
-        } catch (OcrServiceUnavailableException e) {
-            e.printStackTrace();
-        }
+        response = ocrApiRequestAdapter.sendOcrRequestToOcrApi(externalReferenceID, image);
 
         return response;
     }
 
-    private void sendTextResult(String convertedTextEndpoint, ExtractTextResultDTO extractedText) {
+    private void sendTextResult(String extractedTextEndpoint, ExtractTextResultDTO extractedText) {
         try {
-            chipsExtractedTextAdapter.sendTextResult(convertedTextEndpoint, extractedText);
-        } catch (ExtractedTextEndpointNotFoundException e) {
+            chipsExtractedTextAdapter.sendTextResult(extractedTextEndpoint, extractedText);
+        } catch (IOException e) {
             e.printStackTrace();
         }
     }
