@@ -16,4 +16,15 @@ public class TestParent {
     protected ExtractTextResultDTO extractTextResultDTO;
     protected ResponseEntity<ExtractTextResultDTO> response;
 
+    protected ExtractTextResultDTO createMockTextResult() {
+        ExtractTextResultDTO extractTextResultDTO = new ExtractTextResultDTO();
+        extractTextResultDTO.setResponseId(EXTERNAL_REFERENCE_ID);
+        extractTextResultDTO.setLowestConfidenceScore(LOWEST_CONFIDENCE_SCORE);
+        extractTextResultDTO.setAverageConfidenceScore(AVERAGE_CONFIDENCE_SCORE);
+        extractTextResultDTO.setExtractedText(EXTRACTED_TEXT);
+        extractTextResultDTO.setOcrProcessingTimeMs(OCR_PROCESSING_TIME);
+        extractTextResultDTO.setTotalProcessingTimeMs(TOTAL_PROCESSING_TIME);
+        return extractTextResultDTO;
+    }
+
 }

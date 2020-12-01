@@ -10,24 +10,25 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.RestTemplate;
-import org.springframework.web.multipart.MultipartFile;
+import uk.gov.companieshouse.environment.EnvironmentReader;
+import uk.gov.companieshouse.environment.impl.EnvironmentReaderImpl;
 import uk.gov.companieshouse.logging.Logger;
 import uk.gov.companieshouse.logging.LoggerFactory;
 import uk.gov.companieshouse.ocrapiconsumer.OcrApiConsumerApplication;
-import uk.gov.companieshouse.ocrapiconsumer.common.MultipartTiff;
 import uk.gov.companieshouse.ocrapiconsumer.request.extractedtext.ExtractTextResultDTO;
-
-import java.io.IOException;
 
 @Component
 public class OcrApiRequestAdapter {
 
-    private static final String OCR_API_ENDPOINT = "http://localhost:9090/ocr";
     private static final String FILE_REQUEST_PARAMETER_NAME = "file";
     private static final String RESPONSE_ID_REQUEST_PARAMETER_NAME = "responseId";
-
     private static final Logger LOG = LoggerFactory.getLogger(OcrApiConsumerApplication.APPLICATION_NAME_SPACE);
+
+    // Get the ocr api url from env variables
+    private final EnvironmentReader environmentReader = new EnvironmentReaderImpl();
+    private final String ocrApiUrl = environmentReader.getMandatoryUrl("OCR_API_URL");
 
     private final RestTemplate restTemplate;
 
@@ -43,37 +44,36 @@ public class OcrApiRequestAdapter {
      * @return  A response entity containing the extracted text result DTO.
      * @throws  HttpClientErrorException  When the request returns a 404 NOT FOUND.
      */
-    public ResponseEntity<ExtractTextResultDTO> sendOcrRequestToOcrApi(String externalReferenceID, byte[] tiffContent) throws IOException {
-
-        MultipartFile multipartFile = convertByteArrayToMultipartTiff(externalReferenceID, tiffContent);
-
-        LOG.debugContext(externalReferenceID,
-                String.format("Building URI with URL: %s, Query Params: %s, %s",
-                        OCR_API_ENDPOINT, FILE_REQUEST_PARAMETER_NAME, RESPONSE_ID_REQUEST_PARAMETER_NAME),
-                null);
+    public ResponseEntity<ExtractTextResultDTO> sendOcrRequestToOcrApi(String externalReferenceID, byte[] tiffContent) {
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.MULTIPART_FORM_DATA);
 
+        // Filename is required to send the byte array as a file to the MultipartFile parameter.
+        String filename = externalReferenceID + ".tif";
+        ByteArrayResource byteArrayResource = new ByteArrayResource(tiffContent) {
+            @Override
+            public String getFilename() {
+                return filename;
+            }
+        };
+
         MultiValueMap<String, Object> params = new LinkedMultiValueMap<>();
-        params.add(FILE_REQUEST_PARAMETER_NAME, new ByteArrayResource(multipartFile.getBytes()));
+        params.add(FILE_REQUEST_PARAMETER_NAME, byteArrayResource);
         params.add(RESPONSE_ID_REQUEST_PARAMETER_NAME, externalReferenceID);
 
         HttpEntity<MultiValueMap<String, Object>> entity = new HttpEntity<>(params, headers);
 
         ResponseEntity<ExtractTextResultDTO> response;
+
+        LOG.debug(ocrApiUrl);
         try {
-            response = restTemplate.postForEntity(OCR_API_ENDPOINT, entity, ExtractTextResultDTO.class);
-        } catch(HttpClientErrorException exception) {
+            response = restTemplate.postForEntity(ocrApiUrl, entity, ExtractTextResultDTO.class);
+        } catch(HttpClientErrorException | HttpServerErrorException exception) {
             LOG.error(exception);
             throw exception;
         }
-
         return response;
     }
 
-    private MultipartFile convertByteArrayToMultipartTiff(String externalReferenceID, byte[] tiffContent) {
-        LOG.debugContext(externalReferenceID, "Creating MultipartTiff from byte array image contents", null);
-        return new MultipartTiff(tiffContent);
-    }
 }

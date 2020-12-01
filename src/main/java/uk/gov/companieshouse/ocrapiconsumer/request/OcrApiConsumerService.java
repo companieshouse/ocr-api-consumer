@@ -12,8 +12,6 @@ import uk.gov.companieshouse.ocrapiconsumer.request.extractedtext.ExtractTextRes
 import uk.gov.companieshouse.ocrapiconsumer.request.image.ChipsImageAdapter;
 import uk.gov.companieshouse.ocrapiconsumer.request.ocr.OcrApiRequestAdapter;
 
-import java.io.IOException;
-
 @Service
 public class OcrApiConsumerService {
 
@@ -43,47 +41,29 @@ public class OcrApiConsumerService {
 
         LOG.debugContext(externalReferenceID, "Sending image to ocr microservice for conversion", null);
 
-        ResponseEntity<ExtractTextResultDTO> response = null;
-        try {
-            response = sendRequestToOcrMicroservice(externalReferenceID, image);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        ResponseEntity<ExtractTextResultDTO> response = sendRequestToOcrMicroservice(externalReferenceID, image);
+
         ExtractTextResultDTO extractedText = null;
         if(response != null) {
             extractedText = response.getBody();
         }
 
-        LOG.debugContext(externalReferenceID, "Sending the extracted text response for the articles of association", null);
+        LOG.debugContext(externalReferenceID,
+                "Sending the extracted text response for the articles of association", null);
         sendTextResult(extractedTextEndpoint, extractedText);
     }
 
     private byte[] getTiffImage(String imageEndpoint) {
-        byte[] tiffContent = null;
-
-        try {
-            tiffContent = chipsImageAdapter.getTiffImageFromChips(imageEndpoint);
-        } catch(IOException e) {
-            e.printStackTrace();
-        }
-
-        return tiffContent;
+        return chipsImageAdapter.getTiffImageFromChips(imageEndpoint);
     }
 
-    private ResponseEntity<ExtractTextResultDTO> sendRequestToOcrMicroservice(String externalReferenceID, byte[] image) throws IOException {
-        ResponseEntity<ExtractTextResultDTO> response = null;
+    private ResponseEntity<ExtractTextResultDTO> sendRequestToOcrMicroservice(String externalReferenceID, byte[] image) {
+        return ocrApiRequestAdapter.sendOcrRequestToOcrApi(externalReferenceID, image);
 
-        response = ocrApiRequestAdapter.sendOcrRequestToOcrApi(externalReferenceID, image);
-
-        return response;
     }
 
     private void sendTextResult(String extractedTextEndpoint, ExtractTextResultDTO extractedText) {
-        try {
-            chipsExtractedTextAdapter.sendTextResult(extractedTextEndpoint, extractedText);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        chipsExtractedTextAdapter.sendTextResult(extractedTextEndpoint, extractedText);
     }
 
 }

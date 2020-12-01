@@ -1,15 +1,14 @@
 package uk.gov.companieshouse.ocrapiconsumer.request.image;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.RestTemplate;
 import uk.gov.companieshouse.logging.Logger;
 import uk.gov.companieshouse.logging.LoggerFactory;
 import uk.gov.companieshouse.ocrapiconsumer.OcrApiConsumerApplication;
-
-import java.io.IOException;
 
 @Component
 public class ChipsImageAdapter {
@@ -25,16 +24,15 @@ public class ChipsImageAdapter {
 
     /**
      * Gets a byte array of tiff contents from CHIPS.
-     * @param   imageEndpoint               The endpoint that the image is retrieved from.
+     * @param   imageEndpoint   The endpoint that the image is retrieved from.
      * @return  A byte array of tiff image contents used for the OCR text extraction.
-     * @throws  IOException  When the endpoint returns a 404 NOT FOUND.
      */
-    public byte[] getTiffImageFromChips(String imageEndpoint) throws IOException {
+    public byte[] getTiffImageFromChips(String imageEndpoint) {
 
-        ResponseEntity<byte[]> responseEntity = restTemplate.getForEntity(imageEndpoint, byte[].class);
-
-        if(responseEntity.getStatusCode().equals(HttpStatus.NOT_FOUND)) {
-            IOException exception = new IOException();
+        ResponseEntity<byte[]> responseEntity;
+        try {
+            responseEntity= restTemplate.getForEntity(imageEndpoint, byte[].class);
+        } catch(HttpClientErrorException | HttpServerErrorException exception) {
             LOG.error(exception);
             throw exception;
         }

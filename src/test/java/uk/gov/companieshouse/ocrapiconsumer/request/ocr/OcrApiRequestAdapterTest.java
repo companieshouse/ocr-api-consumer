@@ -2,7 +2,6 @@ package uk.gov.companieshouse.ocrapiconsumer.request.ocr;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
@@ -15,13 +14,10 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 import uk.gov.companieshouse.ocrapiconsumer.groups.Unit;
 import uk.gov.companieshouse.ocrapiconsumer.request.TestParent;
 import uk.gov.companieshouse.ocrapiconsumer.request.extractedtext.ExtractTextResultDTO;
-
-import java.io.IOException;
 
 @Unit
 @ExtendWith(MockitoExtension.class)
@@ -35,18 +31,12 @@ class OcrApiRequestAdapterTest extends TestParent {
 
     @BeforeEach
     void setupTests() {
-        ExtractTextResultDTO extractTextResultDTO = new ExtractTextResultDTO();
-        extractTextResultDTO.setResponseId(EXTERNAL_REFERENCE_ID);
-        extractTextResultDTO.setLowestConfidenceScore(LOWEST_CONFIDENCE_SCORE);
-        extractTextResultDTO.setAverageConfidenceScore(AVERAGE_CONFIDENCE_SCORE);
-        extractTextResultDTO.setExtractedText(EXTRACTED_TEXT);
-        extractTextResultDTO.setOcrProcessingTimeMs(OCR_PROCESSING_TIME);
-        extractTextResultDTO.setTotalProcessingTimeMs(TOTAL_PROCESSING_TIME);
+        ExtractTextResultDTO extractTextResultDTO = createMockTextResult();
         response = new ResponseEntity<>(extractTextResultDTO, HttpStatus.CREATED);
     }
 
     @Test
-    void testSendOcrRequestSuccessful() throws IOException {
+    void testSendOcrRequestSuccessful() {
         // given
         ResponseEntity<ExtractTextResultDTO> expected = response;
         when(restTemplate.postForEntity(anyString(), any(), eq(ExtractTextResultDTO.class))).thenReturn(response);

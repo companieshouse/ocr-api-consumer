@@ -9,6 +9,10 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import uk.gov.companieshouse.ocrapiconsumer.request.extractedtext.ExtractTextResultDTO;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+
 @RestController
 public class DummyController {
 
@@ -17,8 +21,14 @@ public class DummyController {
 
     @GetMapping("/image")
     public ResponseEntity<byte[]> dummyImageEndpoint() {
-        byte[] bytes = {0, 1};
-        return new ResponseEntity<>(bytes, HttpStatus.OK);
+        File fi = new File("src/main/resources/sample-articles-of-association.tif");
+        byte[] fileContent = {0};
+        try {
+            fileContent = Files.readAllBytes(fi.toPath());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return new ResponseEntity<>(fileContent, HttpStatus.OK);
     }
 
     @PostMapping(value = "/ocr")
