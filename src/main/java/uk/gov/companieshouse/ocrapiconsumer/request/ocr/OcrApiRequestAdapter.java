@@ -9,14 +9,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
-import org.springframework.web.client.HttpClientErrorException;
-import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.RestTemplate;
 import uk.gov.companieshouse.environment.EnvironmentReader;
 import uk.gov.companieshouse.environment.impl.EnvironmentReaderImpl;
-import uk.gov.companieshouse.logging.Logger;
-import uk.gov.companieshouse.logging.LoggerFactory;
-import uk.gov.companieshouse.ocrapiconsumer.OcrApiConsumerApplication;
 import uk.gov.companieshouse.ocrapiconsumer.request.extractedtext.ExtractTextResultDTO;
 
 @Component
@@ -24,17 +19,14 @@ public class OcrApiRequestAdapter {
 
     private static final String FILE_REQUEST_PARAMETER_NAME = "file";
     private static final String RESPONSE_ID_REQUEST_PARAMETER_NAME = "responseId";
-    private static final Logger LOG = LoggerFactory.getLogger(OcrApiConsumerApplication.APPLICATION_NAME_SPACE);
 
-    // Get the ocr api url from env variables
-    private final EnvironmentReader environmentReader = new EnvironmentReaderImpl();
-    private final String ocrApiUrl = environmentReader.getMandatoryUrl("OCR_API_URL");
-
+    private final String ocrApiUrl;
     private final RestTemplate restTemplate;
 
     @Autowired
     public OcrApiRequestAdapter(RestTemplate restTemplate) {
         this.restTemplate = restTemplate;
+        this.ocrApiUrl = readOcrApiUrlFromEnv();
     }
 
     /**
@@ -42,7 +34,6 @@ public class OcrApiRequestAdapter {
      * @param   externalReferenceID   The request ID.
      * @param   tiffContent           The image content retrieved from CHIPS.
      * @return  A response entity containing the extracted text result DTO.
-     * @throws  HttpClientErrorException  When the request returns a 404 NOT FOUND.
      */
     public ResponseEntity<ExtractTextResultDTO> sendOcrRequestToOcrApi(String externalReferenceID, byte[] tiffContent) {
 
@@ -64,16 +55,17 @@ public class OcrApiRequestAdapter {
 
         HttpEntity<MultiValueMap<String, Object>> entity = new HttpEntity<>(params, headers);
 
-        ResponseEntity<ExtractTextResultDTO> response;
+        return restTemplate.postForEntity(ocrApiUrl, entity, ExtractTextResultDTO.class);
+    }
 
-        LOG.debug(ocrApiUrl);
-        try {
-            response = restTemplate.postForEntity(ocrApiUrl, entity, ExtractTextResultDTO.class);
-        } catch(HttpClientErrorException | HttpServerErrorException exception) {
-            LOG.error(exception);
-            throw exception;
-        }
-        return response;
+    /**
+     * Reads in the OCR API URL from environment variables using the Environment Reader.
+     * @return  The OCR API URL as a string
+     */
+    private String readOcrApiUrlFromEnv() {
+        // Get the ocr api url from env variables
+        final EnvironmentReader environmentReader = new EnvironmentReaderImpl();
+        return environmentReader.getMandatoryUrl("OCR_API_URL");
     }
 
 }

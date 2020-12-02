@@ -16,8 +16,6 @@ import uk.gov.companieshouse.ocrapiconsumer.request.extractedtext.ExtractTextRes
 import uk.gov.companieshouse.ocrapiconsumer.request.image.ChipsImageAdapter;
 import uk.gov.companieshouse.ocrapiconsumer.request.ocr.OcrApiRequestAdapter;
 
-import java.io.IOException;
-
 @Unit
 @ExtendWith(MockitoExtension.class)
 class OcrApiConsumerServiceTest extends TestParent {
@@ -47,7 +45,7 @@ class OcrApiConsumerServiceTest extends TestParent {
     }
 
     @Test
-    void testOcrApiServiceLogsSuccessfully() throws IOException {
+    void testOcrApiServiceLogsSuccessfully() {
         // given
         when(chipsImageAdapter.getTiffImageFromChips(IMAGE_ENDPOINT)).thenReturn(MOCK_TIFF_CONTENT);
         when(ocrApiRequestAdapter.sendOcrRequestToOcrApi(EXTERNAL_REFERENCE_ID, MOCK_TIFF_CONTENT)).thenReturn(response);
