@@ -10,7 +10,7 @@
 		<!-- lookup parent from repository -->
 	</parent>
 	<artifactId>ocr-api-consumer</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
+	<version>unversioned</version>
 	<name>ocr-api-consumer</name>
 	<description>Temporary API consumer for OCR requests</description>
 

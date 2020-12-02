@@ -6,6 +6,10 @@ Service to consume requests for extraction of text from images and manage the re
 - Java 11
 - Maven
 
+## Usage
+- Run `make dev` to build JAR (versioned in target and unversioned in top level d) and run the unit tests **(using Java 11)**
+- Run `java -jar ocr-api-consumer.jar` to run the application.
+
 ## Environment Variables
 
 The following is a list of mandatory environment variables for the service to run:
