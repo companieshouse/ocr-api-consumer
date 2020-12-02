@@ -27,7 +27,7 @@ Setup a post request to http://localhost:9090/ocr-requests with the following qu
 | Parameter Name          | Description                                                      | Example Value                                                                                        |
 |-------------------------|------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------|
 | external-reference-id   | The request ID of the request used in context for logging        | ABC                                                                                                         |
-| image-endpoint          | The endpoint of the image to retrieve for OCR text extraction    | http://localhost:9090/image http://localhost:9090/image (dummy endpoint, reads tif file from resources) |
+| image-endpoint          | The endpoint of the image to retrieve for OCR text extraction    | http://localhost:9090/image (dummy endpoint, reads tif file from resources) |
 | extracted-text-endpoint | The endpoint to send the extracted text result to once retrieved | http://localhost:9090/text (dummy endpoint, returns 200 OK)                                             |
 
 ### Running tests with Maven
