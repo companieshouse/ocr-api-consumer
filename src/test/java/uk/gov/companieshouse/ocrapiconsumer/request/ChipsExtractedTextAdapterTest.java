@@ -1,4 +1,4 @@
-package uk.gov.companieshouse.ocrapiconsumer.request.extractedtext;
+package uk.gov.companieshouse.ocrapiconsumer.request;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -14,7 +14,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestTemplate;
 import uk.gov.companieshouse.ocrapiconsumer.groups.Unit;
-import uk.gov.companieshouse.ocrapiconsumer.request.TestParent;
 
 @Unit
 @ExtendWith(MockitoExtension.class)

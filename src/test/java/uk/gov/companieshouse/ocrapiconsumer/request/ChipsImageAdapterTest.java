@@ -1,4 +1,4 @@
-package uk.gov.companieshouse.ocrapiconsumer.request.image;
+package uk.gov.companieshouse.ocrapiconsumer.request;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
@@ -12,7 +12,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestTemplate;
 import uk.gov.companieshouse.ocrapiconsumer.groups.Unit;
-import uk.gov.companieshouse.ocrapiconsumer.request.TestParent;
 
 @Unit
 @ExtendWith(MockitoExtension.class)

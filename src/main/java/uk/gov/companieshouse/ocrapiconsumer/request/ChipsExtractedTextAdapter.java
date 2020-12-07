@@ -1,4 +1,4 @@
-package uk.gov.companieshouse.ocrapiconsumer.request.extractedtext;
+package uk.gov.companieshouse.ocrapiconsumer.request;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpEntity;

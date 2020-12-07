@@ -1,4 +1,4 @@
-package uk.gov.companieshouse.ocrapiconsumer.request.ocr;
+package uk.gov.companieshouse.ocrapiconsumer.request;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ByteArrayResource;
@@ -12,7 +12,6 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 import uk.gov.companieshouse.environment.EnvironmentReader;
 import uk.gov.companieshouse.environment.impl.EnvironmentReaderImpl;
-import uk.gov.companieshouse.ocrapiconsumer.request.extractedtext.ExtractTextResultDTO;
 
 @Component
 public class OcrApiRequestAdapter {
@@ -20,13 +19,11 @@ public class OcrApiRequestAdapter {
     private static final String FILE_REQUEST_PARAMETER_NAME = "file";
     private static final String RESPONSE_ID_REQUEST_PARAMETER_NAME = "responseId";
 
-    private final String ocrApiUrl;
     private final RestTemplate restTemplate;
 
     @Autowired
     public OcrApiRequestAdapter(RestTemplate restTemplate) {
         this.restTemplate = restTemplate;
-        this.ocrApiUrl = readOcrApiUrlFromEnv();
     }
 
     /**
@@ -36,6 +33,7 @@ public class OcrApiRequestAdapter {
      * @return  A response entity containing the extracted text result DTO.
      */
     public ResponseEntity<ExtractTextResultDTO> sendOcrRequestToOcrApi(String externalReferenceID, byte[] tiffContent) {
+        String ocrApiUrl = readOcrApiUrlFromEnv();
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.MULTIPART_FORM_DATA);
@@ -62,7 +60,7 @@ public class OcrApiRequestAdapter {
      * Reads in the OCR API URL from environment variables using the Environment Reader.
      * @return  The OCR API URL as a string
      */
-    private String readOcrApiUrlFromEnv() {
+    public String readOcrApiUrlFromEnv() {
         // Get the ocr api url from env variables
         final EnvironmentReader environmentReader = new EnvironmentReaderImpl();
         return environmentReader.getMandatoryUrl("OCR_API_URL");

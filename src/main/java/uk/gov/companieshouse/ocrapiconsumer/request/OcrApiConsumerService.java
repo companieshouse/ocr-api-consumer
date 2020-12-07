@@ -7,10 +7,6 @@ import org.springframework.stereotype.Service;
 import uk.gov.companieshouse.logging.Logger;
 import uk.gov.companieshouse.logging.LoggerFactory;
 import uk.gov.companieshouse.ocrapiconsumer.OcrApiConsumerApplication;
-import uk.gov.companieshouse.ocrapiconsumer.request.extractedtext.ChipsExtractedTextAdapter;
-import uk.gov.companieshouse.ocrapiconsumer.request.extractedtext.ExtractTextResultDTO;
-import uk.gov.companieshouse.ocrapiconsumer.request.image.ChipsImageAdapter;
-import uk.gov.companieshouse.ocrapiconsumer.request.ocr.OcrApiRequestAdapter;
 
 @Service
 public class OcrApiConsumerService {

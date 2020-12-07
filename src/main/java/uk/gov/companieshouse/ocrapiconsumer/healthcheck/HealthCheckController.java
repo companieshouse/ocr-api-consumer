@@ -9,19 +9,8 @@ import org.springframework.web.bind.annotation.RestController;
 public class HealthCheckController {
 
     @GetMapping("/healthcheck")
-    public ResponseEntity<ServiceStatus> isHealthy() {
-        return new ResponseEntity<>(new ServiceStatus("ALIVE"), HttpStatus.OK);
+    public ResponseEntity<String> isHealthy() {
+        return new ResponseEntity<>("ALIVE", HttpStatus.OK);
     }
 
-    static final class ServiceStatus {
-        private final String status;
-
-        public ServiceStatus(String status) {
-            this.status = status;
-        }
-
-        public String getStatus() {
-            return status;
-        }
-    }
 }

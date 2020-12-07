@@ -11,10 +11,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import uk.gov.companieshouse.ocrapiconsumer.groups.Unit;
-import uk.gov.companieshouse.ocrapiconsumer.request.extractedtext.ChipsExtractedTextAdapter;
-import uk.gov.companieshouse.ocrapiconsumer.request.extractedtext.ExtractTextResultDTO;
-import uk.gov.companieshouse.ocrapiconsumer.request.image.ChipsImageAdapter;
-import uk.gov.companieshouse.ocrapiconsumer.request.ocr.OcrApiRequestAdapter;
 
 @Unit
 @ExtendWith(MockitoExtension.class)

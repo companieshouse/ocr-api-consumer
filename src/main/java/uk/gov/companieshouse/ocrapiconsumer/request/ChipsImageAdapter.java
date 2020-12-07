@@ -1,4 +1,4 @@
-package uk.gov.companieshouse.ocrapiconsumer.request.image;
+package uk.gov.companieshouse.ocrapiconsumer.request;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
