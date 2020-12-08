@@ -34,23 +34,23 @@ dev: clean
 
 .PHONY: package
 package:
-	ifndef version
-		$(error No version given. Aborting)
-	endif
-		$(info Packaging version: $(version) on $(OS))
-	ifneq ($(OS),Darwin)
-			mvn versions:set -DnewVersion=$(version) -DgenerateBackupPoms=false
-	endif
-		mvn package -DskipTests=true
-		$(eval tmpdir:=$(shell mktemp -d build-XXXXXXXXXX))
-		cp ./start.sh $(tmpdir)
-		cp ./routes.yaml $(tmpdir)
-		cp ./target/$(artifact_name)-$(version).jar $(tmpdir)/$(artifact_name).jar
-	ifeq ($(OS),Darwin)
-		cp ./target/$(artifact_name)-$(version).jar ./$(artifact_name).jar
-	endif
-		cd $(tmpdir); zip -r ../$(artifact_name)-$(version).zip *
-		rm -rf $(tmpdir)
+ifndef version
+	$(error No version given. Aborting)
+endif
+	$(info Packaging version: $(version) on $(OS))
+ifneq ($(OS),Darwin)
+		mvn versions:set -DnewVersion=$(version) -DgenerateBackupPoms=false
+endif
+	mvn package -DskipTests=true
+	$(eval tmpdir:=$(shell mktemp -d build-XXXXXXXXXX))
+	cp ./start.sh $(tmpdir)
+	cp ./routes.yaml $(tmpdir)
+	cp ./target/$(artifact_name)-$(version).jar $(tmpdir)/$(artifact_name).jar
+ifeq ($(OS),Darwin)
+	cp ./target/$(artifact_name)-$(version).jar ./$(artifact_name).jar
+endif
+	cd $(tmpdir); zip -r ../$(artifact_name)-$(version).zip *
+	rm -rf $(tmpdir)
 
 .PHONY: dist
 dist: clean build package
