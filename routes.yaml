@@ -1,4 +1,4 @@
-app_name: ocr-api-OCR_API_CONSUMER_PORT
+app_name: ocr-api-consumer
 group: internalapi
 weight: 929
 routes:
