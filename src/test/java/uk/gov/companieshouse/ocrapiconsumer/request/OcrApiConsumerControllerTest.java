@@ -29,10 +29,10 @@ class OcrApiConsumerControllerTest extends TestParent {
 
         // when
         var actual = controller
-                .receiveOcrRequest(EXTERNAL_REFERENCE_ID,IMAGE_ENDPOINT, EXTRACTED_TEXT_ENDPOINT);
+                .receiveOcrRequest(IMAGE_ENDPOINT, CONVERTED_TEXT_ENDPOINT, RESPONSE_ID);
 
         // then
-        verify(service).logOcrRequest(EXTERNAL_REFERENCE_ID, IMAGE_ENDPOINT, EXTRACTED_TEXT_ENDPOINT);
+        verify(service).logOcrRequest(IMAGE_ENDPOINT, CONVERTED_TEXT_ENDPOINT, RESPONSE_ID);
         assertThat(actual, is(expected));
     }
 }

@@ -30,13 +30,7 @@ class OcrApiConsumerServiceTest extends TestParent {
 
     @BeforeEach
     void setupTests() {
-        extractTextResultDTO = new ExtractTextResultDTO();
-        extractTextResultDTO.setResponseId(EXTERNAL_REFERENCE_ID);
-        extractTextResultDTO.setLowestConfidenceScore(LOWEST_CONFIDENCE_SCORE);
-        extractTextResultDTO.setAverageConfidenceScore(AVERAGE_CONFIDENCE_SCORE);
-        extractTextResultDTO.setExtractedText(EXTRACTED_TEXT);
-        extractTextResultDTO.setOcrProcessingTimeMs(OCR_PROCESSING_TIME);
-        extractTextResultDTO.setTotalProcessingTimeMs(TOTAL_PROCESSING_TIME);
+        extractTextResultDTO = createMockTextResult();
         response = new ResponseEntity<>(extractTextResultDTO, HttpStatus.CREATED);
     }
 
@@ -44,14 +38,14 @@ class OcrApiConsumerServiceTest extends TestParent {
     void testOcrApiServiceLogsSuccessfully() {
         // given
         when(chipsImageAdapter.getTiffImageFromChips(IMAGE_ENDPOINT)).thenReturn(MOCK_TIFF_CONTENT);
-        when(ocrApiRequestAdapter.sendOcrRequestToOcrApi(EXTERNAL_REFERENCE_ID, MOCK_TIFF_CONTENT)).thenReturn(response);
+        when(ocrApiRequestAdapter.sendOcrRequestToOcrApi(MOCK_TIFF_CONTENT, RESPONSE_ID)).thenReturn(response);
 
         // when
-        ocrApiConsumerService.logOcrRequest(EXTERNAL_REFERENCE_ID, IMAGE_ENDPOINT, EXTRACTED_TEXT_ENDPOINT);
+        ocrApiConsumerService.logOcrRequest(IMAGE_ENDPOINT, CONVERTED_TEXT_ENDPOINT, RESPONSE_ID);
 
         // then
         verify(chipsImageAdapter).getTiffImageFromChips(IMAGE_ENDPOINT);
-        verify(ocrApiRequestAdapter).sendOcrRequestToOcrApi(EXTERNAL_REFERENCE_ID, MOCK_TIFF_CONTENT);
-        verify(chipsExtractedTextAdapter).sendTextResult(EXTRACTED_TEXT_ENDPOINT, extractTextResultDTO);
+        verify(ocrApiRequestAdapter).sendOcrRequestToOcrApi(MOCK_TIFF_CONTENT, RESPONSE_ID);
+        verify(chipsExtractedTextAdapter).sendTextResult(CONVERTED_TEXT_ENDPOINT, extractTextResultDTO);
     }
 }

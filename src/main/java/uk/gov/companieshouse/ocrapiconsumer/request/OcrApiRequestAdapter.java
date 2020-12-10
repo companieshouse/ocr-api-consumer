@@ -28,18 +28,18 @@ public class OcrApiRequestAdapter {
 
     /**
      * Sends the OCR request to the ocr-api
-     * @param   externalReferenceID   The request ID.
      * @param   tiffContent           The image content retrieved from CHIPS.
+     * @param   responseId            The request ID.
      * @return  A response entity containing the extracted text result DTO.
      */
-    public ResponseEntity<ExtractTextResultDTO> sendOcrRequestToOcrApi(String externalReferenceID, byte[] tiffContent) {
+    public ResponseEntity<ExtractTextResultDTO> sendOcrRequestToOcrApi(byte[] tiffContent, String responseId) {
         String ocrApiUrl = readOcrApiUrlFromEnv();
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.MULTIPART_FORM_DATA);
 
         // Filename is required to send the byte array as a file to the MultipartFile parameter.
-        String filename = externalReferenceID + ".tif";
+        String filename = responseId + ".tif";
         ByteArrayResource byteArrayResource = new ByteArrayResource(tiffContent) {
             @Override
             public String getFilename() {
@@ -49,7 +49,7 @@ public class OcrApiRequestAdapter {
 
         MultiValueMap<String, Object> params = new LinkedMultiValueMap<>();
         params.add(FILE_REQUEST_PARAMETER_NAME, byteArrayResource);
-        params.add(RESPONSE_ID_REQUEST_PARAMETER_NAME, externalReferenceID);
+        params.add(RESPONSE_ID_REQUEST_PARAMETER_NAME, responseId);
 
         HttpEntity<MultiValueMap<String, Object>> entity = new HttpEntity<>(params, headers);
 

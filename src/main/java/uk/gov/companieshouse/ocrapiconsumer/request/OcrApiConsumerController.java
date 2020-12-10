@@ -19,9 +19,9 @@ import uk.gov.companieshouse.ocrapiconsumer.common.ErrorResponseDTO;
 public class OcrApiConsumerController {
 
     private static final String REQUEST_ENDPOINT = "/ocr-requests";
-    private static final String EXTERNAL_REFERENCE_ID_PARAMETER_NAME = "external-reference-id";
-    private static final String IMAGE_ENDPOINT_PARAMETER_NAME = "image-endpoint";
-    private static final String EXTRACTED_TEXT_ENDPOINT = "extracted-text-endpoint";
+    private static final String IMAGE_ENDPOINT_PARAMETER_NAME = "image_endpoint";
+    private static final String CONVERTED_TEXT_ENDPOINT_PARAMETER_NAME = "converted_text_endpoint";
+    private static final String RESPONSE_ID_PARAMETER_NAME = "response_id";
 
     private static final String CONTROLLER_ERROR_MESSAGE = "Unexpected error occurred";
     private static final String CLIENT_ERROR_MESSAGE = "A client error has occurred during the request";
@@ -40,17 +40,17 @@ public class OcrApiConsumerController {
      * Receives an OCR request from CHIPS and calls the service to:
      * - log it asynchronously
      * - return status code 202 (ACCEPTED)
-     * @param   externalReferenceID       The request reference ID
      * @param   imageEndpoint             The endpoint that the image is located at
-     * @param   extractedTextEndpoint     The endpoint to send the converted text to
+     * @param   convertedTextEndpoint     The endpoint to send the converted text to
+     * @param   responseId                The response ID of the request
      * @return                            The HTTP Status code 202 ACCEPTED
      */
     @PostMapping(REQUEST_ENDPOINT)
-    public ResponseEntity<HttpStatus> receiveOcrRequest(@RequestParam(EXTERNAL_REFERENCE_ID_PARAMETER_NAME) String externalReferenceID,
-                                                @RequestParam(IMAGE_ENDPOINT_PARAMETER_NAME) String imageEndpoint,
-                                                @RequestParam(EXTRACTED_TEXT_ENDPOINT) String extractedTextEndpoint) {
+    public ResponseEntity<HttpStatus> receiveOcrRequest(@RequestParam(IMAGE_ENDPOINT_PARAMETER_NAME) String imageEndpoint,
+                                                        @RequestParam(CONVERTED_TEXT_ENDPOINT_PARAMETER_NAME) String convertedTextEndpoint,
+                                                        @RequestParam(RESPONSE_ID_PARAMETER_NAME) String responseId) {
 
-        service.logOcrRequest(externalReferenceID, imageEndpoint, extractedTextEndpoint);
+        service.logOcrRequest(imageEndpoint, convertedTextEndpoint, responseId);
         return new ResponseEntity<>(HttpStatus.ACCEPTED);
     }
 
