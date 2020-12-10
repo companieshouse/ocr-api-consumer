@@ -26,35 +26,35 @@ public class OcrApiConsumerService {
     }
 
     @Async
-    public void logOcrRequest(String externalReferenceID, String imageEndpoint, String extractedTextEndpoint) {
-        LOG.infoContext(externalReferenceID,
-                String.format("Request received with ID: %s, Image Endpoint: %s, Extracted Text Endpoint: %s",
-                        externalReferenceID, imageEndpoint, extractedTextEndpoint),
+    public void logOcrRequest(String imageEndpoint, String convertedTextEndpoint, String responseId) {
+        LOG.infoContext(responseId,
+                String.format("Request received with Image Endpoint: %s, Extracted Text Endpoint: %s",
+                        imageEndpoint, convertedTextEndpoint),
                 null);
 
-        LOG.debugContext(externalReferenceID, "Getting the TIFF image", null);
+        LOG.debugContext(responseId, "Getting the TIFF image", null);
         byte[] image = getTiffImage(imageEndpoint);
 
-        LOG.debugContext(externalReferenceID, "Sending image to ocr microservice for conversion", null);
+        LOG.debugContext(responseId, "Sending image to ocr microservice for conversion", null);
 
-        ResponseEntity<ExtractTextResultDTO> response = sendRequestToOcrMicroservice(externalReferenceID, image);
+        ResponseEntity<ExtractTextResultDTO> response = sendRequestToOcrMicroservice(image, responseId);
 
         ExtractTextResultDTO extractedText = null;
         if(response != null) {
             extractedText = response.getBody();
         }
 
-        LOG.debugContext(externalReferenceID,
+        LOG.debugContext(responseId,
                 "Sending the extracted text response for the articles of association", null);
-        sendTextResult(extractedTextEndpoint, extractedText);
+        sendTextResult(convertedTextEndpoint, extractedText);
     }
 
     private byte[] getTiffImage(String imageEndpoint) {
         return chipsImageAdapter.getTiffImageFromChips(imageEndpoint);
     }
 
-    private ResponseEntity<ExtractTextResultDTO> sendRequestToOcrMicroservice(String externalReferenceID, byte[] image) {
-        return ocrApiRequestAdapter.sendOcrRequestToOcrApi(externalReferenceID, image);
+    private ResponseEntity<ExtractTextResultDTO> sendRequestToOcrMicroservice(byte[] image, String responseId) {
+        return ocrApiRequestAdapter.sendOcrRequestToOcrApi(image, responseId);
 
     }
 

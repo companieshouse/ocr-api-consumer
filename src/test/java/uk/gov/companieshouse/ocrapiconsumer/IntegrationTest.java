@@ -19,9 +19,9 @@ import uk.gov.companieshouse.ocrapiconsumer.request.TestParent;
 @SpringBootTest(classes = OcrApiConsumerApplication.class, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 class IntegrationTest extends TestParent {
 
-    private static final String EXTERNAL_REFERENCE_ID_PARAM_NAME = "external-reference-id";
-    private static final String IMAGE_ENDPOINT_PARAM_NAME = "image-endpoint";
-    private static final String EXTRACTED_TEXT_ENDPOINT_PARAM_NAME = "extracted-text-endpoint";
+    private static final String IMAGE_ENDPOINT_PARAM_NAME = "image_endpoint";
+    private static final String CONVERTED_TEXT_ENDPOINT_PARAM_NAME = "converted_text_endpoint";
+    private static final String RESPONSE_ID_PARAM_NAME = "response_id";
     private static final String APPLICATION_URL = "/ocr-requests";
 
     @LocalServerPort
@@ -35,9 +35,9 @@ class IntegrationTest extends TestParent {
         var expected = HttpStatus.ACCEPTED;
 
         MultiValueMap<String, Object> params = new LinkedMultiValueMap<>();
-        params.add(EXTERNAL_REFERENCE_ID_PARAM_NAME, EXTERNAL_REFERENCE_ID);
         params.add(IMAGE_ENDPOINT_PARAM_NAME, IMAGE_ENDPOINT);
-        params.add(EXTRACTED_TEXT_ENDPOINT_PARAM_NAME, EXTRACTED_TEXT_ENDPOINT);
+        params.add(CONVERTED_TEXT_ENDPOINT_PARAM_NAME, CONVERTED_TEXT_ENDPOINT);
+        params.add(RESPONSE_ID_PARAM_NAME, RESPONSE_ID);
 
         var uri = "http://localhost:" + port + APPLICATION_URL;
 
@@ -51,7 +51,7 @@ class IntegrationTest extends TestParent {
     void verifyControllerThrowsRestClientExceptionWhenRequiredParameterMissing() {
 
         MultiValueMap<String, Object> params = new LinkedMultiValueMap<>();
-        params.add(EXTERNAL_REFERENCE_ID_PARAM_NAME, EXTERNAL_REFERENCE_ID);
+        params.add(RESPONSE_ID_PARAM_NAME, RESPONSE_ID);
         params.add(IMAGE_ENDPOINT_PARAM_NAME, IMAGE_ENDPOINT);
         // no extracted text endpoint parameter which is a required parameter
 

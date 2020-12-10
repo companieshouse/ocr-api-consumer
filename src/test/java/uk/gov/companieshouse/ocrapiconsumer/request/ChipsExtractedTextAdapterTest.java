@@ -29,25 +29,19 @@ class ChipsExtractedTextAdapterTest extends TestParent {
 
     @BeforeEach
     void setupTests() {
-        extractTextResultDTO = new ExtractTextResultDTO();
-        extractTextResultDTO.setResponseId(EXTERNAL_REFERENCE_ID);
-        extractTextResultDTO.setLowestConfidenceScore(LOWEST_CONFIDENCE_SCORE);
-        extractTextResultDTO.setAverageConfidenceScore(AVERAGE_CONFIDENCE_SCORE);
-        extractTextResultDTO.setExtractedText(EXTRACTED_TEXT);
-        extractTextResultDTO.setOcrProcessingTimeMs(OCR_PROCESSING_TIME);
-        extractTextResultDTO.setTotalProcessingTimeMs(TOTAL_PROCESSING_TIME);
+        extractTextResultDTO = createMockTextResult();
     }
 
     @Test
     void testSendExtractedTextSuccessfully() {
         // given
-        when(restTemplate.postForEntity(eq(EXTRACTED_TEXT_ENDPOINT), any(), any()))
+        when(restTemplate.postForEntity(eq(CONVERTED_TEXT_ENDPOINT), any(), any()))
                 .thenReturn(new ResponseEntity<>(HttpStatus.OK));
 
         // when
-        chipsExtractedTextAdapter.sendTextResult(EXTRACTED_TEXT_ENDPOINT, extractTextResultDTO);
+        chipsExtractedTextAdapter.sendTextResult(CONVERTED_TEXT_ENDPOINT, extractTextResultDTO);
 
         // then
-        verify(restTemplate).postForEntity(eq(EXTRACTED_TEXT_ENDPOINT), any(), any());
+        verify(restTemplate).postForEntity(eq(CONVERTED_TEXT_ENDPOINT), any(), any());
     }
 }
