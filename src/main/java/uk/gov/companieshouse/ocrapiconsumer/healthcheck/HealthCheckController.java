@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 public class HealthCheckController {
 
-    @GetMapping("/healthcheck")
+    @GetMapping("/internal/ocr-api-consumer/healthcheck")
     public ResponseEntity<String> isHealthy() {
         return new ResponseEntity<>("ALIVE", HttpStatus.OK);
     }
