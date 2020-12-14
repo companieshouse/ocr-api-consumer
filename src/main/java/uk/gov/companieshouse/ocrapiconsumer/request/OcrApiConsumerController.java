@@ -56,6 +56,8 @@ public class OcrApiConsumerController {
 
     @PostMapping("/internal/ocr-api-request")
     public ResponseEntity<HttpStatus> sendTestOcrApiRequest(@RequestParam(RESPONSE_ID_PARAMETER_NAME) String responseId) {
+        String version = System.getProperty("java.version");
+        LOG.debugContext(responseId, "Java version: " + version, null);
         service.sendOcrApiRequest(responseId);
         return new ResponseEntity<>(HttpStatus.OK);
     }
