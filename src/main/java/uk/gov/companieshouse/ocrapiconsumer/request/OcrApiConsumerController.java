@@ -61,18 +61,18 @@ public class OcrApiConsumerController {
      */
     @ExceptionHandler(RestClientResponseException.class)
     public ResponseEntity<ErrorResponseDTO> restClientException(Exception e) {
-        var errorResponse = new ErrorResponseDTO();
+        ErrorResponseDTO errorResponse = new ErrorResponseDTO();
         HttpStatus statusCode = HttpStatus.INTERNAL_SERVER_ERROR;
 
         if(e instanceof HttpClientErrorException) {
-            var cause = (HttpClientErrorException) e.getCause();
+            HttpClientErrorException cause = (HttpClientErrorException) e.getCause();
             statusCode = cause.getStatusCode();
             errorResponse.setErrorMessage(CLIENT_ERROR_MESSAGE);
             LOG.error(null, e);
 
             errorResponse.setErrorMessage(CLIENT_ERROR_MESSAGE);
         } else if(e instanceof HttpServerErrorException) {
-            var cause = (HttpServerErrorException) e.getCause();
+            HttpServerErrorException cause = (HttpServerErrorException) e.getCause();
             statusCode = cause.getStatusCode();
             errorResponse.setErrorMessage(SERVER_ERROR_MESSAGE);
             LOG.error(null, e);
@@ -93,7 +93,7 @@ public class OcrApiConsumerController {
 
         LOG.error(null, e);
 
-        var errorResponse = new ErrorResponseDTO();
+        ErrorResponseDTO errorResponse = new ErrorResponseDTO();
         errorResponse.setErrorMessage(CONTROLLER_ERROR_MESSAGE);
 
         return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);

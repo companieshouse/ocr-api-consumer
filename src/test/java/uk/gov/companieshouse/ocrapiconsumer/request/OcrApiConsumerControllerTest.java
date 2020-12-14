@@ -25,10 +25,10 @@ class OcrApiConsumerControllerTest extends TestParent {
     @Test
     void testReceiveOcrRequestReturns202() {
         // given
-        var expected = new ResponseEntity<HttpStatus>(HttpStatus.ACCEPTED);
+        ResponseEntity<HttpStatus> expected = new ResponseEntity<HttpStatus>(HttpStatus.ACCEPTED);
 
         // when
-        var actual = controller
+        ResponseEntity<HttpStatus> actual = controller
                 .receiveOcrRequest(IMAGE_ENDPOINT, CONVERTED_TEXT_ENDPOINT, RESPONSE_ID);
 
         // then
