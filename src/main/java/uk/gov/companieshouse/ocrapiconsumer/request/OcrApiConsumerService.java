@@ -8,6 +8,10 @@ import uk.gov.companieshouse.logging.Logger;
 import uk.gov.companieshouse.logging.LoggerFactory;
 import uk.gov.companieshouse.ocrapiconsumer.OcrApiConsumerApplication;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+
 @Service
 public class OcrApiConsumerService {
 
@@ -47,6 +51,25 @@ public class OcrApiConsumerService {
         LOG.debugContext(responseId,
                 "Sending the extracted text response for the articles of association", null);
         sendTextResult(convertedTextEndpoint, extractedText);
+    }
+
+    public void sendOcrApiRequest(String responseId) {
+        LOG.debugContext(responseId, "Creating byte array from test image", null);
+        File file = new File("src/main/resources/newer-articles-15.tif");
+        byte[] image = new byte[0];
+        try {
+            image = Files.readAllBytes(file.toPath());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        LOG.debugContext(responseId, "Sending image to ocr microservice for conversion", null);
+
+        ResponseEntity<ExtractTextResultDTO> response = sendRequestToOcrMicroservice(image, responseId);
+        LOG.debugContext(responseId, "Processing time: " + response.getBody().getOcrProcessingTimeMs(), null);
+        LOG.debugContext(responseId, "Total processing time: " + response.getBody().getTotalProcessingTimeMs(), null);
+        LOG.debugContext(responseId, "Lowest confidence score: " + response.getBody().getLowestConfidenceScore(), null);
+        LOG.debugContext(responseId, "Average confidence score: " + response.getBody().getAverageConfidenceScore(), null);
     }
 
     private byte[] getTiffImage(String imageEndpoint) {
