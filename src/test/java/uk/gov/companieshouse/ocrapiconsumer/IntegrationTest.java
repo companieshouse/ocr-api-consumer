@@ -32,16 +32,16 @@ class IntegrationTest extends TestParent {
 
     @Test
     void verifyControllerReturns202AcceptedWhenCalled() {
-        var expected = HttpStatus.ACCEPTED;
+        HttpStatus expected = HttpStatus.ACCEPTED;
 
         MultiValueMap<String, Object> params = new LinkedMultiValueMap<>();
         params.add(IMAGE_ENDPOINT_PARAM_NAME, IMAGE_ENDPOINT);
         params.add(CONVERTED_TEXT_ENDPOINT_PARAM_NAME, CONVERTED_TEXT_ENDPOINT);
         params.add(RESPONSE_ID_PARAM_NAME, RESPONSE_ID);
 
-        var uri = "http://localhost:" + port + APPLICATION_URL;
+        String uri = "http://localhost:" + port + APPLICATION_URL;
 
-        var actual = this.restTemplate
+        HttpStatus actual = this.restTemplate
                 .postForEntity(uri, params, HttpStatus.class).getStatusCode();
 
         assertThat(actual, is(expected));
@@ -55,7 +55,7 @@ class IntegrationTest extends TestParent {
         params.add(IMAGE_ENDPOINT_PARAM_NAME, IMAGE_ENDPOINT);
         // no extracted text endpoint parameter which is a required parameter
 
-        var uri = "http://localhost:" + port + APPLICATION_URL;
+        String uri = "http://localhost:" + port + APPLICATION_URL;
         assertThrows(RestClientException.class, () -> this.restTemplate
                 .postForEntity(uri, params, HttpStatus.class));
     }
