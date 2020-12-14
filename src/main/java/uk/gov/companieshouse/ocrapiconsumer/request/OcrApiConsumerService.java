@@ -2,9 +2,6 @@ package uk.gov.companieshouse.ocrapiconsumer.request;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ClassPathResource;
-import org.springframework.core.io.DefaultResourceLoader;
-import org.springframework.core.io.Resource;
-import org.springframework.core.io.ResourceLoader;
 import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
@@ -13,10 +10,7 @@ import uk.gov.companieshouse.logging.Logger;
 import uk.gov.companieshouse.logging.LoggerFactory;
 import uk.gov.companieshouse.ocrapiconsumer.OcrApiConsumerApplication;
 
-import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
-import java.nio.file.Files;
 
 @Service
 public class OcrApiConsumerService {
