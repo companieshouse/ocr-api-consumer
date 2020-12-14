@@ -1,15 +1,21 @@
 package uk.gov.companieshouse.ocrapiconsumer.request;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.core.io.DefaultResourceLoader;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.ResourceLoader;
 import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import org.springframework.util.FileCopyUtils;
 import uk.gov.companieshouse.logging.Logger;
 import uk.gov.companieshouse.logging.LoggerFactory;
 import uk.gov.companieshouse.ocrapiconsumer.OcrApiConsumerApplication;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 
 @Service
@@ -55,14 +61,17 @@ public class OcrApiConsumerService {
 
     public void sendOcrApiRequest(String responseId) {
         LOG.debugContext(responseId, "Creating byte array from test image", null);
-        File file = new File("src/main/resources/newer-articles-15.tif");
+
         byte[] image = new byte[0];
         try {
-            image = Files.readAllBytes(file.toPath());
+            ClassPathResource classPathResource = new ClassPathResource("static/newer-articles-15.tif");
+            image = FileCopyUtils.copyToByteArray(classPathResource.getInputStream());
         } catch (IOException e) {
             e.printStackTrace();
+            LOG.info("See error log");
         }
 
+        LOG.info("Length of byte array: " + image.length);
         LOG.debugContext(responseId, "Sending image to ocr microservice for conversion", null);
 
         ResponseEntity<ExtractTextResultDTO> response = sendRequestToOcrMicroservice(image, responseId);
