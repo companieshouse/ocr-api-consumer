@@ -9,6 +9,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.boot.web.server.LocalServerPort;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestClientException;
@@ -22,7 +23,8 @@ class IntegrationTest extends TestParent {
     private static final String IMAGE_ENDPOINT_PARAM_NAME = "image_endpoint";
     private static final String CONVERTED_TEXT_ENDPOINT_PARAM_NAME = "converted_text_endpoint";
     private static final String RESPONSE_ID_PARAM_NAME = "response_id";
-    private static final String APPLICATION_URL = "/ocr-requests";
+    private static final String APPLICATION_URL = "/internal/ocr-requests";
+    private static final String HEALTHCHECK_URL = "/internal/ocr-api-consumer/healthcheck";
 
     @LocalServerPort
     private int port;
@@ -58,6 +60,21 @@ class IntegrationTest extends TestParent {
         String uri = "http://localhost:" + port + APPLICATION_URL;
         assertThrows(RestClientException.class, () -> this.restTemplate
                 .postForEntity(uri, params, HttpStatus.class));
+    }
+
+    @Test
+    void verifyHealthCheckControllerReturns200Alive() {
+        HttpStatus expectedResponseCode = HttpStatus.OK;
+        String expectedResponseMessage = "ALIVE";
+
+        String uri = "http://localhost:" + port + HEALTHCHECK_URL;
+
+        ResponseEntity<String> response = this.restTemplate.getForEntity(uri, String.class);
+        HttpStatus actualResponseCode = response.getStatusCode();
+        String actualResponseMessage = response.getBody();
+
+        assertThat(actualResponseCode, is(expectedResponseCode));
+        assertThat(actualResponseMessage, is(expectedResponseMessage));
     }
 
 }

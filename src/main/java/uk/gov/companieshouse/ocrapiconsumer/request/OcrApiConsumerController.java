@@ -18,7 +18,7 @@ import uk.gov.companieshouse.ocrapiconsumer.common.ErrorResponseDTO;
 @RestController
 public class OcrApiConsumerController {
 
-    private static final String REQUEST_ENDPOINT = "/ocr-requests";
+    private static final String REQUEST_ENDPOINT = "/internal/ocr-requests";
     private static final String IMAGE_ENDPOINT_PARAMETER_NAME = "image_endpoint";
     private static final String CONVERTED_TEXT_ENDPOINT_PARAMETER_NAME = "converted_text_endpoint";
     private static final String RESPONSE_ID_PARAMETER_NAME = "response_id";
