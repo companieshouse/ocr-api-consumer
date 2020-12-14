@@ -54,6 +54,12 @@ public class OcrApiConsumerController {
         return new ResponseEntity<>(HttpStatus.ACCEPTED);
     }
 
+    @PostMapping("/internal/ocr-api-request")
+    public ResponseEntity<HttpStatus> sendTestOcrApiRequest(@RequestParam(RESPONSE_ID_PARAMETER_NAME) String responseId) {
+        service.sendOcrApiRequest(responseId);
+        return new ResponseEntity<>(HttpStatus.OK);
+    }
+
     /**
      * Handles errors for any rest requests.
      * @param e The runtime exception thrown by rest template requests.

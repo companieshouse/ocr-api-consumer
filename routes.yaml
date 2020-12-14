@@ -3,4 +3,5 @@ group: internalapi
 weight: 929
 routes:
    1: ^/internal/ocr-requests
-   2: ^/internal/ocr-api-consumer/healthcheck
+   2: ^/internal/ocr-api-request
+   3: ^/internal/ocr-api-consumer/healthcheck
