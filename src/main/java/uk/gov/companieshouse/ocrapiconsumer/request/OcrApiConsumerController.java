@@ -5,7 +5,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.HttpServerErrorException;
@@ -15,13 +15,12 @@ import uk.gov.companieshouse.logging.LoggerFactory;
 import uk.gov.companieshouse.ocrapiconsumer.OcrApiConsumerApplication;
 import uk.gov.companieshouse.ocrapiconsumer.common.ErrorResponseDTO;
 
+import javax.validation.Valid;
+
 @RestController
 public class OcrApiConsumerController {
 
     private static final String REQUEST_ENDPOINT = "/internal/ocr-requests";
-    private static final String IMAGE_ENDPOINT_PARAMETER_NAME = "image_endpoint";
-    private static final String CONVERTED_TEXT_ENDPOINT_PARAMETER_NAME = "converted_text_endpoint";
-    private static final String RESPONSE_ID_PARAMETER_NAME = "response_id";
 
     private static final String CONTROLLER_ERROR_MESSAGE = "Unexpected error occurred";
     private static final String CLIENT_ERROR_MESSAGE = "A client error has occurred during the request";
@@ -40,24 +39,24 @@ public class OcrApiConsumerController {
      * Receives an OCR request from CHIPS and calls the service to:
      * - log it asynchronously
      * - return status code 202 (ACCEPTED)
-     * @param   imageEndpoint             The endpoint that the image is located at
-     * @param   convertedTextEndpoint     The endpoint to send the converted text to
-     * @param   responseId                The response ID of the request
-     * @return                            The HTTP Status code 202 ACCEPTED
+     * @param   ocrRequest  A request object containing the 3 mandatory JSON fields.
+     * @return              The HTTP Status code 202 ACCEPTED
      */
     @PostMapping(REQUEST_ENDPOINT)
-    public ResponseEntity<HttpStatus> receiveOcrRequest(@RequestParam(IMAGE_ENDPOINT_PARAMETER_NAME) String imageEndpoint,
-                                                        @RequestParam(CONVERTED_TEXT_ENDPOINT_PARAMETER_NAME) String convertedTextEndpoint,
-                                                        @RequestParam(RESPONSE_ID_PARAMETER_NAME) String responseId) {
+    public ResponseEntity<HttpStatus> receiveOcrRequest(@Valid @RequestBody OcrRequest ocrRequest) {
 
-        service.logOcrRequest(imageEndpoint, convertedTextEndpoint, responseId);
+        service.logOcrRequest(ocrRequest.getImageEndpoint(),
+                ocrRequest.getConvertedTextEndpoint(),
+                ocrRequest.getResponseId());
         return new ResponseEntity<>(HttpStatus.ACCEPTED);
     }
 
     @PostMapping("/internal/ocr-api-request")
-    public ResponseEntity<HttpStatus> sendTestOcrApiRequest(@RequestParam(RESPONSE_ID_PARAMETER_NAME) String responseId) {
+    public ResponseEntity<HttpStatus> sendTestOcrApiRequest(@Valid @RequestBody OcrRequest ocrRequest) {
         String version = System.getProperty("java.version");
+        String responseId = ocrRequest.getResponseId();
         LOG.debugContext(responseId, "Java version: " + version, null);
+
         service.sendOcrApiRequest(responseId);
         return new ResponseEntity<>(HttpStatus.OK);
     }
