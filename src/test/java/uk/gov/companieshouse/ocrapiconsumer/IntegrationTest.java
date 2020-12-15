@@ -8,10 +8,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.boot.web.server.LocalServerPort;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.util.LinkedMultiValueMap;
-import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestClientException;
 import uk.gov.companieshouse.ocrapiconsumer.groups.Integration;
 import uk.gov.companieshouse.ocrapiconsumer.request.TestParent;
@@ -20,9 +21,6 @@ import uk.gov.companieshouse.ocrapiconsumer.request.TestParent;
 @SpringBootTest(classes = OcrApiConsumerApplication.class, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 class IntegrationTest extends TestParent {
 
-    private static final String IMAGE_ENDPOINT_PARAM_NAME = "image_endpoint";
-    private static final String CONVERTED_TEXT_ENDPOINT_PARAM_NAME = "converted_text_endpoint";
-    private static final String RESPONSE_ID_PARAM_NAME = "response_id";
     private static final String APPLICATION_URL = "/internal/ocr-requests";
     private static final String HEALTHCHECK_URL = "/internal/ocr-api-consumer/healthcheck";
 
@@ -36,30 +34,53 @@ class IntegrationTest extends TestParent {
     void verifyControllerReturns202AcceptedWhenCalled() {
         HttpStatus expected = HttpStatus.ACCEPTED;
 
-        MultiValueMap<String, Object> params = new LinkedMultiValueMap<>();
-        params.add(IMAGE_ENDPOINT_PARAM_NAME, IMAGE_ENDPOINT);
-        params.add(CONVERTED_TEXT_ENDPOINT_PARAM_NAME, CONVERTED_TEXT_ENDPOINT);
-        params.add(RESPONSE_ID_PARAM_NAME, RESPONSE_ID);
-
         String uri = "http://localhost:" + port + APPLICATION_URL;
 
+        String jsonBody =
+                "{\n" +
+                "  \"image_endpoint\": \"http://testurl.com/cff/servlet/viewArticles?transaction_id=9613245852\",\n" +
+                "  \"converted_text_endpoint\": \"http://testurl.com/ocr-results/\",\n" +
+                "  \"response_id\": \"9613245852\"\n" +
+                "}";
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        HttpEntity<String> entity = new HttpEntity<>(jsonBody, headers);
+
         HttpStatus actual = this.restTemplate
-                .postForEntity(uri, params, HttpStatus.class).getStatusCode();
+                .postForEntity(uri, entity, HttpStatus.class).getStatusCode();
 
         assertThat(actual, is(expected));
     }
 
     @Test
-    void verifyControllerThrowsRestClientExceptionWhenRequiredParameterMissing() {
-
-        MultiValueMap<String, Object> params = new LinkedMultiValueMap<>();
-        params.add(RESPONSE_ID_PARAM_NAME, RESPONSE_ID);
-        params.add(IMAGE_ENDPOINT_PARAM_NAME, IMAGE_ENDPOINT);
-        // no extracted text endpoint parameter which is a required parameter
-
+    void verifyControllerThrowsRestClientExceptionWhenRequiredBodyMissing() {
         String uri = "http://localhost:" + port + APPLICATION_URL;
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        HttpEntity<String> entity = new HttpEntity<>("", headers);
+
         assertThrows(RestClientException.class, () -> this.restTemplate
-                .postForEntity(uri, params, HttpStatus.class));
+                .postForEntity(uri, entity, HttpStatus.class));
+    }
+
+    @Test
+    void verifyControllerThrowsRestClientExceptionWhenPartOfRequiredBodyMissing() {
+        String uri = "http://localhost:" + port + APPLICATION_URL;
+
+        String jsonBody =
+                "{\n" +
+                "  \"image_endpoint\": \"http://testurl.com/cff/servlet/viewArticles?transaction_id=9613245852\",\n" +
+                "  \"converted_text_endpoint\": \"http://testurl.com/ocr-results/\"" +
+                "}";
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        HttpEntity<String> entity = new HttpEntity<>(jsonBody, headers);
+
+        assertThrows(RestClientException.class, () -> this.restTemplate
+                .postForEntity(uri, entity, HttpStatus.class));
     }
 
     @Test
