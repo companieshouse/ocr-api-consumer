@@ -43,7 +43,7 @@ public class OcrApiConsumerController {
      * @return              The HTTP Status code 202 ACCEPTED
      */
     @PostMapping(REQUEST_ENDPOINT)
-    public ResponseEntity<HttpStatus> receiveOcrRequest(@Valid @RequestBody OcrRequestDTO requestDTO) {
+    public ResponseEntity<HttpStatus> receiveOcrRequest(@Valid @RequestBody OcrRequest requestDTO) {
 
         service.logOcrRequest(requestDTO.getImageEndpoint(),
                 requestDTO.getConvertedTextEndpoint(),
@@ -52,7 +52,7 @@ public class OcrApiConsumerController {
     }
 
     @PostMapping("/internal/ocr-api-request")
-    public ResponseEntity<HttpStatus> sendTestOcrApiRequest(@Valid @RequestBody OcrRequestDTO requestDTO) {
+    public ResponseEntity<HttpStatus> sendTestOcrApiRequest(@Valid @RequestBody OcrRequest requestDTO) {
         String version = System.getProperty("java.version");
         String responseId = requestDTO.getResponseId();
         LOG.debugContext(responseId, "Java version: " + version, null);

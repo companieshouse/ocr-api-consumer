@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import javax.validation.constraints.NotBlank;
 
-public class OcrRequestDTO {
+public class OcrRequest {
 
     // Use the NotBlank annotation as each field is required and cannot be blank or null
     @NotBlank(message = "Missing required value image_endpoint")
@@ -19,7 +19,7 @@ public class OcrRequestDTO {
     @JsonProperty("response_id")
     private String responseId;
 
-    public OcrRequestDTO(String imageEndpoint, String convertedTextEndpoint, String responseId) {
+    public OcrRequest(String imageEndpoint, String convertedTextEndpoint, String responseId) {
         this.imageEndpoint = imageEndpoint;
         this.convertedTextEndpoint = convertedTextEndpoint;
         this.responseId = responseId;
