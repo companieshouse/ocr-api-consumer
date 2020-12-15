@@ -39,22 +39,22 @@ public class OcrApiConsumerController {
      * Receives an OCR request from CHIPS and calls the service to:
      * - log it asynchronously
      * - return status code 202 (ACCEPTED)
-     * @param   requestDTO  The request details sent by CHIPS.
+     * @param   ocrRequest  A request object containing the 3 mandatory JSON fields.
      * @return              The HTTP Status code 202 ACCEPTED
      */
     @PostMapping(REQUEST_ENDPOINT)
-    public ResponseEntity<HttpStatus> receiveOcrRequest(@Valid @RequestBody OcrRequest requestDTO) {
+    public ResponseEntity<HttpStatus> receiveOcrRequest(@Valid @RequestBody OcrRequest ocrRequest) {
 
-        service.logOcrRequest(requestDTO.getImageEndpoint(),
-                requestDTO.getConvertedTextEndpoint(),
-                requestDTO.getResponseId());
+        service.logOcrRequest(ocrRequest.getImageEndpoint(),
+                ocrRequest.getConvertedTextEndpoint(),
+                ocrRequest.getResponseId());
         return new ResponseEntity<>(HttpStatus.ACCEPTED);
     }
 
     @PostMapping("/internal/ocr-api-request")
-    public ResponseEntity<HttpStatus> sendTestOcrApiRequest(@Valid @RequestBody OcrRequest requestDTO) {
+    public ResponseEntity<HttpStatus> sendTestOcrApiRequest(@Valid @RequestBody OcrRequest ocrRequest) {
         String version = System.getProperty("java.version");
-        String responseId = requestDTO.getResponseId();
+        String responseId = ocrRequest.getResponseId();
         LOG.debugContext(responseId, "Java version: " + version, null);
 
         service.sendOcrApiRequest(responseId);
