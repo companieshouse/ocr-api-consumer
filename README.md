@@ -9,8 +9,9 @@ Service to consume requests for extraction of text from images and manage the re
 
 ## Usage
 
-- Run `make dev` to build JAR (versioned in target and unversioned in top level d) and run the unit tests 
-- Run `java -jar ocr-api-consumer.jar` to run the application. Also with start.sh
+- Run `make dev` to build JAR (versioned in target and unversioned in top level d) and run the unit tests
+- Run `java -jar ocr-api-consumer.jar` to run the application
+- Alternatively, `export OCR_API_CONSUMER_PORT={your-chosen-port-number}` and run ./start.sh to run the application on your chosen port number.
 
 ## Environment Variables
 
@@ -22,17 +23,24 @@ OCR_API_URL                                 | The URL of the ocr-api            
 
 ## Testing Locally (dev)
 
-The service runs locally on the port 9090.
-
 ### Testing with postman
 
-Setup a post request to http://localhost:9090/ocr-requests with the following query parameters:
+Send a post request to http://localhost:9090/internal/ocr-requests with the following JSON body (each field is mandatory):
+```
+{
+  "image_endpoint": "http://testurl.com/cff/servlet/viewArticles?transaction_id=9613245852",
+  "converted_text_endpoint": "http://testurl.com/ocr-results/",
+  "response_id": "9613245852"
+}
+```
 
-| Parameter Name          | Description
-|-------------------------|------------------------------------------------------------------
-  external-reference-id   | The request ID of the request used in context for logging
-  image-endpoint          | The endpoint of the image to retrieve for OCR text extraction
-  extracted-text-endpoint | The endpoint to send the extracted text result to once retrieved
+### Testing with curl
+```
+curl --header "Content-Type: application/json" \
+--request POST \
+--data '{"image_endpoint": "http://testurl.com/cff/servlet/viewArticles?transaction_id=9613245852", "converted_text_endpoint": "http://testurl.com/ocr-results/", "response_id": "9613245852"}' \
+http://localhost:9090/internal/ocr-requests
+```
 
 ### Running tests with Maven
 
