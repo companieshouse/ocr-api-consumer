@@ -15,6 +15,9 @@ bin/
 .idea/
 *.iml
 
+# VSCode
+.vscode
+
 # Mac files
 .DS_Store
 ._*
