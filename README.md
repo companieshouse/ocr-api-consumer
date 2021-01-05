@@ -19,7 +19,7 @@ Service to consume requests for extraction of text from images and manage the re
 The service can be run using docker, with the addition of the jib maven plugin.
 - Run `mvn clean`
 - Run `mvn compile jib:dockerBuild` to compile the project into a docker image
-- Run `docker run -t -i -p 8080:8080 ocr-api-consumer:unversioned` to run the service on port 8080.
+- Run `docker run -e OCR_API_URL -t -i -p 8080:8080 ocr-api-consumer:unversioned` to run the service on port 8080.
 
 ## Environment Variables
 
