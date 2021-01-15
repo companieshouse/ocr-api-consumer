@@ -3,9 +3,12 @@ package uk.gov.companieshouse.ocrapiconsumer.request;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.HttpServerErrorException;
@@ -48,6 +51,17 @@ public class OcrApiConsumerController {
         service.logOcrRequest(ocrRequest.getImageEndpoint(),
                 ocrRequest.getConvertedTextEndpoint(),
                 ocrRequest.getResponseId());
+        return new ResponseEntity<>(HttpStatus.ACCEPTED);
+    }
+
+    @Autowired
+    private KafkaTemplate<String, String> kafkaTemplate;
+
+    @GetMapping
+    public ResponseEntity<HttpStatus> sendMessage(@RequestParam String message) {
+
+        kafkaTemplate.send("tutorialspoint", message);
+
         return new ResponseEntity<>(HttpStatus.ACCEPTED);
     }
 
