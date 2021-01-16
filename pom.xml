@@ -31,7 +31,7 @@
 		<apache-commons-lang.version>2.6</apache-commons-lang.version>
 
 		<!-- Spring kafka -->
-		<spring-kafka.version>2.1.0.RELEASE</spring-kafka.version>
+		<spring-kafka.version>2.6.5</spring-kafka.version>
 	</properties>
 
 	<profiles>

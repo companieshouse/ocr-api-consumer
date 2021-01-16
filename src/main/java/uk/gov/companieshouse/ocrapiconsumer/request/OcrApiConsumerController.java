@@ -31,11 +31,11 @@ public class OcrApiConsumerController {
 
     private static final Logger LOG = LoggerFactory.getLogger(OcrApiConsumerApplication.APPLICATION_NAME_SPACE);
 
-    private final OcrApiConsumerService service;
+    private final OcrApiConsumerService ocrApiConsumerService;
 
     @Autowired
     public OcrApiConsumerController(final OcrApiConsumerService service) {
-        this.service = service;
+        this.ocrApiConsumerService = service;
     }
 
     /**
@@ -48,7 +48,7 @@ public class OcrApiConsumerController {
     @PostMapping(REQUEST_ENDPOINT)
     public ResponseEntity<HttpStatus> receiveOcrRequest(@Valid @RequestBody OcrRequest ocrRequest) {
 
-        service.logOcrRequest(ocrRequest.getImageEndpoint(),
+        ocrApiConsumerService.logOcrRequest(ocrRequest.getImageEndpoint(),
                 ocrRequest.getConvertedTextEndpoint(),
                 ocrRequest.getResponseId());
         return new ResponseEntity<>(HttpStatus.ACCEPTED);
@@ -57,9 +57,10 @@ public class OcrApiConsumerController {
     @Autowired
     private KafkaTemplate<String, String> kafkaTemplate;
 
-    @GetMapping
-    public ResponseEntity<HttpStatus> sendMessage(@RequestParam String message) {
+    @GetMapping("/internal/send")
+    public ResponseEntity<HttpStatus> sendMessage(@RequestParam("message") String message) {
 
+        LOG.debug("Calling the kafka send");
         kafkaTemplate.send("tutorialspoint", message);
 
         return new ResponseEntity<>(HttpStatus.ACCEPTED);
@@ -71,7 +72,7 @@ public class OcrApiConsumerController {
         String responseId = ocrRequest.getResponseId();
         LOG.debugContext(responseId, "Java version: " + version, null);
 
-        service.sendOcrApiRequest(responseId);
+        ocrApiConsumerService.sendOcrApiRequest(responseId);
         return new ResponseEntity<>(HttpStatus.OK);
     }
 
