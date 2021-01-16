@@ -40,13 +40,13 @@ public class OcrApiConsumerConsumer {
         groupId = OCR_REQUEST_GROUP,
         autoStartup = "#{!${uk.gov.companieshouse.ocrapiconsumer.error-consumer}}",
         containerFactory = "kafkaListenerContainerFactory")
-    public void processOcrApiRequest(org.springframework.messaging.Message<OcrKafkaRequest> message) {
+    public void processOcrApiRequest(String message) {
         
-        LOG.debug("Received Messasge in group - group-id: " + message.getPayload().getResponseId());
+        LOG.debug("Received Messasge in group - group-id: " + message);
 
         boolean doKafka = false;
         if (doKafka) {
-            ocrApiConsumerService.sendOcrApiRequest(message.getPayload().getResponseId());
+            ocrApiConsumerService.sendOcrApiRequest(message);
         }
     }
 
