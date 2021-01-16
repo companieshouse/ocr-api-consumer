@@ -32,6 +32,8 @@
 
 		<!-- Spring kafka -->
 		<spring-kafka.version>2.6.5</spring-kafka.version>
+
+		<ch-kafka.version>1.4.2</ch-kafka.version>
 	</properties>
 
 	<profiles>
@@ -102,6 +104,12 @@
 			<artifactId>mockito-junit-jupiter</artifactId>
 			<scope>test</scope>
 		</dependency>
+
+        <dependency>
+            <groupId>uk.gov.companieshouse</groupId>
+            <artifactId>ch-kafka</artifactId>
+            <version>${ch-kafka.version}</version>
+        </dependency>
 
 	</dependencies>
 

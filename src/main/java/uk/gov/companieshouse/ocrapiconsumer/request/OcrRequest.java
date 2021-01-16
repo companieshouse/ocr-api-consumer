@@ -19,6 +19,8 @@ public class OcrRequest {
     @JsonProperty("response_id")
     private String responseId;
 
+    public OcrRequest() {}
+
     public OcrRequest(String imageEndpoint, String convertedTextEndpoint, String responseId) {
         this.imageEndpoint = imageEndpoint;
         this.convertedTextEndpoint = convertedTextEndpoint;
