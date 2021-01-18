@@ -1,2 +1,0 @@
-kafka-configs --zookeeper kafka-zk1-parent1.development.aws.internal:2181  --alter --entity-type topics --entity-name ocr-request --add-config retention.ms=0
-kafka-configs --zookeeper kafka-zk1-parent1.development.aws.internal:2181 --alter --entity-type topics --entity-name ocr-request --delete-config retention.ms=999999

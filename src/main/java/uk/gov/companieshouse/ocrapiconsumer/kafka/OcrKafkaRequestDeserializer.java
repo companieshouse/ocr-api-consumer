@@ -9,19 +9,21 @@ import org.apache.kafka.common.errors.SerializationException;
 import org.apache.kafka.common.serialization.Deserializer;
 import org.springframework.stereotype.Component;
 
+import uk.gov.companieshouse.ocr.OcrRequestMessage;
+
 import java.util.Arrays;
 import java.util.Map;
 
 @Component
-public class OcrKafkaRequestDeserializer<T> implements Deserializer<T> {
-    
+public class OcrKafkaRequestDeserializer<T extends IndexedRecord> implements Deserializer<T> {
+
     @SuppressWarnings("unchecked")
     @Override
     public T deserialize(String topic, byte[] data) {
 
         try {
             Decoder decoder = DecoderFactory.get().binaryDecoder(data, null);
-            DatumReader<OcrKafkaRequest> reader = new ReflectDatumReader<>(OcrKafkaRequest.class);
+            DatumReader<OcrRequestMessage> reader = new ReflectDatumReader<>(OcrRequestMessage.class);
 
             return (T)reader.read(null, decoder);
             

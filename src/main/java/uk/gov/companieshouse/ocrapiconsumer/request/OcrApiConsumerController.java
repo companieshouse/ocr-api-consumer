@@ -3,12 +3,9 @@ package uk.gov.companieshouse.ocrapiconsumer.request;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.HttpServerErrorException;
@@ -17,9 +14,6 @@ import uk.gov.companieshouse.logging.Logger;
 import uk.gov.companieshouse.logging.LoggerFactory;
 import uk.gov.companieshouse.ocrapiconsumer.OcrApiConsumerApplication;
 import uk.gov.companieshouse.ocrapiconsumer.common.ErrorResponseDTO;
-import uk.gov.companieshouse.ocrapiconsumer.kafka.OcrKafkaRequest;
-
-import java.util.Date;
 
 import javax.validation.Valid;
 
@@ -57,24 +51,24 @@ public class OcrApiConsumerController {
         return new ResponseEntity<>(HttpStatus.ACCEPTED);
     }
 
-    @Autowired
-    private KafkaTemplate<String, OcrKafkaRequest> kafkaTemplate;
-    // private KafkaTemplate<String, String> kafkaTemplate;
+    // @Autowired
+    // private KafkaTemplate<String, OcrRequestMessage> kafkaTemplate;
+    // // private KafkaTemplate<String, String> kafkaTemplate;
 
-    @GetMapping("/internal/send")
-    public ResponseEntity<HttpStatus> sendMessage(@RequestParam("message") String message) {
+    // @GetMapping("/internal/send")
+    // public ResponseEntity<HttpStatus> sendMessage(@RequestParam("message") String message) {
 
-        LOG.debug("Calling the kafka send");
+    //     LOG.debug("Calling the kafka send");
 
-        OcrKafkaRequest fakeMessage = new OcrKafkaRequest(
-            "imageEndpoint", "convertedTextEndpoint", message, "applicationId", new Date(), 1
-        );
+    //     OcrRequestMessage fakeMessage = new OcrRequestMessage(
+    //         "imageEndpoint", "convertedTextEndpoint", message, "applicationId", new Date(), 1
+    //     );
 
-        kafkaTemplate.send("ocr-request", fakeMessage);
-        // kafkaTemplate.send("ocr-request", message);
+    //     kafkaTemplate.send("ocr-request", fakeMessage);
+    //     // kafkaTemplate.send("ocr-request", message);
 
-        return new ResponseEntity<>(HttpStatus.ACCEPTED);
-    }
+    //     return new ResponseEntity<>(HttpStatus.ACCEPTED);
+    // }
 
     @PostMapping("/internal/ocr-api-request")
     public ResponseEntity<HttpStatus> sendTestOcrApiRequest(@Valid @RequestBody OcrRequest ocrRequest) {

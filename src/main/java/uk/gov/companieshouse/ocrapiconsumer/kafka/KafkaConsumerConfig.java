@@ -18,6 +18,7 @@ import org.springframework.kafka.support.serializer.JsonDeserializer;
 
 import uk.gov.companieshouse.logging.Logger;
 import uk.gov.companieshouse.logging.LoggerFactory;
+import uk.gov.companieshouse.ocr.OcrRequestMessage;
 import uk.gov.companieshouse.ocrapiconsumer.OcrApiConsumerApplication;
 
 @EnableKafka
@@ -30,7 +31,7 @@ public class KafkaConsumerConfig {
     private String bootstrapServers;
     
     @Bean
-    public ConsumerFactory<String, OcrKafkaRequest> consumerFactory() {
+    public ConsumerFactory<String, OcrRequestMessage> consumerFactory() {
 
         Map<String, Object> props = new HashMap<>();
 
@@ -42,16 +43,16 @@ public class KafkaConsumerConfig {
         // props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, JsonDeserializer.class);
 
         // return new DefaultKafkaConsumerFactory<>(props, new StringDeserializer(), new OcrKafkaRequestDeserializer<>());
-        // return new DefaultKafkaConsumerFactory<String, OcrKafkaRequest>(props, new StringDeserializer(), new JsonDeserializer<OcrKafkaRequest>());
+        // return new DefaultKafkaConsumerFactory<String, OcrRequestMessage>(props, new StringDeserializer(), new JsonDeserializer<OcrRequestMessage>());
         // return new DefaultKafkaConsumerFactory<>(props, new StringDeserializer(), new OcrKafkaRequestDeserializer<>());
 
         return new DefaultKafkaConsumerFactory<>(props, new StringDeserializer(), new OcrKafkaRequestDeserializer<>());
     }
 
     @Bean
-    public ConcurrentKafkaListenerContainerFactory<String, OcrKafkaRequest> kafkaListenerContainerFactory() {
+    public ConcurrentKafkaListenerContainerFactory<String, OcrRequestMessage> kafkaListenerContainerFactory() {
 
-        ConcurrentKafkaListenerContainerFactory<String, OcrKafkaRequest> factory = new ConcurrentKafkaListenerContainerFactory<>();
+        ConcurrentKafkaListenerContainerFactory<String, OcrRequestMessage> factory = new ConcurrentKafkaListenerContainerFactory<>();
 
         factory.setConsumerFactory(consumerFactory());
 
