@@ -17,6 +17,7 @@ import uk.gov.companieshouse.logging.Logger;
 import uk.gov.companieshouse.logging.LoggerFactory;
 import uk.gov.companieshouse.ocrapiconsumer.OcrApiConsumerApplication;
 import uk.gov.companieshouse.ocrapiconsumer.common.ErrorResponseDTO;
+import uk.gov.companieshouse.ocrapiconsumer.kafka.OcrKafkaRequest;
 
 import java.util.Date;
 
@@ -57,20 +58,20 @@ public class OcrApiConsumerController {
     }
 
     @Autowired
-    // private KafkaTemplate<String, OcrKafkaRequest> kafkaTemplate;
-    private KafkaTemplate<String, String> kafkaTemplate;
+    private KafkaTemplate<String, OcrKafkaRequest> kafkaTemplate;
+    // private KafkaTemplate<String, String> kafkaTemplate;
 
     @GetMapping("/internal/send")
     public ResponseEntity<HttpStatus> sendMessage(@RequestParam("message") String message) {
 
         LOG.debug("Calling the kafka send");
 
-        // OcrKafkaRequest fakeMessage = new OcrKafkaRequest(
-        //     "imageEndpoint", "convertedTextEndpoint", message, "applicationId", new Date(), 1
-        // );
+        OcrKafkaRequest fakeMessage = new OcrKafkaRequest(
+            "imageEndpoint", "convertedTextEndpoint", message, "applicationId", new Date(), 1
+        );
 
-        // kafkaTemplate.send("ocr-request", fakeMessage);
-        kafkaTemplate.send("ocr-request", message);
+        kafkaTemplate.send("ocr-request", fakeMessage);
+        // kafkaTemplate.send("ocr-request", message);
 
         return new ResponseEntity<>(HttpStatus.ACCEPTED);
     }

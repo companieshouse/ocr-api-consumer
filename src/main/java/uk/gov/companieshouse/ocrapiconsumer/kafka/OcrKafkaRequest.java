@@ -1,8 +1,10 @@
-package uk.gov.companieshouse.ocrapiconsumer.request;
+package uk.gov.companieshouse.ocrapiconsumer.kafka;
 
 import java.util.Date;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+
+import uk.gov.companieshouse.ocrapiconsumer.request.OcrRequest;
 
 public class OcrKafkaRequest extends OcrRequest {
 

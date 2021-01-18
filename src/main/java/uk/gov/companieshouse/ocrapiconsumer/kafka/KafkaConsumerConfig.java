@@ -19,7 +19,6 @@ import org.springframework.kafka.support.serializer.JsonDeserializer;
 import uk.gov.companieshouse.logging.Logger;
 import uk.gov.companieshouse.logging.LoggerFactory;
 import uk.gov.companieshouse.ocrapiconsumer.OcrApiConsumerApplication;
-import uk.gov.companieshouse.ocrapiconsumer.request.OcrKafkaRequest;
 
 @EnableKafka
 @Configuration
@@ -31,30 +30,35 @@ public class KafkaConsumerConfig {
     private String bootstrapServers;
     
     @Bean
-    public ConsumerFactory<String, String> consumerFactory() {
+    public ConsumerFactory<String, OcrKafkaRequest> consumerFactory() {
 
         Map<String, Object> props = new HashMap<>();
 
         props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
         // props.put(ConsumerConfig.GROUP_ID_CONFIG, "group-id");
         props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
-        props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
-        // props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, OcrKafkaRequestDeserializer.class);
+        // props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+        props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, OcrKafkaRequestDeserializer.class);
         // props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, JsonDeserializer.class);
 
         // return new DefaultKafkaConsumerFactory<>(props, new StringDeserializer(), new OcrKafkaRequestDeserializer<>());
-        return new DefaultKafkaConsumerFactory<>(props, new StringDeserializer(), new StringDeserializer());
-        // return new DefaultKafkaConsumerFactory<>(props, new StringDeserializer(), new JsonDeserializer<OcrKafkaRequest>());
+        // return new DefaultKafkaConsumerFactory<String, OcrKafkaRequest>(props, new StringDeserializer(), new JsonDeserializer<OcrKafkaRequest>());
+        // return new DefaultKafkaConsumerFactory<>(props, new StringDeserializer(), new OcrKafkaRequestDeserializer<>());
+
+        return new DefaultKafkaConsumerFactory<>(props, new StringDeserializer(), new OcrKafkaRequestDeserializer<>());
     }
 
     @Bean
-    public ConcurrentKafkaListenerContainerFactory<String, String> kafkaListenerContainerFactory() throws java.lang.IllegalAccessException {
+    public ConcurrentKafkaListenerContainerFactory<String, OcrKafkaRequest> kafkaListenerContainerFactory() {
 
-        ConcurrentKafkaListenerContainerFactory<String, String> factory = new ConcurrentKafkaListenerContainerFactory<>();
+        ConcurrentKafkaListenerContainerFactory<String, OcrKafkaRequest> factory = new ConcurrentKafkaListenerContainerFactory<>();
 
         factory.setConsumerFactory(consumerFactory());
 
         factory.setErrorHandler(((exception, data) -> {
+            LOG.error("data is null: " + Boolean.toString(data == null));
+            // LOG.error("Contents: " + data.toString());
+            LOG.error("Exception logging");
             LOG.error(exception);
         }));
 

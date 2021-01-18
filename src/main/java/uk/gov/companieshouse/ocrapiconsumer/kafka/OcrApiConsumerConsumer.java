@@ -1,4 +1,4 @@
-package uk.gov.companieshouse.ocrapiconsumer.request;
+package uk.gov.companieshouse.ocrapiconsumer.kafka;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.kafka.annotation.KafkaListener;
@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import uk.gov.companieshouse.logging.Logger;
 import uk.gov.companieshouse.logging.LoggerFactory;
 import uk.gov.companieshouse.ocrapiconsumer.OcrApiConsumerApplication;
+import uk.gov.companieshouse.ocrapiconsumer.request.OcrApiConsumerService;
 
 @Service
 public class OcrApiConsumerConsumer {
@@ -40,13 +41,13 @@ public class OcrApiConsumerConsumer {
         groupId = OCR_REQUEST_GROUP,
         autoStartup = "#{!${uk.gov.companieshouse.ocrapiconsumer.error-consumer}}",
         containerFactory = "kafkaListenerContainerFactory")
-    public void processOcrApiRequest(String message) {
+    public void processOcrApiRequest(org.springframework.messaging.Message<OcrKafkaRequest> message) {
         
-        LOG.debug("Received Messasge in group - group-id: " + message);
+        LOG.debug("Received Messasge in group - group-id: " + message.getPayload().getResponseId());
 
         boolean doKafka = false;
         if (doKafka) {
-            ocrApiConsumerService.sendOcrApiRequest(message);
+            ocrApiConsumerService.sendOcrApiRequest(message.getPayload().getResponseId());
         }
     }
 

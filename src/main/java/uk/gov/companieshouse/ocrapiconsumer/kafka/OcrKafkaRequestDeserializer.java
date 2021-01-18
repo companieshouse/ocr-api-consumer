@@ -8,13 +8,12 @@ import org.apache.avro.reflect.ReflectDatumReader;
 import org.apache.kafka.common.errors.SerializationException;
 import org.apache.kafka.common.serialization.Deserializer;
 import org.springframework.stereotype.Component;
-import uk.gov.companieshouse.ocrapiconsumer.request.OcrKafkaRequest;
 
 import java.util.Arrays;
 import java.util.Map;
 
 @Component
-public class OcrKafkaRequestDeserializer<T extends IndexedRecord> implements Deserializer<T> {
+public class OcrKafkaRequestDeserializer<T> implements Deserializer<T> {
     
     @SuppressWarnings("unchecked")
     @Override

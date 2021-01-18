@@ -13,8 +13,6 @@ import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.core.ProducerFactory;
 import org.springframework.kafka.support.serializer.JsonSerializer;
 
-import uk.gov.companieshouse.ocrapiconsumer.request.OcrKafkaRequest;
-
 @Configuration
 public class KafkaProducerConfig {
 
@@ -22,7 +20,7 @@ public class KafkaProducerConfig {
     private String bootstrapServers;
 
     @Bean
-    public ProducerFactory<String, String> producerFactory() {
+    public ProducerFactory<String, OcrKafkaRequest> producerFactory() {
 
         Map<String, Object> configProps = new HashMap<>();
 
@@ -35,7 +33,7 @@ public class KafkaProducerConfig {
     }
 
     @Bean
-    public KafkaTemplate<String, String> kafkaTemplate() {
+    public KafkaTemplate<String, OcrKafkaRequest> kafkaTemplate() {
         return new KafkaTemplate<>(producerFactory());
     }
 }
