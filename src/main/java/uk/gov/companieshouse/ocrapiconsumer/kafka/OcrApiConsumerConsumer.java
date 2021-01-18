@@ -1,5 +1,8 @@
 package uk.gov.companieshouse.ocrapiconsumer.kafka;
 
+import static uk.gov.companieshouse.ocrapiconsumer.logging.LoggingUtils.logIfNotNull;
+
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
@@ -7,6 +10,12 @@ import java.util.concurrent.ExecutionException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.config.KafkaListenerEndpointRegistry;
+
+import uk.gov.companieshouse.kafka.exceptions.SerializationException;
+import uk.gov.companieshouse.kafka.message.Message;
+import uk.gov.companieshouse.kafka.serialization.AvroSerializer;
+import uk.gov.companieshouse.kafka.serialization.SerializerFactory;
+
 import org.springframework.kafka.support.KafkaHeaders;
 import org.springframework.messaging.MessageHeaders;
 import org.springframework.stereotype.Service;
@@ -16,8 +25,8 @@ import uk.gov.companieshouse.logging.LoggerFactory;
 import uk.gov.companieshouse.ocr.OcrRequestMessage;
 import uk.gov.companieshouse.ocrapiconsumer.OcrApiConsumerApplication;
 import uk.gov.companieshouse.ocrapiconsumer.exception.RetryableErrorException;
+import uk.gov.companieshouse.ocrapiconsumer.logging.LoggingUtils;
 import uk.gov.companieshouse.ocrapiconsumer.request.OcrApiConsumerService;
-import uk.gov.companieshouse.ocrapiconsumer.request.OcrRequest;
 
 @Service
 public class OcrApiConsumerConsumer {
@@ -40,12 +49,16 @@ public class OcrApiConsumerConsumer {
 
     private final Map<String, Integer> retryCount;
 
+    private final SerializerFactory serializerFactory;
+    private final OcrApiConsumerProducer kafkaProducer;
     private final KafkaListenerEndpointRegistry registry;
     private final OcrApiConsumerService ocrApiConsumerService;
 
     @Autowired
-    public OcrApiConsumerConsumer(final OcrApiConsumerService ocrApiConsumerService, KafkaListenerEndpointRegistry registry) {
+    public OcrApiConsumerConsumer(SerializerFactory serializerFactory, OcrApiConsumerProducer ocrApiConsumerProducer, final OcrApiConsumerService ocrApiConsumerService, KafkaListenerEndpointRegistry registry) {
         this.retryCount = new HashMap<>();
+        this.serializerFactory = serializerFactory;
+        this.kafkaProducer = ocrApiConsumerProducer;
         this.ocrApiConsumerService = ocrApiConsumerService;
         this.registry = registry;
     }
@@ -128,6 +141,7 @@ public class OcrApiConsumerConsumer {
 
     private void logMessageProcessed(org.springframework.messaging.Message<OcrRequestMessage> message, OcrRequestMessage ocrRequestMessage) {
 
+        LOG.infoContext(message.getPayload().getResponseId(), "'ocr-request' message processing completed ", null);
     }
 
     /**
@@ -193,7 +207,7 @@ public class OcrApiConsumerConsumer {
             orderReference, currentTopic, nextTopic));
 
         try {
-            kafkaProducer.sendMessage(createRetryMessage(ocrRequestMessage, orderReference, nextTopic));
+            kafkaProducer.sendMessage(createRetryMessage(ocrRequestMessage, nextTopic));
 
         } catch (ExecutionException | InterruptedException exception) {
             
@@ -205,4 +219,38 @@ public class OcrApiConsumerConsumer {
             }
         }
     }
+
+
+    protected Message createRetryMessage(final OcrRequestMessage ocrRequestMessage,
+                                         final String topic) {
+        final Message message = new Message();
+        final AvroSerializer<OcrRequestMessage> serializer =
+                serializerFactory.getGenericRecordSerializer(OcrRequestMessage.class);
+        message.setKey(OCR_REQUEST_KEY_RETRY);
+        try {
+            message.setValue(serializer.toBinary(ocrRequestMessage));
+        } catch (SerializationException e) {
+            Map<String, Object> logMap = LoggingUtils.createLogMap();
+            logIfNotNull(logMap, LoggingUtils.MESSAGE, ocrRequestMessage.getResponseId());
+            logIfNotNull(logMap, LoggingUtils.TOPIC, topic);
+            logIfNotNull(logMap, LoggingUtils.OFFSET, message.getOffset());
+            LOG.error(String.format("Error serializing message: \"%1$s\" for topic: \"%2$s\"",
+            ocrRequestMessage.getResponseId(), topic), e, logMap);
+        }
+        message.setTopic(topic);
+        message.setTimestamp(new Date().getTime());
+
+        return message;
+    }
+
+
+    protected void logMessageProcessingFailureRecoverable(
+            org.springframework.messaging.Message<OcrRequestMessage> message, int attempt,
+            Exception exception) {
+        Map<String, Object> logMap = LoggingUtils.getMessageHeadersAsMap(message);
+        logMap.put(LoggingUtils.RETRY_ATTEMPT, attempt);
+        LOG.error("'ocr-request' message processing failed with a recoverable exception",
+                exception, logMap);
+    }
+
 }
