@@ -24,6 +24,7 @@ import org.springframework.stereotype.Service;
 import uk.gov.companieshouse.logging.Logger;
 import uk.gov.companieshouse.logging.LoggerFactory;
 import uk.gov.companieshouse.ocr.OcrRequestMessage;
+import uk.gov.companieshouse.ocrapiconsumer.exception.DuplicateErrorException;
 import uk.gov.companieshouse.ocrapiconsumer.exception.RetryableErrorException;
 import uk.gov.companieshouse.ocrapiconsumer.logging.LoggingUtils;
 import uk.gov.companieshouse.ocrapiconsumer.request.OcrApiConsumerService;
@@ -54,11 +55,12 @@ public class OcrApiConsumerKafkaConsumer {
 
     @Autowired
     public OcrApiConsumerKafkaConsumer(SerializerFactory serializerFactory, OcrApiConsumerKafkaProducer kafkaProducer, final OcrApiConsumerService ocrApiConsumerService, KafkaListenerEndpointRegistry registry) {
+        
         this.retryCount = new HashMap<>();
         this.serializerFactory = serializerFactory;
         this.kafkaProducer = kafkaProducer;
-        this.ocrApiConsumerService = ocrApiConsumerService;
         this.registry = registry;
+        this.ocrApiConsumerService = ocrApiConsumerService;
     }
 
     @KafkaListener(
@@ -83,6 +85,16 @@ public class OcrApiConsumerKafkaConsumer {
         handleMessage(message);
     }
 
+      /**
+     * Error (`-error`) topic listener/consumer is enabled when the application is launched in error
+     * mode (IS_ERROR_QUEUE_CONSUMER=true). Receives messages up to `errorRecoveryOffset` offset.
+     * Calls `handleMessage` method to process received message. If the `retryable` processor is
+     * unsuccessful with a `retryable` error, after maximum numbers of attempts allowed, the message
+     * is republished to `-retry` topic for failover processing. This listener stops accepting
+     * messages when the topic's offset reaches `errorRecoveryOffset`.
+     *
+     * @param message
+     */
     @KafkaListener(
         id = OCR_REQUEST_ERROR_GROUP,
         topics = OCR_REQUEST_ERROR_TOPICS,
@@ -96,10 +108,10 @@ public class OcrApiConsumerKafkaConsumer {
         if (offset <= errorRecoveryOffset) {
             handleMessage(message);
         } else {
-            // Map<String, Object> logMap = LoggingUtils.createLogMap();
-            // logMap.put(LoggingUtils.CHD_ITEM_ORDERED_GROUP_ERROR, errorRecoveryOffset);
-            // logMap.put(LoggingUtils.TOPIC, CHD_ITEM_ORDERED_TOPIC_ERROR);
-            LOG.info("Pausing error consumer as error recovery offset reached."); // todo: add additional info from above
+            Map<String, Object> logMap = LoggingUtils.createLogMap();
+            logMap.put(LoggingUtils.OCR_REQUEST_ERROR_GROUP, errorRecoveryOffset);
+            logMap.put(LoggingUtils.TOPIC, OCR_REQUEST_ERROR_TOPICS);
+            LOG.info("Pausing error consumer as error recovery offset reached.", logMap);
             
             registry.getListenerContainer(OCR_REQUEST_ERROR_GROUP).pause();
         }
@@ -110,33 +122,57 @@ public class OcrApiConsumerKafkaConsumer {
         final OcrRequestMessage requestMessage = message.getPayload();
         final String responseId = requestMessage.getResponseId();
         final MessageHeaders headers = message.getHeaders();
-        final String receivedTopic = headers.get(KafkaHeaders.RECEIVED_TOPIC).toString();
+        String receivedTopic = "";
 
         try {
-            // log message received
+            receivedTopic = headers.get(KafkaHeaders.RECEIVED_TOPIC).toString();
+           
+            LOG.infoContext(message.getPayload().getResponseId(), "'ocr-request' message processing completed ", null);
 
-            // process message
-            // ocrApiConsumerService.sendOcrApiRequest(responseId);
+            ocrApiConsumerService.ocrRequest(requestMessage);
+
             if (retryCount.containsKey(responseId)) {
                 resetRetryCount(receivedTopic + "-" + responseId);
             }
 
             logMessageProcessed(message, requestMessage);
 
-        // } catch (RetryableErrorException ex) {
-        //     retryMessage(message, order, orderReference, receivedTopic, ex);
-        // } catch (DuplicateErrorException dx) {
-        //     logMessageProcessingFailureDuplicateItem(message, dx);
+        } catch (RetryableErrorException ex) {
+            retryMessage(message, requestMessage, receivedTopic, ex);
+        } catch (DuplicateErrorException dx) {
+            logMessageProcessingFailureDuplicateItem(message, dx);
         } catch (Exception x) {
-            // logMessageProcessingFailureNonRecoverable(message, x);
+            logMessageProcessingFailureNonRecoverable(message, x);
             throw x;
         }
     }
 
     private void logMessageProcessed(org.springframework.messaging.Message<OcrRequestMessage> message, OcrRequestMessage ocrRequestMessage) {
-
-        LOG.infoContext(message.getPayload().getResponseId(), "'ocr-request' message processing completed ", null);
+        Map<String, Object> logMap = LoggingUtils.getMessageHeadersAsMap(message);
+        LOG.infoContext(ocrRequestMessage.getResponseId(), "'ocr-request' message processing completed ", logMap);
     }
+
+    private void logMessageProcessingFailureDuplicateItem(
+            org.springframework.messaging.Message<OcrRequestMessage> message, Exception exception) {
+        Map<String, Object> logMap = LoggingUtils.getMessageHeadersAsMap(message);
+        LOG.error("'ocr-request' message processing failed item already exists", exception, logMap);
+    }
+
+    protected void logMessageProcessingFailureNonRecoverable(
+            org.springframework.messaging.Message<OcrRequestMessage> message, Exception exception) {
+        Map<String, Object> logMap = LoggingUtils.getMessageHeadersAsMap(message);
+        LOG.error("'ocr-request' message processing failed with a non-recoverable exception",
+                exception, logMap);
+    }
+
+    protected void logMessageProcessingFailureRecoverable(
+        org.springframework.messaging.Message<OcrRequestMessage> message, int attempt,
+        Exception exception) {
+        Map<String, Object> logMap = LoggingUtils.getMessageHeadersAsMap(message);
+        logMap.put(LoggingUtils.RETRY_ATTEMPT, attempt);
+        LOG.error("'ocr-request' message processing failed with a recoverable exception",
+            exception, logMap);
+}
 
     /**
      * Resets retryCount for message identified by key `counterKey`
@@ -154,24 +190,24 @@ public class OcrApiConsumerKafkaConsumer {
      *
      * @param message
      * @param ocrRequestMessage
-     * @param orderReference
      * @param receivedTopic
      * @param ex
      */
     private void retryMessage(org.springframework.messaging.Message<OcrRequestMessage> message,
             final OcrRequestMessage ocrRequestMessage,
-            String orderReference, String receivedTopic, RetryableErrorException ex) {
+            String receivedTopic, 
+            RetryableErrorException ex) {
 
         String nextTopic = (receivedTopic.equals(OCR_REQUEST_TOPICS) ||
             receivedTopic.equals(OCR_REQUEST_ERROR_TOPICS)) ?
                 OCR_REQUEST_RETRY_TOPICS :
                 OCR_REQUEST_ERROR_TOPICS;
 
-        String counterKey = receivedTopic + "-" + orderReference;
+        String counterKey = receivedTopic + "-" + ocrRequestMessage.getResponseId();
 
         if (receivedTopic.equals(OCR_REQUEST_TOPICS) || retryCount.getOrDefault(counterKey, 1) >= MAX_RETRY_ATTEMPTS) {
 
-            republishMessageToTopic(ocrRequestMessage, orderReference, receivedTopic, nextTopic);
+            republishMessageToTopic(ocrRequestMessage, receivedTopic, nextTopic);
 
             if (!receivedTopic.equals(OCR_REQUEST_TOPICS)) {
                 resetRetryCount(counterKey);
@@ -187,18 +223,17 @@ public class OcrApiConsumerKafkaConsumer {
     }
 
     protected void republishMessageToTopic(final OcrRequestMessage ocrRequestMessage,
-            final String orderReference,
             final String currentTopic,
             final String nextTopic) {
         
-        // Map<String, Object> logMap = LoggingUtils.createLogMap();
-        // logIfNotNull(logMap, ORDER_REFERENCE_NUMBER, orderReference);
-        // logIfNotNull(logMap, LoggingUtils.CURRENT_TOPIC, currentTopic);
-        // logIfNotNull(logMap, LoggingUtils.NEXT_TOPIC, nextTopic);
+        Map<String, Object> logMap = LoggingUtils.createLogMap();
+        logIfNotNull(logMap, LoggingUtils.MESSAGE, ocrRequestMessage.getResponseId());
+        logIfNotNull(logMap, LoggingUtils.CURRENT_TOPIC, currentTopic);
+        logIfNotNull(logMap, LoggingUtils.NEXT_TOPIC, nextTopic);
 
         LOG.info(String.format(
             "Republishing message: \"%1$s\" received from topic: \"%2$s\" to topic: \"%3$s\"",
-            orderReference, currentTopic, nextTopic));
+            ocrRequestMessage.getResponseId(), currentTopic, nextTopic));
 
         try {
             kafkaProducer.sendMessage(createRetryMessage(ocrRequestMessage, nextTopic));
@@ -206,7 +241,7 @@ public class OcrApiConsumerKafkaConsumer {
         } catch (ExecutionException | InterruptedException exception) {
             
             LOG.error(String.format("Error sending message: \"%1$s\" to topic: \"%2$s\"",
-                    orderReference, nextTopic), exception);
+                ocrRequestMessage.getResponseId(), nextTopic), exception);
 
             if (exception instanceof InterruptedException) {
                 Thread.currentThread().interrupt();
@@ -235,16 +270,6 @@ public class OcrApiConsumerKafkaConsumer {
         message.setTimestamp(new Date().getTime());
 
         return message;
-    }
-
-
-    protected void logMessageProcessingFailureRecoverable(
-            org.springframework.messaging.Message<OcrRequestMessage> message, int attempt,
-            Exception exception) {
-        Map<String, Object> logMap = LoggingUtils.getMessageHeadersAsMap(message);
-        logMap.put(LoggingUtils.RETRY_ATTEMPT, attempt);
-        LOG.error("'ocr-request' message processing failed with a recoverable exception",
-                exception, logMap);
     }
 
 }

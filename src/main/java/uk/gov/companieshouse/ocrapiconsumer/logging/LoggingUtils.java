@@ -24,12 +24,7 @@ public class LoggingUtils {
     public static final String NEXT_TOPIC = "next_topic";
     public static final String MESSAGE = "message";
     public static final String RETRY_ATTEMPT = "retry_attempt";
-    // TODO Change names below
-    public static final String CHD_ITEM_ORDERED_GROUP_ERROR = "chd_item_ordered_error";
-    public static final String ORDER_REFERENCE_NUMBER = "order_reference_number";
-    public static final String ITEM_ID = "item_id";
-    public static final String PAYMENT_REFERENCE = "payment_reference";
-    public static final String COMPANY_NUMBER = "company_number";
+    public static final String OCR_REQUEST_ERROR_GROUP = "ocr-request-error";
 
     private static final Logger LOGGER = LoggerFactory.getLogger(OcrApiConsumerApplication.APPLICATION_NAME_SPACE);
 
