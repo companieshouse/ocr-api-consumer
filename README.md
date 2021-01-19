@@ -26,7 +26,8 @@ OCR_API_URL                                 | The URL of the ocr-api            
 ### Testing with postman
 
 Send a post request to http://localhost:9090/internal/ocr-requests with the following JSON body (each field is mandatory):
-```
+
+``` bash
 {
   "image_endpoint": "http://testurl.com/cff/servlet/viewArticles?transaction_id=9613245852",
   "converted_text_endpoint": "http://testurl.com/ocr-results/",
@@ -35,7 +36,8 @@ Send a post request to http://localhost:9090/internal/ocr-requests with the foll
 ```
 
 ### Testing with curl
-```
+
+``` bash
 curl --header "Content-Type: application/json" \
 --request POST \
 --data '{"image_endpoint": "http://testurl.com/cff/servlet/viewArticles?transaction_id=9613245852", "converted_text_endpoint": "http://testurl.com/ocr-results/", "response_id": "9613245852"}' \

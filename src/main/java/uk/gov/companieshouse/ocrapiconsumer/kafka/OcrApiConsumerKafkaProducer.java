@@ -12,7 +12,7 @@ import uk.gov.companieshouse.ocrapiconsumer.logging.LoggingUtils;
  *  OcrApiConsumerProducer is a wra
  */
 @Service
-public class OcrApiConsumerProducer extends KafkaProducer {
+public class OcrApiConsumerKafkaProducer extends KafkaProducer {
     /**
      * Sends message to Kafka topic
      * @param message message

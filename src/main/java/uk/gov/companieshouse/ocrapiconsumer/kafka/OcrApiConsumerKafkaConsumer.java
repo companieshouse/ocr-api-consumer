@@ -1,6 +1,7 @@
 package uk.gov.companieshouse.ocrapiconsumer.kafka;
 
 import static uk.gov.companieshouse.ocrapiconsumer.logging.LoggingUtils.logIfNotNull;
+import static uk.gov.companieshouse.ocrapiconsumer.OcrApiConsumerApplication.APPLICATION_NAME_SPACE;
 
 import java.util.Date;
 import java.util.HashMap;
@@ -23,25 +24,22 @@ import org.springframework.stereotype.Service;
 import uk.gov.companieshouse.logging.Logger;
 import uk.gov.companieshouse.logging.LoggerFactory;
 import uk.gov.companieshouse.ocr.OcrRequestMessage;
-import uk.gov.companieshouse.ocrapiconsumer.OcrApiConsumerApplication;
 import uk.gov.companieshouse.ocrapiconsumer.exception.RetryableErrorException;
 import uk.gov.companieshouse.ocrapiconsumer.logging.LoggingUtils;
 import uk.gov.companieshouse.ocrapiconsumer.request.OcrApiConsumerService;
 
 @Service
-public class OcrApiConsumerConsumer {
+public class OcrApiConsumerKafkaConsumer {
 
-    private static final Logger LOG = LoggerFactory.getLogger(OcrApiConsumerApplication.APPLICATION_NAME_SPACE);
-
-    public static final String APPLICATION_NAMESPACE = "ocr-api-consumer";
+    private static final Logger LOG = LoggerFactory.getLogger(APPLICATION_NAME_SPACE);
 
     private static final String OCR_REQUEST_TOPICS = "ocr-request";
     private static final String OCR_REQUEST_RETRY_TOPICS = "ocr-request-retry";
     private static final String OCR_REQUEST_KEY_RETRY = OCR_REQUEST_RETRY_TOPICS;
     private static final String OCR_REQUEST_ERROR_TOPICS = "ocr-request-error";
-    private static final String OCR_REQUEST_GROUP = APPLICATION_NAMESPACE + "-" + OCR_REQUEST_TOPICS;
-    private static final String OCR_REQUEST_RETRY_GROUP = APPLICATION_NAMESPACE + "-" + OCR_REQUEST_RETRY_TOPICS;
-    private static final String OCR_REQUEST_ERROR_GROUP = APPLICATION_NAMESPACE + "-" + OCR_REQUEST_ERROR_TOPICS;
+    private static final String OCR_REQUEST_GROUP = APPLICATION_NAME_SPACE + "-" + OCR_REQUEST_TOPICS;
+    private static final String OCR_REQUEST_RETRY_GROUP = APPLICATION_NAME_SPACE + "-" + OCR_REQUEST_RETRY_TOPICS;
+    private static final String OCR_REQUEST_ERROR_GROUP = APPLICATION_NAME_SPACE + "-" + OCR_REQUEST_ERROR_TOPICS;
 
     private static final int MAX_RETRY_ATTEMPTS = 3;
 
@@ -50,15 +48,15 @@ public class OcrApiConsumerConsumer {
     private final Map<String, Integer> retryCount;
 
     private final SerializerFactory serializerFactory;
-    private final OcrApiConsumerProducer kafkaProducer;
+    private final OcrApiConsumerKafkaProducer kafkaProducer;
     private final KafkaListenerEndpointRegistry registry;
     private final OcrApiConsumerService ocrApiConsumerService;
 
     @Autowired
-    public OcrApiConsumerConsumer(SerializerFactory serializerFactory, OcrApiConsumerProducer ocrApiConsumerProducer, final OcrApiConsumerService ocrApiConsumerService, KafkaListenerEndpointRegistry registry) {
+    public OcrApiConsumerKafkaConsumer(SerializerFactory serializerFactory, OcrApiConsumerKafkaProducer kafkaProducer, final OcrApiConsumerService ocrApiConsumerService, KafkaListenerEndpointRegistry registry) {
         this.retryCount = new HashMap<>();
         this.serializerFactory = serializerFactory;
-        this.kafkaProducer = ocrApiConsumerProducer;
+        this.kafkaProducer = kafkaProducer;
         this.ocrApiConsumerService = ocrApiConsumerService;
         this.registry = registry;
     }
@@ -71,11 +69,7 @@ public class OcrApiConsumerConsumer {
         containerFactory = "kafkaListenerContainerFactory")
     public void processOcrApiRequest(org.springframework.messaging.Message<OcrRequestMessage> message) {
         
-        // LOG.debug("Received Messasge in group - group-id: " + message.getPayload().getResponseId());
-
-        // OcrRequestMessage payload = message.getPayload();
-
-        // LOG.debug(String.format("responseId: %s, appId: %s, attempt: %s, imageEndpoint: %s, convertedTextEndpoint: %s, createdAt: %s", payload.getResponseId(), payload.getAppId(), payload.getAttempt(), payload.getImageEndpoint(), payload.getConvertedTextEndpoint(), payload.getCreatedAt()));
+        LOG.debug("Received Messasge responseId: " + message.getPayload().getResponseId());
         handleMessage(message);
     }
 
