@@ -13,19 +13,24 @@ import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
 import org.springframework.kafka.core.ConsumerFactory;
 import org.springframework.kafka.core.DefaultKafkaConsumerFactory;
 
+import uk.gov.companieshouse.logging.Logger;
 import uk.gov.companieshouse.ocr.OcrRequestMessage;
 import uk.gov.companieshouse.ocrapiconsumer.kafka.OcrKafkaRequestDeserializer;
+import uk.gov.companieshouse.ocrapiconsumer.logging.LoggingUtils;
 
 @EnableKafka
 @Configuration
 public class KafkaConfig {
 
+    private static final Logger LOGGER = LoggingUtils.getLogger();
 
     @Value("${spring.kafka.bootstrap-servers}")
     private String bootstrapServers;
     
     @Bean
     public ConsumerFactory<String, OcrRequestMessage> consumerFactory() {
+
+        LOGGER.info("Using Bootstrap servers [" + bootstrapServers + "]");
 
         return new DefaultKafkaConsumerFactory<>(consumerConfigs(), 
             new StringDeserializer(),

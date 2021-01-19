@@ -127,7 +127,7 @@ public class OcrApiConsumerKafkaConsumer {
         try {
             receivedTopic = headers.get(KafkaHeaders.RECEIVED_TOPIC).toString();
            
-            LOG.infoContext(message.getPayload().getResponseId(), "'ocr-request' message processing completed ", null);
+            LOG.infoContext(message.getPayload().getResponseId(), "'ocr-request' message processing started ", null);
 
             ocrApiConsumerService.ocrRequest(requestMessage);
 
