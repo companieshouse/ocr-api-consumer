@@ -5,6 +5,9 @@ package uk.gov.companieshouse.ocrapiconsumer.exception;
  * network connectivity error while accessing an external api that may go away during subsequent retries.
  */
 public class RetryableErrorException extends RuntimeException {
+
+    private static final long serialVersionUID = 1L;
+
     public RetryableErrorException(String message) {
         super(message);
     }

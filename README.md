@@ -1,6 +1,11 @@
 # ocr-api-consumer
 
-Service to consume requests for extraction of text from images and manage the requests to the OCR API. Drop 1 will NOT include any Kafka.
+Service to consume requests for extraction of text from images and manage the requests to the OCR API. 
+
+There are two ways of starting the ocr-request:
+  
+- reading from a kafka-topic (this is resilient in that the ocr-request result will always return a result to the provided callback url)
+- HTTP rest call which is used for testing.
 
 ## Requirements
 
@@ -20,6 +25,11 @@ The following is a list of mandatory environment variables for the service to ru
 Name                                        | Description                         | Example Value
 ------------------------------------------- | ----------------------------------- | -------------------------------------------------------------------------
 OCR_API_URL                                 | The URL of the ocr-api              | http://localhost:8080/api/ocr/image/tiff/extractText  (default value)
+KAFKA_BROKER_ADDR                           | Address of the Kafka Broker         | localhost:9092
+
+## Use of Kafka
+
+This project uses both Spring Kafka and the CH Kafka library to allow clients who publish messages to the ocr-request topic to get results back via a HTTP callback.
 
 ## Testing Locally (dev)
 
