@@ -146,7 +146,7 @@ public class OcrApiConsumerKafkaConsumer {
         try {
             receivedTopic = extractedReceivedTopicName(headers);
            
-            LOG.infoContext(contextId, receivedTopic + " message processing", null);
+            LOG.infoContext(contextId, receivedTopic + " Orchestrate OCR Request for Kafka Message", null);
 
             ocrApiConsumerService.ocrRequest(requestMessage);
 
@@ -247,6 +247,8 @@ public class OcrApiConsumerKafkaConsumer {
                 resetRetryCount(counterKey);
             }
         } else {
+            // Retrying sending the message on the retry count
+            // TODO - Should we add a delay?
             retryCount.put(counterKey, retryCount.getOrDefault(counterKey, 1) + 1);
 
             logMessageProcessingFailureRecoverable(message, retryCount.get(counterKey), ex);
