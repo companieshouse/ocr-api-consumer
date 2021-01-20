@@ -150,6 +150,7 @@ public class OcrApiConsumerKafkaConsumer {
 
             ocrApiConsumerService.ocrRequest(requestMessage);
 
+            // TODO - is this correct? Below use has a topic name as well as responseId
             if (retryCount.containsKey(responseId)) {
                 resetRetryCount(receivedTopic + "-" + responseId);
             }
@@ -161,7 +162,19 @@ public class OcrApiConsumerKafkaConsumer {
         } catch (DuplicateErrorException dx) {
             logMessageProcessingFailureDuplicateItem(message, dx);
         } catch (Exception x) {
-            // TODO - do we send an error message to CHIPS instead of just logging this?
+            /**
+             * TODO - Need to send a message to the main topic that indicates to CHIPS
+             * Use the request id but create a new ExtractTextResultDTO with a result with following values:
+             * private String extractedText;
+             * averageConfidenceScore=0
+             * lowestConfidenceScore=0
+             * ocrProcessingTimeMs=0
+             * totalProcessingTimeMs=0
+             * responseId=requestMessage.getRequestId()
+             *  extractedText=EXTRACTED_TEXT_WHEN_FATAL_EXCEPTION - "OCR Service could not process this document"
+             * 
+             * Issue could be if CHIPS is down for this response - maybe put message on error queue?
+             */
             logMessageProcessingFailureNonRecoverable(message, x);
             throw x;
         }
