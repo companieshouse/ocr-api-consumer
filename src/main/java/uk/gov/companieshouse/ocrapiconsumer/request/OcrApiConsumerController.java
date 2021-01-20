@@ -109,6 +109,8 @@ public class OcrApiConsumerController {
         return new ResponseEntity<>(errorResponse, statusCode);
     }
 
+    // TODO - Add new handler for RetryableErrorException
+    
     /**
      * Catches any uncaught exception.
      * @param e The exception thrown

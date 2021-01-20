@@ -2,11 +2,14 @@ package uk.gov.companieshouse.ocrapiconsumer.request;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.RestTemplate;
 
 import uk.gov.companieshouse.logging.Logger;
 import uk.gov.companieshouse.logging.LoggerFactory;
 import uk.gov.companieshouse.ocrapiconsumer.OcrApiConsumerApplication;
+import uk.gov.companieshouse.ocrapiconsumer.exception.RetryableErrorException;
 
 @Component
 public class ChipsImageAdapter {
@@ -28,6 +31,12 @@ public class ChipsImageAdapter {
     public byte[] getTiffImageFromChips(String imageEndpoint) {
         
         LOG.debug("Get Image from [" + imageEndpoint + "]");
-        return restTemplate.getForEntity(imageEndpoint, byte[].class).getBody();
+
+        try {
+            return restTemplate.getForEntity(imageEndpoint, byte[].class).getBody();
+
+        } catch (HttpClientErrorException | HttpServerErrorException httpClientOrServerException) {
+             throw new RetryableErrorException(httpClientOrServerException.getMessage());
+        }
     }
 }
