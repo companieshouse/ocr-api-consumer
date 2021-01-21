@@ -25,7 +25,7 @@ class ChipsExtractedTextAdapterTest extends TestParent {
     private RestTemplate restTemplate;
 
     @InjectMocks
-    private ChipsExtractedTextAdapter chipsExtractedTextAdapter;
+    private ExtractedTextCallbackAdapter chipsExtractedTextAdapter;
 
     @BeforeEach
     void setupTests() {

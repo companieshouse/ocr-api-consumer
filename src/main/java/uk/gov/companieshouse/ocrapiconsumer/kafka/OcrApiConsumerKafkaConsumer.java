@@ -6,6 +6,7 @@ import static uk.gov.companieshouse.ocrapiconsumer.OcrApiConsumerApplication.APP
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -60,8 +61,7 @@ public class OcrApiConsumerKafkaConsumer {
     @Autowired
     public OcrApiConsumerKafkaConsumer(SerializerFactory serializerFactory, OcrApiConsumerKafkaProducer kafkaProducer, final OcrApiConsumerService ocrApiConsumerService, KafkaListenerEndpointRegistry registry) {
 
-        // TODO - this map might be accessed in multiple threads - should we use the thread save version of it
-        this.retryCount = new HashMap<>();
+        this.retryCount = new ConcurrentHashMap<>();
         this.serializerFactory = serializerFactory;
         this.kafkaProducer = kafkaProducer;
         this.registry = registry;
@@ -160,7 +160,7 @@ public class OcrApiConsumerKafkaConsumer {
         } catch (RetryableErrorException ex) {
             retryMessage(message, requestMessage, receivedTopic, ex);
         } catch (DuplicateErrorException dx) {
-            logMessageProcessingFailureDuplicateItem(message, dx);
+            logMessageProcessingFailureDuplicateItem(contextId, message, dx);
         } catch (Exception x) {
             /**
              * TODO - Need to send a message to the main topic that indicates to CHIPS
@@ -175,7 +175,7 @@ public class OcrApiConsumerKafkaConsumer {
              * 
              * Issue could be if CHIPS is down for this response - maybe put message on error queue?
              */
-            logMessageProcessingFailureNonRecoverable(message, x);
+            logMessageProcessingFailureNonRecoverable(contextId, message, x);
             throw x;
         }
     }
@@ -199,26 +199,33 @@ public class OcrApiConsumerKafkaConsumer {
     }
 
     private void logMessageProcessingFailureDuplicateItem(
-            org.springframework.messaging.Message<OcrRequestMessage> message, Exception exception) {
+        String contextId,
+        org.springframework.messaging.Message<OcrRequestMessage> message, 
+        Exception exception) {
+
         Map<String, Object> logMap = LoggingUtils.getMessageHeadersAsMap(message);
-        LOG.error("'ocr-request' message processing failed item already exists", exception, logMap);
+        LOG.errorContext(contextId, "Message processing failed item already exists", exception, logMap);
     }
 
     protected void logMessageProcessingFailureNonRecoverable(
-            org.springframework.messaging.Message<OcrRequestMessage> message, Exception exception) {
+        String contextId,
+        org.springframework.messaging.Message<OcrRequestMessage> message, 
+        Exception exception) {
+
         Map<String, Object> logMap = LoggingUtils.getMessageHeadersAsMap(message);
-        LOG.error("'ocr-request' message processing failed with a non-recoverable exception",
+        LOG.errorContext(contextId, "Message processing failed with a  non-recoverable (fatal) exception",
                 exception, logMap);
     }
 
     protected void logMessageProcessingFailureRecoverable(
-        org.springframework.messaging.Message<OcrRequestMessage> message, int attempt,
+        String contextId,
+        org.springframework.messaging.Message<OcrRequestMessage> message, 
+        int attempt,
         Exception exception) {
 
         Map<String, Object> logMap = LoggingUtils.getMessageHeadersAsMap(message);
         logMap.put(LoggingUtils.RETRY_ATTEMPT, attempt);
-        LOG.error("message processing failed with a recoverable exception",
-            exception, logMap);
+        LOG.errorContext(contextId, "Message processing failed with a recoverable exception ", exception, logMap);
 }
 
     /**
@@ -262,9 +269,9 @@ public class OcrApiConsumerKafkaConsumer {
         } else {
             // Retrying sending the message on the retry count
             // TODO - Should we add a delay?
-            retryCount.put(counterKey, retryCount.getOrDefault(counterKey, 1) + 1);
+            retryCount.put(counterKey, retryCount.getOrDefault(counterKey, 0) + 1);
 
-            logMessageProcessingFailureRecoverable(message, retryCount.get(counterKey), ex);
+            logMessageProcessingFailureRecoverable(ocrRequestMessage.getResponseId(), message, retryCount.get(counterKey), ex);
 
             // retry
             handleMessage(message);
@@ -280,17 +287,17 @@ public class OcrApiConsumerKafkaConsumer {
         logIfNotNull(logMap, LoggingUtils.CURRENT_TOPIC, currentTopic);
         logIfNotNull(logMap, LoggingUtils.NEXT_TOPIC, nextTopic);
 
-        LOG.info(String.format(
+        LOG.infoContext(ocrRequestMessage.getResponseId(), String.format(
             "Republishing message: \"%1$s\" received from topic: \"%2$s\" to topic: \"%3$s\"",
-            ocrRequestMessage.getResponseId(), currentTopic, nextTopic));
+            ocrRequestMessage.getResponseId(), currentTopic, nextTopic), null);
 
         try {
             kafkaProducer.sendMessage(createRetryMessage(ocrRequestMessage, nextTopic));
 
         } catch (ExecutionException | InterruptedException exception) {
             
-            LOG.error(String.format("Error sending message: \"%1$s\" to topic: \"%2$s\"",
-                ocrRequestMessage.getResponseId(), nextTopic), exception);
+            LOG.errorContext(ocrRequestMessage.getResponseId(), String.format("Error sending message: \"%1$s\" to topic: \"%2$s\"",
+                ocrRequestMessage.getResponseId(), nextTopic), exception, null);
 
             if (exception instanceof InterruptedException) {
                 Thread.currentThread().interrupt();
@@ -301,10 +308,12 @@ public class OcrApiConsumerKafkaConsumer {
 
     protected Message createRetryMessage(final OcrRequestMessage ocrRequestMessage,
                                          final String topic) {
+
         final Message message = new Message();
         final AvroSerializer<OcrRequestMessage> serializer =
                 serializerFactory.getGenericRecordSerializer(OcrRequestMessage.class);
         message.setKey(OCR_REQUEST_KEY_RETRY);
+
         try {
             message.setValue(serializer.toBinary(ocrRequestMessage));
         } catch (SerializationException e) {
@@ -312,9 +321,10 @@ public class OcrApiConsumerKafkaConsumer {
             logIfNotNull(logMap, LoggingUtils.MESSAGE, ocrRequestMessage.getResponseId());
             logIfNotNull(logMap, LoggingUtils.TOPIC, topic);
             logIfNotNull(logMap, LoggingUtils.OFFSET, message.getOffset());
-            LOG.error(String.format("Error serializing message: \"%1$s\" for topic: \"%2$s\"",
-            ocrRequestMessage.getResponseId(), topic), e, logMap);
+            LOG.errorContext(ocrRequestMessage.getResponseId(),String.format("Error serializing message: \"%1$s\" for topic: \"%2$s\"",
+                ocrRequestMessage.getResponseId(), topic), e, logMap);
         }
+
         message.setTopic(topic);
         message.setTimestamp(new Date().getTime());
 

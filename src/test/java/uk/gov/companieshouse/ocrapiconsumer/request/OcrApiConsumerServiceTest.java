@@ -20,10 +20,10 @@ class OcrApiConsumerServiceTest extends TestParent {
     private OcrApiRequestAdapter ocrApiRequestAdapter;
 
     @Mock
-    private ChipsImageAdapter chipsImageAdapter;
+    private ImageCallbackAdapter chipsImageAdapter;
 
     @Mock
-    private ChipsExtractedTextAdapter chipsExtractedTextAdapter;
+    private ExtractedTextCallbackAdapter chipsExtractedTextAdapter;
 
     @InjectMocks
     private OcrApiConsumerService ocrApiConsumerService;

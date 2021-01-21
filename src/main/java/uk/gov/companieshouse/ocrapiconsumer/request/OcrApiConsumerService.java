@@ -18,13 +18,13 @@ public class OcrApiConsumerService {
 
     private static final Logger LOG = LoggerFactory.getLogger(OcrApiConsumerApplication.APPLICATION_NAME_SPACE);
     private final OcrApiRequestAdapter ocrApiRequestAdapter;
-    private final ChipsImageAdapter chipsImageAdapter;
-    private final ChipsExtractedTextAdapter chipsExtractedTextAdapter;
+    private final ImageCallbackAdapter chipsImageAdapter;
+    private final ExtractedTextCallbackAdapter chipsExtractedTextAdapter;
 
     @Autowired
     public OcrApiConsumerService(OcrApiRequestAdapter ocrApiRequestAdapter,
-                                 ChipsImageAdapter chipsImageAdapter,
-                                 ChipsExtractedTextAdapter chipsExtractedTextAdapter) {
+                                 ImageCallbackAdapter chipsImageAdapter,
+                                 ExtractedTextCallbackAdapter chipsExtractedTextAdapter) {
         this.ocrApiRequestAdapter = ocrApiRequestAdapter;
         this.chipsImageAdapter = chipsImageAdapter;
         this.chipsExtractedTextAdapter = chipsExtractedTextAdapter;

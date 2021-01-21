@@ -21,7 +21,7 @@ class ChipsImageAdapterTest extends TestParent {
     private RestTemplate restTemplate;
 
     @InjectMocks
-    private ChipsImageAdapter chipsImageAdapter;
+    private ImageCallbackAdapter chipsImageAdapter;
 
     @Test
     void testGetTiffImageSuccessfully() {
