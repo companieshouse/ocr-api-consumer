@@ -138,7 +138,6 @@ public class OcrApiConsumerKafkaConsumer {
     private void handleMessage(org.springframework.messaging.Message<OcrRequestMessage> message) {
 
         final OcrRequestMessage requestMessage = message.getPayload();
-        final String responseId = requestMessage.getResponseId();
         final MessageHeaders headers = message.getHeaders();
         String receivedTopic = "";
         String contextId = message.getPayload().getResponseId();
@@ -150,30 +149,20 @@ public class OcrApiConsumerKafkaConsumer {
 
             ocrApiConsumerService.ocrRequest(requestMessage);
 
-            // TODO - is this correct? Below use has a topic name as well as responseId
-            if (retryCount.containsKey(responseId)) {
-                resetRetryCount(receivedTopic + "-" + responseId);
-            }
-
             logMessageProcessed(message, requestMessage);
 
+            String counterKey = receivedTopic + "-" + contextId;
+            if (retryCount.containsKey(counterKey)) {
+                // housekeep map now we have successfully processed this message
+                resetRetryCount(counterKey);
+            }
         } catch (RetryableErrorException ex) {
             retryMessage(message, requestMessage, receivedTopic, ex);
         } catch (DuplicateErrorException dx) {
             logMessageProcessingFailureDuplicateItem(contextId, message, dx);
         } catch (Exception x) {
             /**
-             * TODO - Need to send a message to the main topic that indicates to CHIPS
-             * Use the request id but create a new ExtractTextResultDTO with a result with following values:
-             * private String extractedText;
-             * averageConfidenceScore=0
-             * lowestConfidenceScore=0
-             * ocrProcessingTimeMs=0
-             * totalProcessingTimeMs=0
-             * responseId=requestMessage.getRequestId()
-             *  extractedText=EXTRACTED_TEXT_WHEN_FATAL_EXCEPTION - "OCR Service could not process this document"
-             * 
-             * Issue could be if CHIPS is down for this response - maybe put message on error queue?
+             * TODO - IVP-1251
              */
             logMessageProcessingFailureNonRecoverable(contextId, message, x);
             throw x;
@@ -268,7 +257,7 @@ public class OcrApiConsumerKafkaConsumer {
             }
         } else {
             // Retrying sending the message on the retry count
-            // TODO - Should we add a delay?
+            // TODO - IVP-1285
             retryCount.put(counterKey, retryCount.getOrDefault(counterKey, 0) + 1);
 
             logMessageProcessingFailureRecoverable(ocrRequestMessage.getResponseId(), message, retryCount.get(counterKey), ex);
@@ -304,7 +293,6 @@ public class OcrApiConsumerKafkaConsumer {
             }
         }
     }
-
 
     protected Message createRetryMessage(final OcrRequestMessage ocrRequestMessage,
                                          final String topic) {

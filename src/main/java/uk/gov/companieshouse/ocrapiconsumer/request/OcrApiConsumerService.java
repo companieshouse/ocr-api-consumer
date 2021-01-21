@@ -18,16 +18,16 @@ public class OcrApiConsumerService {
 
     private static final Logger LOG = LoggerFactory.getLogger(OcrApiConsumerApplication.APPLICATION_NAME_SPACE);
     private final OcrApiRequestAdapter ocrApiRequestAdapter;
-    private final ImageCallbackAdapter chipsImageAdapter;
-    private final ExtractedTextCallbackAdapter chipsExtractedTextAdapter;
+    private final ImageCallbackAdapter imageAdapter;
+    private final ExtractedTextCallbackAdapter extractedTextAdapter;
 
     @Autowired
     public OcrApiConsumerService(OcrApiRequestAdapter ocrApiRequestAdapter,
-                                 ImageCallbackAdapter chipsImageAdapter,
-                                 ExtractedTextCallbackAdapter chipsExtractedTextAdapter) {
+                                 ImageCallbackAdapter imageAdapter,
+                                 ExtractedTextCallbackAdapter extractedTextAdapter) {
         this.ocrApiRequestAdapter = ocrApiRequestAdapter;
-        this.chipsImageAdapter = chipsImageAdapter;
-        this.chipsExtractedTextAdapter = chipsExtractedTextAdapter;
+        this.imageAdapter = imageAdapter;
+        this.extractedTextAdapter = extractedTextAdapter;
     }
 
     @Async
@@ -85,7 +85,7 @@ public class OcrApiConsumerService {
     }
 
     private byte[] getTiffImage(String imageEndpoint) {
-        return chipsImageAdapter.getTiffImageFromChips(imageEndpoint);
+        return imageAdapter.getTiffImageFromChips(imageEndpoint);
     }
 
     private ResponseEntity<ExtractTextResultDTO> sendRequestToOcrMicroservice(byte[] image, String responseId) {
@@ -94,7 +94,7 @@ public class OcrApiConsumerService {
     }
 
     private void sendTextResult(String extractedTextEndpoint, ExtractTextResultDTO extractedText) {
-        chipsExtractedTextAdapter.sendTextResult(extractedTextEndpoint, extractedText);
+        extractedTextAdapter.sendTextResult(extractedTextEndpoint, extractedText);
     }
 
 }
