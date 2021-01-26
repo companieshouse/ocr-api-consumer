@@ -17,7 +17,7 @@ import uk.gov.companieshouse.ocrapiconsumer.groups.Unit;
 
 @Unit
 @ExtendWith(MockitoExtension.class)
-class ChipsExtractedTextAdapterTest extends TestParent {
+public class ChipsExtractedTextAdapterTest extends TestParent {
 
     private ExtractTextResultDTO extractTextResultDTO;
 

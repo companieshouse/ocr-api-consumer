@@ -69,10 +69,9 @@ public class OcrApiConsumerKafkaConsumerTest {
         // When
         kafkaConsumer.processOcrApiRequest(message);
 
-       // Then
-       verify(ocrApiConsumerService).ocrRequest(message.getPayload());
+        // Then
+        verify(ocrApiConsumerService).ocrRequest(message.getPayload());
     }
-
 
     @Test
     @DisplayName("Successfully handle a message published on the Retry ocr-request")
@@ -84,11 +83,12 @@ public class OcrApiConsumerKafkaConsumerTest {
         // When
         kafkaConsumer.processOcrApiRequest(message);
 
-       // Then
-       verify(ocrApiConsumerService).ocrRequest(message.getPayload());
+        // Then
+        verify(ocrApiConsumerService).ocrRequest(message.getPayload());
     }
 
     @Test
+    @DisplayName("Successfully error an api request")
     public void shouldErrorOcrApiRequest() {
         // Given
         org.springframework.messaging.Message<OcrRequestMessage> message = createTestMessage(OCR_REQUEST_ERROR_TOPICS);
@@ -100,8 +100,7 @@ public class OcrApiConsumerKafkaConsumerTest {
         verify(ocrApiConsumerService).ocrRequest(message.getPayload());
     }
 
-
-    private  org.springframework.messaging.Message<OcrRequestMessage> createTestMessage(String receivedTopic) {
+    private org.springframework.messaging.Message<OcrRequestMessage> createTestMessage(String receivedTopic) {
         return new org.springframework.messaging.Message<OcrRequestMessage>() {
 
             @Override
@@ -110,8 +109,10 @@ public class OcrApiConsumerKafkaConsumerTest {
             }
 
             private OcrRequestMessage createOcrRequest() {
+
                 OcrRequestMessage ocrRequestMessage = new OcrRequestMessage();
                 ocrRequestMessage.setResponseId(CONTEXT_ID);
+
                 return ocrRequestMessage;
             }
 
@@ -119,16 +120,14 @@ public class OcrApiConsumerKafkaConsumerTest {
             public MessageHeaders getHeaders() {
 
                 Map<String, Object> headerItems = new HashMap<>();
+
                 headerItems.put("kafka_receivedTopic", receivedTopic);
                 headerItems.put("kafka_offset", 0);
                 headerItems.put("kafka_receivedMessageKey", CONTEXT_ID);
                 headerItems.put("kafka_receivedPartitionId", 0);
                 
-                MessageHeaders headers = new MessageHeaders(headerItems);
-                return headers;
+                return new MessageHeaders(headerItems);
             }
         };
-    } 
-
-
+    }
 }
