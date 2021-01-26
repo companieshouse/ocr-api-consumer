@@ -13,7 +13,7 @@ public abstract class KafkaProducer implements InitializingBean {
 
     private static final Logger LOGGER = LoggingUtils.getLogger();
 
-    private CHKafkaProducer chKafkaProducer;
+    protected CHKafkaProducer chKafkaProducer;
 
     @Value("${spring.kafka.bootstrap-servers}")
     private String brokerAddresses;
@@ -22,6 +22,7 @@ public abstract class KafkaProducer implements InitializingBean {
     public void afterPropertiesSet() {
         LOGGER.trace("Configuring CH Kafka producer");
         final ProducerConfig config = createProducerConfig();
+        setBrokerAddress(config);
         config.setRoundRobinPartitioner(true);
         config.setAcks(Acks.WAIT_FOR_ALL);
         config.setRetries(10); 
@@ -41,12 +42,9 @@ public abstract class KafkaProducer implements InitializingBean {
         return chKafkaProducer;
     }
 
-    /**
-     * Extending classes may implement this to facilitate testing for example.
-     * @return the {@link ProducerConfig} created
-     */
-    protected ProducerConfig createProducerConfig() {
-        final ProducerConfig config = new ProducerConfig();
+
+    protected void setBrokerAddress(ProducerConfig config) {
+     
         if (brokerAddresses != null && !brokerAddresses.isEmpty()) {
             config.setBrokerAddresses(brokerAddresses.split(","));
         } else {
@@ -54,7 +52,6 @@ public abstract class KafkaProducer implements InitializingBean {
                     "[Hint: The property 'kafka.broker.addresses' uses the value of this environment variable in live environments " +
                     "and that of 'spring.embedded.kafka.brokers' property in test.]");
         }
-        return config;
     }
 
     /**
@@ -64,6 +61,18 @@ public abstract class KafkaProducer implements InitializingBean {
      */
     protected CHKafkaProducer createChKafkaProducer(final ProducerConfig config) {
         return new CHKafkaProducer(config);
+    }
+
+    /**
+     * Extending classes may implement this to facilitate testing for example.
+     * @return the {@link ProducerConfig} created
+     */
+    protected ProducerConfig createProducerConfig() {
+        return new ProducerConfig();
+    }
+
+    protected void setBrokerAddresses(String brokerAddresses) {
+        this.brokerAddresses = brokerAddresses;
     }
 }
 

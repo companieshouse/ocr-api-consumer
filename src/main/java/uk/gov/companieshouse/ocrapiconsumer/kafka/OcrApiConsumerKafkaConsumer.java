@@ -1,10 +1,9 @@
 package uk.gov.companieshouse.ocrapiconsumer.kafka;
 
-import static uk.gov.companieshouse.ocrapiconsumer.logging.LoggingUtils.logIfNotNull;
 import static uk.gov.companieshouse.ocrapiconsumer.OcrApiConsumerApplication.APPLICATION_NAME_SPACE;
+import static uk.gov.companieshouse.ocrapiconsumer.logging.LoggingUtils.logIfNotNull;
 
 import java.util.Date;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
@@ -12,16 +11,14 @@ import java.util.concurrent.ExecutionException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.config.KafkaListenerEndpointRegistry;
+import org.springframework.kafka.support.KafkaHeaders;
+import org.springframework.messaging.MessageHeaders;
+import org.springframework.stereotype.Service;
 
 import uk.gov.companieshouse.kafka.exceptions.SerializationException;
 import uk.gov.companieshouse.kafka.message.Message;
 import uk.gov.companieshouse.kafka.serialization.AvroSerializer;
 import uk.gov.companieshouse.kafka.serialization.SerializerFactory;
-
-import org.springframework.kafka.support.KafkaHeaders;
-import org.springframework.messaging.MessageHeaders;
-import org.springframework.stereotype.Service;
-
 import uk.gov.companieshouse.logging.Logger;
 import uk.gov.companieshouse.logging.LoggerFactory;
 import uk.gov.companieshouse.ocr.OcrRequestMessage;

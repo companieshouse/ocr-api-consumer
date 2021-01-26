@@ -9,7 +9,7 @@ import uk.gov.companieshouse.kafka.producer.ProducerConfig;
 import uk.gov.companieshouse.ocrapiconsumer.logging.LoggingUtils;
 
 /**
- *  OcrApiConsumerProducer is a wra
+ *  OcrApiConsumerProducer ultimately wraps the CH Kafka Producer 
  */
 @Service
 public class OcrApiConsumerKafkaProducer extends KafkaProducer {
