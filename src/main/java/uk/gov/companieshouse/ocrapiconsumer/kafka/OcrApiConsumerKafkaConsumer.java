@@ -31,12 +31,13 @@ import uk.gov.companieshouse.ocrapiconsumer.request.OcrApiConsumerService;
 @Service
 public class OcrApiConsumerKafkaConsumer {
 
-    private static final Logger LOG = LoggerFactory.getLogger(APPLICATION_NAME_SPACE);
+    protected static final String OCR_REQUEST_TOPICS = "ocr-request";
+    protected static final String OCR_REQUEST_RETRY_TOPICS = "ocr-request-retry";
+    protected static final String OCR_REQUEST_ERROR_TOPICS = "ocr-request-error";
 
-    private static final String OCR_REQUEST_TOPICS = "ocr-request";
-    private static final String OCR_REQUEST_RETRY_TOPICS = "ocr-request-retry";
     private static final String OCR_REQUEST_KEY_RETRY = OCR_REQUEST_RETRY_TOPICS;
-    private static final String OCR_REQUEST_ERROR_TOPICS = "ocr-request-error";
+
+    private static final Logger LOG = LoggerFactory.getLogger(APPLICATION_NAME_SPACE);
 
     private static final String OCR_REQUEST_GROUP = APPLICATION_NAME_SPACE + "-" + OCR_REQUEST_TOPICS;
     private static final String OCR_REQUEST_RETRY_GROUP = APPLICATION_NAME_SPACE + "-" + OCR_REQUEST_RETRY_TOPICS;

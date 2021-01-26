@@ -22,7 +22,10 @@ import uk.gov.companieshouse.kafka.message.Message;
 import uk.gov.companieshouse.kafka.producer.Acks;
 import uk.gov.companieshouse.kafka.producer.CHKafkaProducer;
 import uk.gov.companieshouse.kafka.producer.ProducerConfig;
+import uk.gov.companieshouse.ocrapiconsumer.groups.Unit;
 
+
+@Unit
 @ExtendWith(MockitoExtension.class)
 public class OcrApiConsumerKafkaProducerTest {
 
