@@ -11,9 +11,13 @@ import uk.gov.companieshouse.ocrapiconsumer.logging.LoggingUtils;
 
 public abstract class KafkaProducer implements InitializingBean {
 
-    private static final Logger LOGGER = LoggingUtils.getLogger();
+    protected static final String EXPECTED_CONFIG_ERROR_MESSAGE = "Broker addresses for kafka broker missing, check if environment variable KAFKA_BROKER_ADDR is configured. "
+    + "[Hint: The property 'kafka.broker.addresses' uses the value of this environment variable in live "
+    + "environments and that of 'spring.embedded.kafka.brokers' property in test.]";
 
     protected CHKafkaProducer chKafkaProducer;
+
+    private static final Logger LOGGER = LoggingUtils.getLogger();
 
     @Value("${spring.kafka.bootstrap-servers}")
     private String brokerAddresses;
@@ -48,9 +52,7 @@ public abstract class KafkaProducer implements InitializingBean {
         if (brokerAddresses != null && !brokerAddresses.isEmpty()) {
             config.setBrokerAddresses(brokerAddresses.split(","));
         } else {
-            throw new ProducerConfigException("Broker addresses for kafka broker missing, check if environment variable KAFKA_BROKER_ADDR is configured. " +
-                    "[Hint: The property 'kafka.broker.addresses' uses the value of this environment variable in live environments " +
-                    "and that of 'spring.embedded.kafka.brokers' property in test.]");
+            throw new ProducerConfigException(EXPECTED_CONFIG_ERROR_MESSAGE);
         }
     }
 
