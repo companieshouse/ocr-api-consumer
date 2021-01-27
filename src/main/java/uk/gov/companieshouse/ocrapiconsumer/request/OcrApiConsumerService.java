@@ -39,7 +39,7 @@ public class OcrApiConsumerService {
         orchestrateOcrRequest(message.getImageEndpoint(), message.getConvertedTextEndpoint(), message.getResponseId());
     }
 
-    public void orchestrateOcrRequest(String imageEndpoint, String convertedTextEndpoint, String responseId) {
+    private void orchestrateOcrRequest(String imageEndpoint, String convertedTextEndpoint, String responseId) {
         LOG.infoContext(responseId,
                 String.format("Request received with Image Endpoint: %s, Extracted Text Endpoint: %s",
                         imageEndpoint, convertedTextEndpoint),

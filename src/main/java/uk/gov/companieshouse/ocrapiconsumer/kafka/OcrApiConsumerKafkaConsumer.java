@@ -150,7 +150,7 @@ public class OcrApiConsumerKafkaConsumer {
             logMessageProcessed(message, requestMessage);
 
             String counterKey = receivedTopic + "-" + contextId;
-            if (retryCount.containsKey(counterKey)) {
+            if (getRetryCount().containsKey(counterKey)) {
                 // housekeep map now we have successfully processed this message
                 resetRetryCount(counterKey);
             }
@@ -253,6 +253,9 @@ public class OcrApiConsumerKafkaConsumer {
             if (!receivedTopic.equals(OCR_REQUEST_TOPICS)) {
                 resetRetryCount(counterKey);
             }
+            else {
+                retryCount.put(counterKey, 0);
+            }
         } else {
             // Retrying sending the message on the retry count
             // TODO - IVP-1285
@@ -315,6 +318,11 @@ public class OcrApiConsumerKafkaConsumer {
         message.setTimestamp(new Date().getTime());
 
         return message;
+    }
+
+    // Use for unit testing
+    protected  Map<String, Integer> getRetryCount() {
+        return  retryCount;
     }
 
 }

@@ -5,8 +5,10 @@ import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
-
+import static org.mockito.Mockito.when;
 import static uk.gov.companieshouse.ocrapiconsumer.kafka.OcrApiConsumerKafkaConsumer.OCR_REQUEST_TOPICS;
 import static uk.gov.companieshouse.ocrapiconsumer.kafka.OcrApiConsumerKafkaConsumer.OCR_REQUEST_RETRY_TOPICS;
 import static uk.gov.companieshouse.ocrapiconsumer.kafka.OcrApiConsumerKafkaConsumer.OCR_REQUEST_ERROR_TOPICS;
@@ -27,12 +29,15 @@ import org.springframework.kafka.config.KafkaListenerEndpointRegistry;
 import org.springframework.messaging.MessageHeaders;
 
 import uk.gov.companieshouse.kafka.exceptions.ProducerConfigException;
+import uk.gov.companieshouse.kafka.exceptions.SerializationException;
 import uk.gov.companieshouse.kafka.message.Message;
 import uk.gov.companieshouse.kafka.producer.Acks;
 import uk.gov.companieshouse.kafka.producer.CHKafkaProducer;
 import uk.gov.companieshouse.kafka.producer.ProducerConfig;
+import uk.gov.companieshouse.kafka.serialization.AvroSerializer;
 import uk.gov.companieshouse.kafka.serialization.SerializerFactory;
 import uk.gov.companieshouse.ocr.OcrRequestMessage;
+import uk.gov.companieshouse.ocrapiconsumer.exception.RetryableErrorException;
 import uk.gov.companieshouse.ocrapiconsumer.groups.Unit;
 import uk.gov.companieshouse.ocrapiconsumer.request.OcrApiConsumerService;
 
@@ -45,6 +50,8 @@ public class OcrApiConsumerKafkaConsumerTest {
     @Mock
     private SerializerFactory serializerFactory;
     @Mock
+    private AvroSerializer serializer;
+    @Mock
     private OcrApiConsumerKafkaProducer kafkaProducer;
     @Mock
     private OcrApiConsumerService ocrApiConsumerService;
@@ -56,7 +63,8 @@ public class OcrApiConsumerKafkaConsumerTest {
 
     @BeforeEach
     public void setup() {
-        this.kafkaConsumer = new OcrApiConsumerKafkaConsumer(serializerFactory, kafkaProducer, ocrApiConsumerService, registry);
+        this.kafkaConsumer = new OcrApiConsumerKafkaConsumer(serializerFactory, kafkaProducer, ocrApiConsumerService,
+                registry);
     }
 
     @Test
@@ -98,6 +106,30 @@ public class OcrApiConsumerKafkaConsumerTest {
 
         // Then
         verify(ocrApiConsumerService).ocrRequest(message.getPayload());
+    }
+
+    // Test that we re-try a message when we get a RetryableErrorException
+    @Test
+    @DisplayName("Add message to retry topic when we get a retryable error on the main topic")
+    public void sentMessageToRetryTopicAfterRetryableErrorOnMainTopic() throws SerializationException,
+            ExecutionException, InterruptedException {
+
+        // Given
+        org.springframework.messaging.Message<OcrRequestMessage> message = createTestMessage(OCR_REQUEST_TOPICS);
+        org.springframework.messaging.Message<OcrRequestMessage> retryMessage = createTestMessage(OCR_REQUEST_RETRY_TOPICS);
+        doThrow(new RetryableErrorException("Dummy")).when(ocrApiConsumerService).ocrRequest(message.getPayload());
+        when(serializerFactory.getGenericRecordSerializer(OcrRequestMessage.class)).thenReturn(serializer);
+        when(serializer.toBinary(any())).thenReturn(new byte[4]);
+
+        // When
+        kafkaConsumer.processOcrApiRequest(message);
+
+        // Then
+        verify(kafkaProducer).sendMessage(any());
+        String expectedCounterKey = OCR_REQUEST_TOPICS + "-" + CONTEXT_ID;
+        Map<String, Integer> retryCount = kafkaConsumer.getRetryCount();
+        assertEquals(0, kafkaConsumer.getRetryCount().get(expectedCounterKey), "retry count zero since we have no yet done any");
+
     }
 
     private org.springframework.messaging.Message<OcrRequestMessage> createTestMessage(String receivedTopic) {

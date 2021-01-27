@@ -92,4 +92,5 @@ public class OcrApiConsumerKafkaProducerTest {
         verify(chKafkaProducer).send(testMessage);
     }
 
+
 }
