@@ -149,13 +149,13 @@ public class OcrApiConsumerKafkaConsumer {
 
             logMessageProcessed(message, requestMessage);
 
-            String counterKey = receivedTopic + "-" + contextId;
+            String counterKey = OCR_REQUEST_TOPICS + "-" + contextId;
             if (getRetryCount().containsKey(counterKey)) {
                 // housekeep map now we have successfully processed this message
                 resetRetryCount(counterKey);
             }
         } catch (RetryableErrorException ex) {
-            retryMessage(message, requestMessage, receivedTopic, ex);
+            retryMessage(message, requestMessage, receivedTopic, OCR_REQUEST_TOPICS,ex);
         } catch (DuplicateErrorException dx) {
             logMessageProcessingFailureDuplicateItem(contextId, message, dx);
         } catch (Exception x) {
@@ -225,32 +225,39 @@ public class OcrApiConsumerKafkaConsumer {
     }
 
     /**
-     * Retries a message that failed processing with a `RetryableErrorException`. Checks which topic
-     * the message was received from and whether any retry attempts remain. The message is published
-     * to the next topic for failover processing, if retries match or exceed `MAX_RETRY_ATTEMPTS`.
+     * Retries a message that failed processing with a `RetryableErrorException`.
+     * Checks which topic the message was received from and whether any retry
+     * attempts remain. The message is published to the next topic for failover
+     * processing, if retries match or exceed `MAX_RETRY_ATTEMPTS`.
      *
      * @param message
      * @param ocrRequestMessage
      * @param receivedTopic
+     * @param counterKeyPrefix
+     * @param ocrRequestTopics
      * @param ex
      */
-    private void retryMessage(org.springframework.messaging.Message<OcrRequestMessage> message,
-            final OcrRequestMessage ocrRequestMessage,
-            String receivedTopic, 
-            RetryableErrorException ex) {
+    private void retryMessage(
+        org.springframework.messaging.Message<OcrRequestMessage> message,
+        final OcrRequestMessage ocrRequestMessage, 
+        String receivedTopic, 
+        String counterKeyPrefix,
+        RetryableErrorException ex) {
 
         String nextTopic = (receivedTopic.equals(OCR_REQUEST_TOPICS) ||
             receivedTopic.equals(OCR_REQUEST_ERROR_TOPICS)) ?
                 OCR_REQUEST_RETRY_TOPICS :
                 OCR_REQUEST_ERROR_TOPICS;
 
-        String counterKey = receivedTopic + "-" + ocrRequestMessage.getResponseId();
+        String counterKey = counterKeyPrefix + "-" + ocrRequestMessage.getResponseId();
 
-        if (receivedTopic.equals(OCR_REQUEST_TOPICS) || retryCount.getOrDefault(counterKey, 1) >= MAX_RETRY_ATTEMPTS) {
+        if (receivedTopic.equals(OCR_REQUEST_TOPICS) || 
+            retryCount.getOrDefault(counterKey, 1) >= MAX_RETRY_ATTEMPTS) {
 
             republishMessageToTopic(ocrRequestMessage, receivedTopic, nextTopic);
 
             if (!receivedTopic.equals(OCR_REQUEST_TOPICS)) {
+                // publishing now to the error topic
                 resetRetryCount(counterKey);
             }
             else {

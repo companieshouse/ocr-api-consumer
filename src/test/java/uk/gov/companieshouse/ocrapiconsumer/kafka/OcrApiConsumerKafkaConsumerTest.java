@@ -7,6 +7,8 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static uk.gov.companieshouse.ocrapiconsumer.kafka.OcrApiConsumerKafkaConsumer.OCR_REQUEST_TOPICS;
@@ -127,10 +129,54 @@ public class OcrApiConsumerKafkaConsumerTest {
         // Then
         verify(kafkaProducer).sendMessage(any());
         String expectedCounterKey = OCR_REQUEST_TOPICS + "-" + CONTEXT_ID;
-        Map<String, Integer> retryCount = kafkaConsumer.getRetryCount();
         assertEquals(0, kafkaConsumer.getRetryCount().get(expectedCounterKey), "retry count zero since we have no yet done any");
 
     }
+
+     // Test that we re-try a message when we get a RetryableErrorException
+     @Test
+     @DisplayName("A retryable error occurs on a message from the retry Topic but then successed before max count is set")
+     public void retryableErrorOnceNotMaxOnRetryTopic() throws SerializationException,
+             ExecutionException, InterruptedException {
+ 
+         // Given
+         org.springframework.messaging.Message<OcrRequestMessage> message = createTestMessage(OCR_REQUEST_RETRY_TOPICS);
+         String expectedCounterKey = OCR_REQUEST_TOPICS + "-" + CONTEXT_ID;
+
+         doThrow(new RetryableErrorException("Dummy")).doThrow(new RetryableErrorException("Dummy")).doNothing().when(ocrApiConsumerService).ocrRequest(message.getPayload());
+ 
+         // When
+         kafkaConsumer.retryOcrApiRequest(message);
+ 
+         // Then
+         verify(kafkaProducer, never()).sendMessage(any());
+         assertEquals(null, kafkaConsumer.getRetryCount().get(expectedCounterKey), "retry count reset after ocr service works");
+ 
+     }
+
+          // Test that we re-try a message when we get a RetryableErrorException
+          @Test
+          @DisplayName("A retryable error occurs on a message from the retry Topic and reaches max retries so publish to error topic")
+          public void retryableErrorRetryAboveMaxRetriesTopic() throws SerializationException,
+                  ExecutionException, InterruptedException {
+      
+              // Given
+              org.springframework.messaging.Message<OcrRequestMessage> message = createTestMessage(OCR_REQUEST_RETRY_TOPICS);
+              String expectedCounterKey = OCR_REQUEST_TOPICS + "-" + CONTEXT_ID;
+     
+              doThrow(new RetryableErrorException("Dummy")).doThrow(new RetryableErrorException("Dummy")).doThrow(new RetryableErrorException("Dummy")).doThrow(new RetryableErrorException("Dummy")).when(ocrApiConsumerService).ocrRequest(message.getPayload());
+              
+              when(serializerFactory.getGenericRecordSerializer(OcrRequestMessage.class)).thenReturn(serializer);
+              when(serializer.toBinary(any())).thenReturn(new byte[4]);
+      
+              // When
+              kafkaConsumer.retryOcrApiRequest(message);
+      
+              // Then
+              verify(kafkaProducer).sendMessage(any());
+              assertEquals(null, kafkaConsumer.getRetryCount().get(expectedCounterKey), "retry count reset moving to error");
+      
+          }
 
     private org.springframework.messaging.Message<OcrRequestMessage> createTestMessage(String receivedTopic) {
         return new org.springframework.messaging.Message<OcrRequestMessage>() {
