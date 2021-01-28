@@ -65,5 +65,4 @@ public class OcrApiRequestAdapter {
         final EnvironmentReader environmentReader = new EnvironmentReaderImpl();
         return environmentReader.getMandatoryUrl("OCR_API_URL");
     }
-
 }

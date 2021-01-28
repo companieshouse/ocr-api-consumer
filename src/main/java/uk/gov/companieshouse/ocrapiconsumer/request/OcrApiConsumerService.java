@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.FileCopyUtils;
 import uk.gov.companieshouse.logging.Logger;
 import uk.gov.companieshouse.logging.LoggerFactory;
+import uk.gov.companieshouse.ocr.OcrRequestMessage;
 import uk.gov.companieshouse.ocrapiconsumer.OcrApiConsumerApplication;
 
 import java.io.IOException;
@@ -27,6 +28,33 @@ public class OcrApiConsumerService {
         this.ocrApiRequestAdapter = ocrApiRequestAdapter;
         this.chipsImageAdapter = chipsImageAdapter;
         this.chipsExtractedTextAdapter = chipsExtractedTextAdapter;
+    }
+
+    public void ocrRequest(OcrRequestMessage message) {
+        orchestrateOcrRequest(message.getImageEndpoint(), message.getConvertedTextEndpoint(), message.getResponseId());
+    }
+
+    private void orchestrateOcrRequest(String imageEndpoint, String convertedTextEndpoint, String responseId) {
+        LOG.infoContext(responseId,
+                String.format("Request received with Image Endpoint: %s, Extracted Text Endpoint: %s",
+                        imageEndpoint, convertedTextEndpoint),
+                null);
+
+        LOG.debugContext(responseId, "Getting the TIFF image", null);
+        byte[] image = getTiffImage(imageEndpoint);
+
+        LOG.debugContext(responseId, "Sending image to ocr microservice for conversion", null);
+
+        ResponseEntity<ExtractTextResultDTO> response = sendRequestToOcrMicroservice(image, responseId);
+
+        ExtractTextResultDTO extractedText = null;
+        if (response != null) {
+            extractedText = response.getBody();
+        }
+
+        LOG.debugContext(responseId,
+                "Sending the extracted text response for the articles of association", null);
+        sendTextResult(convertedTextEndpoint, extractedText);
     }
 
     @Async
