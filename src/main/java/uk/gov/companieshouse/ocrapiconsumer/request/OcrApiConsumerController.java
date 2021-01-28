@@ -51,25 +51,6 @@ public class OcrApiConsumerController {
         return new ResponseEntity<>(HttpStatus.ACCEPTED);
     }
 
-    // @Autowired
-    // private KafkaTemplate<String, OcrRequestMessage> kafkaTemplate;
-    // // private KafkaTemplate<String, String> kafkaTemplate;
-
-    // @GetMapping("/internal/send")
-    // public ResponseEntity<HttpStatus> sendMessage(@RequestParam("message") String message) {
-
-    //     LOG.debug("Calling the kafka send");
-
-    //     OcrRequestMessage fakeMessage = new OcrRequestMessage(
-    //         "imageEndpoint", "convertedTextEndpoint", message, "applicationId", new Date(), 1
-    //     );
-
-    //     kafkaTemplate.send("ocr-request", fakeMessage);
-    //     // kafkaTemplate.send("ocr-request", message);
-
-    //     return new ResponseEntity<>(HttpStatus.ACCEPTED);
-    // }
-
     @PostMapping("/internal/ocr-api-request")
     public ResponseEntity<HttpStatus> sendTestOcrApiRequest(@Valid @RequestBody OcrRequest ocrRequest) {
         String version = System.getProperty("java.version");
@@ -108,8 +89,6 @@ public class OcrApiConsumerController {
 
         return new ResponseEntity<>(errorResponse, statusCode);
     }
-
-    // TODO - Add new handler for RetryableErrorException
     
     /**
      * Catches any uncaught exception.

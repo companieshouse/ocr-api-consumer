@@ -104,10 +104,7 @@ public class OcrApiConsumerKafkaConsumer {
      * 
      * This receives messages up to `errorRecoveryOffset` offset.
      * 
-     * Calls the common `handleMessage` method to process received message. If the `retryable` processor is
-     * unsuccessful with a `retryable` error, after maximum numbers of attempts allowed, the message
-     * is republished to `-retry` topic for failover processing. This listener stops accepting
-     * messages when the topic's offset reaches `errorRecoveryOffset`.
+     * THis publishes received message to the retry topic as per CH Standard Kafka resilience model.
      *
      * @param message
      */
@@ -122,7 +119,7 @@ public class OcrApiConsumerKafkaConsumer {
         long offset = Long.parseLong("" + message.getHeaders().get("kafka_offset"));
 
         if (offset <= errorRecoveryOffset) {
-            handleMessage(message);
+            republishMessageToTopic(message.getPayload(), OCR_REQUEST_ERROR_TOPICS, OCR_REQUEST_RETRY_TOPICS);
         } else {
             Map<String, Object> logMap = LoggingUtils.createLogMap();
             logMap.put(LoggingUtils.OCR_REQUEST_ERROR_GROUP, errorRecoveryOffset);
