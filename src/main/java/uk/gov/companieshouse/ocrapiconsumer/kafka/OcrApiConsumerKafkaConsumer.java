@@ -57,6 +57,8 @@ public class OcrApiConsumerKafkaConsumer {
         containerFactory = KAFKA_LISTENER_CONTAINER_FACTORY)
     public void consumeOcrApiRequestMessage(org.springframework.messaging.Message<OcrRequestMessage> message) {
 
+        LOG.info("Consuming Message");
+
         OcrRequestMessage ocrRequestMessage = message.getPayload();
 
         try {
