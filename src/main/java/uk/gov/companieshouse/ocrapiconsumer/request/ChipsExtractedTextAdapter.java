@@ -5,6 +5,8 @@ import org.springframework.http.HttpEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
+import uk.gov.companieshouse.ocrapiconsumer.kafka.exception.RetryableErrorException;
+
 @Component
 public class ChipsExtractedTextAdapter {
 
@@ -21,7 +23,13 @@ public class ChipsExtractedTextAdapter {
      * @param   extractedText           The extracted text DTO object.
      */
     public void sendTextResult(String extractedTextEndpoint, ExtractTextResultDTO extractedText) {
-        HttpEntity<ExtractTextResultDTO> entity = new HttpEntity<>(extractedText);
-        restTemplate.postForEntity(extractedTextEndpoint, entity, String.class);
+        
+        try {
+            HttpEntity<ExtractTextResultDTO> entity = new HttpEntity<>(extractedText);
+            restTemplate.postForEntity(extractedTextEndpoint, entity, String.class);
+
+        } catch (Exception e) {
+             throw new RetryableErrorException("Fail to get OCR Text converted by ocr-api [" + e.getMessage() + "]");
+        }
     }
 }

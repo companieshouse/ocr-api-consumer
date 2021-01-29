@@ -12,6 +12,7 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 import uk.gov.companieshouse.environment.EnvironmentReader;
 import uk.gov.companieshouse.environment.impl.EnvironmentReaderImpl;
+import uk.gov.companieshouse.ocrapiconsumer.kafka.exception.RetryableErrorException;
 
 @Component
 public class OcrApiRequestAdapter {
@@ -51,9 +52,13 @@ public class OcrApiRequestAdapter {
         params.add(FILE_REQUEST_PARAMETER_NAME, byteArrayResource);
         params.add(RESPONSE_ID_REQUEST_PARAMETER_NAME, responseId);
 
-        HttpEntity<MultiValueMap<String, Object>> entity = new HttpEntity<>(params, headers);
+        try {
+            HttpEntity<MultiValueMap<String, Object>> entity = new HttpEntity<>(params, headers);
+            return restTemplate.postForEntity(ocrApiUrl, entity, ExtractTextResultDTO.class);
 
-        return restTemplate.postForEntity(ocrApiUrl, entity, ExtractTextResultDTO.class);
+        } catch (Exception e) {
+             throw new RetryableErrorException("Fail calling ocr-api [" + e.getMessage() + "]");
+        }
     }
 
     /**

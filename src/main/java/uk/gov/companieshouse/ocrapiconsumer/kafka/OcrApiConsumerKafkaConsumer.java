@@ -3,10 +3,11 @@ package uk.gov.companieshouse.ocrapiconsumer.kafka;
 import static uk.gov.companieshouse.ocrapiconsumer.OcrApiConsumerApplication.APPLICATION_NAME_SPACE;
 
 import java.util.Date;
-import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.kafka.annotation.KafkaListener;
+import org.springframework.kafka.config.KafkaListenerEndpointRegistry;
 import org.springframework.stereotype.Service;
 
 import uk.gov.companieshouse.kafka.exceptions.SerializationException;
@@ -16,8 +17,7 @@ import uk.gov.companieshouse.kafka.serialization.SerializerFactory;
 import uk.gov.companieshouse.logging.Logger;
 import uk.gov.companieshouse.logging.LoggerFactory;
 import uk.gov.companieshouse.ocr.OcrRequestMessage;
-import uk.gov.companieshouse.ocrapiconsumer.exception.RetryableErrorException;
-import uk.gov.companieshouse.ocrapiconsumer.kafka.OcrApiConsumerKafkaProducer;
+import uk.gov.companieshouse.ocrapiconsumer.kafka.exception.RetryableErrorException;
 import uk.gov.companieshouse.ocrapiconsumer.request.OcrApiConsumerService;
 
 
@@ -26,7 +26,6 @@ public class OcrApiConsumerKafkaConsumer {
 
     protected static final String OCR_REQUEST_TOPICS = "ocr-request";
     protected static final String OCR_REQUEST_RETRY_TOPICS = "ocr-request-retry";
-    protected static final String OCR_REQUEST_ERROR_TOPICS = "ocr-request-error";
 
     private static final String OCR_REQUEST_KEY_RETRY = OCR_REQUEST_RETRY_TOPICS;
 
@@ -35,15 +34,19 @@ public class OcrApiConsumerKafkaConsumer {
     private static final String OCR_REQUEST_GROUP = APPLICATION_NAME_SPACE + "-" + OCR_REQUEST_TOPICS;
     private static final String KAFKA_LISTENER_CONTAINER_FACTORY = "kafkaListenerContainerFactory";
 
-    private final Map<String, Integer> retryCount;
-
     private OcrApiConsumerService ocrApiConsumerService;
     private SerializerFactory serializerFactory;
     private OcrApiConsumerKafkaProducer kafkaProducer;
+    private final KafkaListenerEndpointRegistry registry;
 
-    public OcrApiConsumerKafkaConsumer(OcrApiConsumerService ocrApiConsumerService, SerializerFactory serializerFactory) {
-        this.ocrApiConsumerService = ocrApiConsumerService;
+    @Autowired
+    public OcrApiConsumerKafkaConsumer(SerializerFactory serializerFactory, OcrApiConsumerKafkaProducer kafkaProducer, final OcrApiConsumerService ocrApiConsumerService, KafkaListenerEndpointRegistry registry) {
+
         this.serializerFactory = serializerFactory;
+        this.kafkaProducer = kafkaProducer;
+        this.ocrApiConsumerService = ocrApiConsumerService;
+        this.registry = registry;
+
     }
 
     @KafkaListener(
@@ -60,9 +63,9 @@ public class OcrApiConsumerKafkaConsumer {
 
             ocrApiConsumerService.ocrRequest(ocrRequestMessage);
 
-        } catch (RetryableErrorException exception) {
+        } catch (RetryableErrorException ree) {
             
-            // Log the exception
+            LOG.error("Retryable Error consuming message", ree);
 
             repostMessage(ocrRequestMessage, OCR_REQUEST_RETRY_TOPICS);
 
@@ -81,7 +84,7 @@ public class OcrApiConsumerKafkaConsumer {
 
         } catch (ExecutionException | InterruptedException exception) {
 
-            // Log error
+            LOG.error("Can not repost message", exception);
 
             if (exception instanceof InterruptedException) {
                 Thread.currentThread().interrupt();
@@ -99,7 +102,7 @@ public class OcrApiConsumerKafkaConsumer {
         try {
             retryMessage.setValue(serializer.toBinary(ocrRequestMessage));
         } catch (SerializationException exception) {
-            // Log Cannot serialize
+            LOG.error("Can not serialise message", exception);
         }
 
         retryMessage.setTopic(topic);
