@@ -29,7 +29,7 @@ public abstract class KafkaProducer implements InitializingBean {
         LOG.trace("Configuring CH Kafka producer");
         final ProducerConfig config = createProducerConfig();
         setBrokerAddress(config);
-        config.setRoundRobinPartitioner(true);
+       // config.setRoundRobinPartitioner(true);
         config.setAcks(Acks.WAIT_FOR_ALL);
         config.setRetries(10); 
         modifyProducerConfig(config);

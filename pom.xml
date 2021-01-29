@@ -35,6 +35,7 @@
 
             <ch-kafka.version>1.4.2</ch-kafka.version>
             <kafka-models.version>1.0.20</kafka-models.version>
+
             
     </properties>
 
@@ -48,6 +49,8 @@
     </profiles>
 
     <dependencies>
+
+
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>

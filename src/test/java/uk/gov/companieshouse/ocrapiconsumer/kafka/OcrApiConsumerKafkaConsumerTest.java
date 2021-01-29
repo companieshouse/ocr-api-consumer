@@ -11,6 +11,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
+import org.apache.kafka.clients.producer.RecordMetadata;
+import org.apache.kafka.common.TopicPartition;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -19,6 +21,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.kafka.config.KafkaListenerEndpointRegistry;
+import org.springframework.kafka.listener.adapter.ConsumerRecordMetadata;
 import org.springframework.messaging.MessageHeaders;
 
 import uk.gov.companieshouse.kafka.exceptions.SerializationException;
@@ -61,7 +64,7 @@ public class OcrApiConsumerKafkaConsumerTest {
         org.springframework.messaging.Message<OcrRequestMessage> message = createTestMessage(OCR_REQUEST_TOPICS);
 
         // When
-        kafkaConsumer.consumeOcrApiRequestMessage(message);
+        kafkaConsumer.consumeOcrApiRequestMessage(message, new ConsumerRecordMetadata(getRecordMetadata(), null));
 
         // Then
         verify(ocrApiConsumerService).ocrRequest(message.getPayload());
@@ -82,7 +85,7 @@ public class OcrApiConsumerKafkaConsumerTest {
         when(serializer.toBinary(any())).thenReturn(new byte[4]);
 
         // When
-        kafkaConsumer.consumeOcrApiRequestMessage(message);
+        kafkaConsumer.consumeOcrApiRequestMessage(message, new ConsumerRecordMetadata(getRecordMetadata(), null));
 
         // Then
         verify(kafkaProducer).sendMessage(any());
@@ -118,5 +121,12 @@ public class OcrApiConsumerKafkaConsumerTest {
                 return new MessageHeaders(headerItems);
             }
         };
+    }
+
+    private RecordMetadata getRecordMetadata() {
+
+        TopicPartition topicPartition = new TopicPartition("test",1);  
+        return new RecordMetadata(topicPartition, 0,0,0,Long.valueOf(0),0, 0);
+
     }
 }

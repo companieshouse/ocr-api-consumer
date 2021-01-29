@@ -7,7 +7,10 @@ import java.util.concurrent.ExecutionException;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.kafka.annotation.KafkaListener;
+import org.springframework.kafka.annotation.PartitionOffset;
+import org.springframework.kafka.annotation.TopicPartition;
 import org.springframework.kafka.config.KafkaListenerEndpointRegistry;
+import org.springframework.kafka.listener.adapter.ConsumerRecordMetadata;
 import org.springframework.stereotype.Service;
 
 import uk.gov.companieshouse.kafka.exceptions.SerializationException;
@@ -32,7 +35,7 @@ public class OcrApiConsumerKafkaConsumer {
     private static final Logger LOG = LoggerFactory.getLogger(APPLICATION_NAME_SPACE);
 
     private static final String OCR_REQUEST_GROUP = APPLICATION_NAME_SPACE + "-" + OCR_REQUEST_TOPICS;
-    private static final String KAFKA_LISTENER_CONTAINER_FACTORY = "kafkaListenerContainerFactory";
+    private static final String KAFKA_LISTENER_CONTAINER_FACTORY =   "kafkaListenerContainerFactory";
 
     private OcrApiConsumerService ocrApiConsumerService;
     private SerializerFactory serializerFactory;
@@ -53,13 +56,17 @@ public class OcrApiConsumerKafkaConsumer {
         id = OCR_REQUEST_GROUP,
         topics = OCR_REQUEST_TOPICS,
         groupId = OCR_REQUEST_GROUP,
+        topicPartitions =
+        { @TopicPartition(topic = OCR_REQUEST_TOPICS, partitions = { "0-2" }),
+        },
         autoStartup = "#{!${uk.gov.companieshouse.ocrapiconsumer.error-consumer}}",
         containerFactory = KAFKA_LISTENER_CONTAINER_FACTORY)
-    public void consumeOcrApiRequestMessage(org.springframework.messaging.Message<OcrRequestMessage> message) {
-
-        LOG.info("Consuming Message");
+    public void consumeOcrApiRequestMessage(org.springframework.messaging.Message<OcrRequestMessage> message, ConsumerRecordMetadata meta) {
 
         OcrRequestMessage ocrRequestMessage = message.getPayload();
+
+        LOG.infoContext(ocrRequestMessage.getResponseId(), "Consuming Message from offset [" + meta.offset() + "] on topic [" + meta.topic() + "] partition [" + meta.partition() + "]", null);
+
 
         try {
 
