@@ -54,7 +54,7 @@ public class OcrApiConsumerKafkaConsumerTest {
 
     @Test
     @DisplayName("Successfully handle a message published on the Main ocr-request")
-    public void shouldProcessOcrApiRequest() {
+    void shouldProcessOcrApiRequest() {
 
         // Given
         org.springframework.messaging.Message<OcrRequestMessage> message = createTestMessage(OCR_REQUEST_TOPICS);
@@ -70,7 +70,7 @@ public class OcrApiConsumerKafkaConsumerTest {
     // Test that we re-try a message when we get a RetryableErrorException
     @Test
     @DisplayName("Add message to retry topic when we get a retryable error on the main topic")
-    public void sentMessageToRetryTopicAfterRetryableErrorOnMainTopic() throws SerializationException,
+    void sentMessageToRetryTopicAfterRetryableErrorOnMainTopic() throws SerializationException,
             ExecutionException, InterruptedException {
 
         // Given

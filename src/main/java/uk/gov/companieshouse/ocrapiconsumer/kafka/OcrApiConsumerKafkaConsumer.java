@@ -73,7 +73,7 @@ public class OcrApiConsumerKafkaConsumer {
             repostMessage(ocrRequestMessage, OCR_REQUEST_RETRY_TOPICS);
 
         } catch (Exception exception) {
-            LOG.errorContext(ocrRequestMessage.getResponseId(), "Unexpected Error when consuming message", exception, null);;
+            LOG.errorContext(ocrRequestMessage.getResponseId(), "Unexpected Error when consuming message", exception, null);
         }
     }
 

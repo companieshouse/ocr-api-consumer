@@ -48,7 +48,7 @@ public class OcrApiConsumerKafkaProducerTest {
 
     @Test
     @DisplayName("afterPropertiesSet() sets producer config properties")
-    public void setUpProducerConfig() {
+    void setUpProducerConfig() {
 
         ocrApiConsumerKafkaProducer.setBrokerAddresses("localhost:9092"); // hostname must be in /etc/hosts
 
@@ -66,7 +66,7 @@ public class OcrApiConsumerKafkaProducerTest {
 
     @Test
     @DisplayName("Correct Exception when no Kafka Address is present")
-    public void errorWhenNoBrokerAddressConfigured() {
+    void errorWhenNoBrokerAddressConfigured() {
 
         // When
         ProducerConfigException exception = Assertions.assertThrows(ProducerConfigException.class,
@@ -79,7 +79,7 @@ public class OcrApiConsumerKafkaProducerTest {
 
     @Test
     @DisplayName("Sens a Kakfa message using CH Kafka object")
-    public void testSendMessage() throws ExecutionException, InterruptedException {
+    void testSendMessage() throws ExecutionException, InterruptedException {
 
         // Given
         Message testMessage = new Message();
