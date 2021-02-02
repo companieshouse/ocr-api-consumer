@@ -7,6 +7,7 @@ import org.springframework.web.client.RestTemplate;
 import uk.gov.companieshouse.logging.Logger;
 import uk.gov.companieshouse.logging.LoggerFactory;
 import uk.gov.companieshouse.ocrapiconsumer.OcrApiConsumerApplication;
+import uk.gov.companieshouse.ocrapiconsumer.kafka.exception.RetryableErrorException;
 
 @Component
 public class ChipsImageAdapter {
@@ -28,6 +29,11 @@ public class ChipsImageAdapter {
     public byte[] getTiffImageFromChips(String imageEndpoint) {
         
         LOG.debug("Get Image from [" + imageEndpoint + "]");
-        return restTemplate.getForEntity(imageEndpoint, byte[].class).getBody();
+        try {
+            return restTemplate.getForEntity(imageEndpoint, byte[].class).getBody();
+
+        } catch (Exception e) {
+             throw new RetryableErrorException("Fail to get Image file from requesting system [" + e.getMessage() + "]", e);
+        }
     }
 }
