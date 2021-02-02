@@ -4,7 +4,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static uk.gov.companieshouse.ocrapiconsumer.kafka.OcrApiConsumerKafkaConsumer.OCR_REQUEST_TOPICS;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -57,10 +56,10 @@ class OcrApiConsumerKafkaConsumerTest {
     void shouldProcessOcrApiRequest() {
 
         // Given
-        org.springframework.messaging.Message<OcrRequestMessage> message = createTestMessage(OCR_REQUEST_TOPICS);
+        org.springframework.messaging.Message<OcrRequestMessage> message = createTestMessage(kafkaConsumer.getMainTopicName());
 
         // When
-        kafkaConsumer.consumeOcrApiRequestMessage(message, new ConsumerRecordMetadata(getRecordMetadata(), null));
+        kafkaConsumer.consumeOcrApiRequestMessage(message, new ConsumerRecordMetadata(getRecordMetadata(kafkaConsumer.getMainTopicName()), null));
 
         // Then
         verify(ocrApiConsumerService).ocrRequest(message.getPayload());
@@ -74,14 +73,14 @@ class OcrApiConsumerKafkaConsumerTest {
             ExecutionException, InterruptedException {
 
         // Given
-        org.springframework.messaging.Message<OcrRequestMessage> message = createTestMessage(OCR_REQUEST_TOPICS);
+        org.springframework.messaging.Message<OcrRequestMessage> message = createTestMessage(kafkaConsumer.getMainTopicName());
         doThrow(new uk.gov.companieshouse.ocrapiconsumer.kafka.exception.RetryableErrorException("Dummy", new Exception("dummy cause")))
 				.when(ocrApiConsumerService).ocrRequest(message.getPayload());
         when(serializerFactory.getGenericRecordSerializer(OcrRequestMessage.class)).thenReturn(serializer);
         when(serializer.toBinary(any())).thenReturn(new byte[4]);
 
         // When
-        kafkaConsumer.consumeOcrApiRequestMessage(message, new ConsumerRecordMetadata(getRecordMetadata(), null));
+        kafkaConsumer.consumeOcrApiRequestMessage(message, new ConsumerRecordMetadata(getRecordMetadata(kafkaConsumer.getMainTopicName()), null));
 
         // Then
         verify(kafkaProducer).sendMessage(any());
@@ -119,9 +118,9 @@ class OcrApiConsumerKafkaConsumerTest {
         };
     }
 
-    private RecordMetadata getRecordMetadata() {
+    private RecordMetadata getRecordMetadata(String topicName) {
 
-        TopicPartition topicPartition = new TopicPartition("test",1);  
+        TopicPartition topicPartition = new TopicPartition(topicName, 1);  
         return new RecordMetadata(topicPartition, 0,0,0,0L,0, 0);
     }
 }
