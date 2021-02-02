@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.FileCopyUtils;
 import uk.gov.companieshouse.logging.Logger;
 import uk.gov.companieshouse.logging.LoggerFactory;
+import uk.gov.companieshouse.ocr.OcrRequestMessage;
 import uk.gov.companieshouse.ocrapiconsumer.OcrApiConsumerApplication;
 
 import java.io.IOException;
@@ -29,8 +30,17 @@ public class OcrApiConsumerService {
         this.chipsExtractedTextAdapter = chipsExtractedTextAdapter;
     }
 
+    public void ocrRequest(OcrRequestMessage message) {
+        orchestrateOcrRequest(message.getImageEndpoint(), message.getConvertedTextEndpoint(), message.getResponseId());
+    }
+
     @Async
     public void logOcrRequest(String imageEndpoint, String convertedTextEndpoint, String responseId) {
+        orchestrateOcrRequest(imageEndpoint, convertedTextEndpoint, responseId);
+    }
+
+
+    private void orchestrateOcrRequest(String imageEndpoint, String convertedTextEndpoint, String responseId) {
         LOG.infoContext(responseId,
                 String.format("Request received with Image Endpoint: %s, Extracted Text Endpoint: %s",
                         imageEndpoint, convertedTextEndpoint),
@@ -44,7 +54,7 @@ public class OcrApiConsumerService {
         ResponseEntity<ExtractTextResultDTO> response = sendRequestToOcrMicroservice(image, responseId);
 
         ExtractTextResultDTO extractedText = null;
-        if(response != null) {
+        if (response != null) {
             extractedText = response.getBody();
         }
 
