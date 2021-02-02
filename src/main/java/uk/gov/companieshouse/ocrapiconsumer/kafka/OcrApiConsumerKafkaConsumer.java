@@ -7,9 +7,7 @@ import java.util.concurrent.ExecutionException;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.kafka.annotation.KafkaListener;
-import org.springframework.kafka.annotation.PartitionOffset;
 import org.springframework.kafka.annotation.TopicPartition;
-import org.springframework.kafka.config.KafkaListenerEndpointRegistry;
 import org.springframework.kafka.listener.adapter.ConsumerRecordMetadata;
 import org.springframework.stereotype.Service;
 
@@ -40,16 +38,13 @@ public class OcrApiConsumerKafkaConsumer {
     private OcrApiConsumerService ocrApiConsumerService;
     private SerializerFactory serializerFactory;
     private OcrApiConsumerKafkaProducer kafkaProducer;
-    private final KafkaListenerEndpointRegistry registry;
 
     @Autowired
-    public OcrApiConsumerKafkaConsumer(SerializerFactory serializerFactory, OcrApiConsumerKafkaProducer kafkaProducer, final OcrApiConsumerService ocrApiConsumerService, KafkaListenerEndpointRegistry registry) {
+    public OcrApiConsumerKafkaConsumer(SerializerFactory serializerFactory, OcrApiConsumerKafkaProducer kafkaProducer, final OcrApiConsumerService ocrApiConsumerService) {
 
         this.serializerFactory = serializerFactory;
         this.kafkaProducer = kafkaProducer;
         this.ocrApiConsumerService = ocrApiConsumerService;
-        this.registry = registry;
-
     }
 
     @KafkaListener(
@@ -67,20 +62,18 @@ public class OcrApiConsumerKafkaConsumer {
 
         LOG.infoContext(ocrRequestMessage.getResponseId(), "Consuming Message from offset [" + meta.offset() + "] on topic [" + meta.topic() + "] partition [" + meta.partition() + "]", null);
 
-
         try {
 
             ocrApiConsumerService.ocrRequest(ocrRequestMessage);
 
         } catch (RetryableErrorException ree) {
             
-            LOG.error("Retryable Error consuming message", ree);
+            LOG.errorContext(ocrRequestMessage.getResponseId(), "Retryable Error consuming message", ree, null);
 
             repostMessage(ocrRequestMessage, OCR_REQUEST_RETRY_TOPICS);
 
         } catch (Exception exception) {
-            // Log unrecoverable error
-            throw exception;
+            LOG.errorContext(ocrRequestMessage.getResponseId(), "Unexpected Error when consuming message", exception, null);;
         }
     }
 

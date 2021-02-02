@@ -19,6 +19,8 @@ public abstract class KafkaProducer implements InitializingBean {
 
     protected CHKafkaProducer chKafkaProducer;
 
+    private static final int PRODUCER_RETRIES = 10;
+
     private static final Logger LOG = LoggerFactory.getLogger(APPLICATION_NAME_SPACE);
 
     @Value("${spring.kafka.bootstrap-servers}")
@@ -29,9 +31,8 @@ public abstract class KafkaProducer implements InitializingBean {
         LOG.trace("Configuring CH Kafka producer");
         final ProducerConfig config = createProducerConfig();
         setBrokerAddress(config);
-       // config.setRoundRobinPartitioner(true);
         config.setAcks(Acks.WAIT_FOR_ALL);
-        config.setRetries(10); 
+        config.setRetries(PRODUCER_RETRIES); 
         modifyProducerConfig(config);
         chKafkaProducer = createChKafkaProducer(config);
     }
@@ -41,7 +42,6 @@ public abstract class KafkaProducer implements InitializingBean {
      * @param producerConfig the producer configuration to be modified
      */
     protected void modifyProducerConfig(final ProducerConfig producerConfig) {
-        // Does nothing here
     }
 
     protected CHKafkaProducer getChKafkaProducer() {

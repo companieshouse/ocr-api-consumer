@@ -33,7 +33,7 @@ public class ChipsImageAdapter {
             return restTemplate.getForEntity(imageEndpoint, byte[].class).getBody();
 
         } catch (Exception e) {
-             throw new RetryableErrorException("Fail to get Image file from requesting system [" + e.getMessage() + "]");
+             throw new RetryableErrorException("Fail to get Image file from requesting system [" + e.getMessage() + "]", e);
         }
     }
 }

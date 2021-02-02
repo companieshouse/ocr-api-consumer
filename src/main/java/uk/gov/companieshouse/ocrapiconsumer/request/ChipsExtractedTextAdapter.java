@@ -29,7 +29,7 @@ public class ChipsExtractedTextAdapter {
             restTemplate.postForEntity(extractedTextEndpoint, entity, String.class);
 
         } catch (Exception e) {
-             throw new RetryableErrorException("Fail to get OCR Text converted by ocr-api [" + e.getMessage() + "]");
+             throw new RetryableErrorException("Fail to get OCR Text converted by ocr-api [" + e.getMessage() + "]", e);
         }
     }
 }

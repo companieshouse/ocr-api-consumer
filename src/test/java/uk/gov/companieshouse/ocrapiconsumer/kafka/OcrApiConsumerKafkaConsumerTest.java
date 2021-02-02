@@ -4,7 +4,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static uk.gov.companieshouse.ocrapiconsumer.kafka.OcrApiConsumerKafkaConsumer.OCR_REQUEST_RETRY_TOPICS;
 import static uk.gov.companieshouse.ocrapiconsumer.kafka.OcrApiConsumerKafkaConsumer.OCR_REQUEST_TOPICS;
 
 import java.util.HashMap;
@@ -20,7 +19,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.kafka.config.KafkaListenerEndpointRegistry;
 import org.springframework.kafka.listener.adapter.ConsumerRecordMetadata;
 import org.springframework.messaging.MessageHeaders;
 
@@ -45,15 +43,13 @@ public class OcrApiConsumerKafkaConsumerTest {
     private OcrApiConsumerKafkaProducer kafkaProducer;
     @Mock
 	private OcrApiConsumerService ocrApiConsumerService;
-	@Mock
-    private KafkaListenerEndpointRegistry registry;
 
     @InjectMocks
     private OcrApiConsumerKafkaConsumer kafkaConsumer;
 
     @BeforeEach
     public void setup() {
-        this.kafkaConsumer = new OcrApiConsumerKafkaConsumer(serializerFactory, kafkaProducer, ocrApiConsumerService, registry);
+        this.kafkaConsumer = new OcrApiConsumerKafkaConsumer(serializerFactory, kafkaProducer, ocrApiConsumerService);
     }
 
     @Test
@@ -79,7 +75,7 @@ public class OcrApiConsumerKafkaConsumerTest {
 
         // Given
         org.springframework.messaging.Message<OcrRequestMessage> message = createTestMessage(OCR_REQUEST_TOPICS);
-        doThrow(new uk.gov.companieshouse.ocrapiconsumer.kafka.exception.RetryableErrorException("Dummy"))
+        doThrow(new uk.gov.companieshouse.ocrapiconsumer.kafka.exception.RetryableErrorException("Dummy", new Exception("dummy cause")))
 				.when(ocrApiConsumerService).ocrRequest(message.getPayload());
         when(serializerFactory.getGenericRecordSerializer(OcrRequestMessage.class)).thenReturn(serializer);
         when(serializer.toBinary(any())).thenReturn(new byte[4]);

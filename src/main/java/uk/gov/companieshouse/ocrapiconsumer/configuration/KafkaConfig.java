@@ -30,6 +30,9 @@ public class KafkaConfig {
 
     @Value("${spring.kafka.bootstrap-servers}")
     private String bootstrapServers;
+
+    @Value("${uk.gov.companieshouse.ocrapiconsumer.concurrency}")
+    private String consumerConcurrency;
     
     @Bean
     public ConsumerFactory<String, OcrRequestMessage> consumerFactory() {
@@ -47,7 +50,7 @@ public class KafkaConfig {
         ConcurrentKafkaListenerContainerFactory<String, OcrRequestMessage> factory = new ConcurrentKafkaListenerContainerFactory<>();
 
         factory.setConsumerFactory(consumerFactory());
-        factory.setConcurrency(3);  // can configure to number of partitions
+        factory.setConcurrency(getConcurrency());  
 
         return factory;
     }
@@ -62,5 +65,9 @@ public class KafkaConfig {
         props.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, false);
 
         return props;
+    }
+
+    private Integer getConcurrency() {
+        return Integer.parseInt(consumerConcurrency);
     }
 }

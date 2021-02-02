@@ -8,7 +8,8 @@ public class RetryableErrorException extends RuntimeException {
     
     private static final long serialVersionUID = 1L;
 
-    public RetryableErrorException(String message) {
-        super(message);
+    public RetryableErrorException(String message, Exception cause) {
+        super(message, cause);
     }
+    
 }

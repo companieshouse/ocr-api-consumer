@@ -18,6 +18,8 @@ public class OcrApiConsumerKafkaProducer extends KafkaProducer {
 
     private static final Logger LOG = LoggerFactory.getLogger(APPLICATION_NAME_SPACE);
 
+    private static final int REQUEST_TIMEOUT_MILLISECONDS = 3000;
+
     /**
      * Sends message to Kafka topic
      * @param message message
@@ -31,6 +33,6 @@ public class OcrApiConsumerKafkaProducer extends KafkaProducer {
 
     @Override
     protected void modifyProducerConfig(final ProducerConfig producerConfig) {
-        producerConfig.setRequestTimeoutMilliseconds(3000);
+        producerConfig.setRequestTimeoutMilliseconds(REQUEST_TIMEOUT_MILLISECONDS);
     }
 }
