@@ -42,7 +42,7 @@ class OcrApiConsumerKafkaConsumerTest {
     @Mock
     private OcrApiConsumerKafkaProducer kafkaProducer;
     @Mock
-	private OcrApiConsumerService ocrApiConsumerService;
+    private OcrApiConsumerService ocrApiConsumerService;
 
     @InjectMocks
     private OcrApiConsumerKafkaConsumer kafkaConsumer;
@@ -122,7 +122,6 @@ class OcrApiConsumerKafkaConsumerTest {
     private RecordMetadata getRecordMetadata() {
 
         TopicPartition topicPartition = new TopicPartition("test",1);  
-        return new RecordMetadata(topicPartition, 0,0,0,Long.valueOf(0),0, 0);
-
+        return new RecordMetadata(topicPartition, 0,0,0,0L,0, 0);
     }
 }
