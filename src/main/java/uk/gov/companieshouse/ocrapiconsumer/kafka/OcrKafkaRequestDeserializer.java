@@ -1,5 +1,7 @@
 package uk.gov.companieshouse.ocrapiconsumer.kafka;
 
+import java.util.Arrays;
+
 import org.apache.avro.generic.IndexedRecord;
 import org.apache.avro.io.DatumReader;
 import org.apache.avro.io.Decoder;
@@ -10,9 +12,6 @@ import org.apache.kafka.common.serialization.Deserializer;
 import org.springframework.stereotype.Component;
 
 import uk.gov.companieshouse.ocr.OcrRequestMessage;
-
-import java.util.Arrays;
-import java.util.Map;
 
 @Component
 public class OcrKafkaRequestDeserializer<T extends IndexedRecord> implements Deserializer<T> {
@@ -33,13 +32,4 @@ public class OcrKafkaRequestDeserializer<T extends IndexedRecord> implements Des
         }
     }
 
-    @Override
-    public void close() {
-        // No-op
-    }
-
-    @Override
-    public void configure(Map<String, ?> arg0, boolean arg1) {
-        // No-op
-    }
 }
