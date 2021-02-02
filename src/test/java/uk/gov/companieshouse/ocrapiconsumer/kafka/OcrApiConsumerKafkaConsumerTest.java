@@ -31,7 +31,7 @@ import uk.gov.companieshouse.ocrapiconsumer.request.OcrApiConsumerService;
 
 @Unit
 @ExtendWith(MockitoExtension.class)
-public class OcrApiConsumerKafkaConsumerTest {
+class OcrApiConsumerKafkaConsumerTest {
 
     private static final String CONTEXT_ID = "1";
 

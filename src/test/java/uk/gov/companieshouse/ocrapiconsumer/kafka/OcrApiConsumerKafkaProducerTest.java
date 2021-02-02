@@ -26,7 +26,7 @@ import uk.gov.companieshouse.ocrapiconsumer.groups.Unit;
 
 @Unit
 @ExtendWith(MockitoExtension.class)
-public class OcrApiConsumerKafkaProducerTest {
+class OcrApiConsumerKafkaProducerTest {
 
     @InjectMocks
     private TestOcrProducer ocrApiConsumerKafkaProducer = new TestOcrProducer();

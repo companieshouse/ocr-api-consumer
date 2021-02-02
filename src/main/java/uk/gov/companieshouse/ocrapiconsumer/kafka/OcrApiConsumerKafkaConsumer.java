@@ -80,17 +80,20 @@ public class OcrApiConsumerKafkaConsumer {
     private void repostMessage(final OcrRequestMessage ocrRequestMessage, final String topic) {
 
         Message retryMessage = createRepostMessage(ocrRequestMessage, topic);
+        String failureMessage = "Can not repost message";
 
         try {
             kafkaProducer.sendMessage(retryMessage);
 
-        } catch (ExecutionException | InterruptedException exception) {
+        } catch (InterruptedException ie) {
 
-            LOG.error("Can not repost message", exception);
+            LOG.error(failureMessage, ie);
 
-            if (exception instanceof InterruptedException) {
-                Thread.currentThread().interrupt();
-            }
+            Thread.currentThread().interrupt();
+
+        }  catch (ExecutionException ee) {
+
+            LOG.error(failureMessage, ee);
         }
     }
 
