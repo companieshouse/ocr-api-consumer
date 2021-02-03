@@ -1,7 +1,9 @@
 package uk.gov.companieshouse.ocrapiconsumer.kafka;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -26,6 +28,7 @@ import uk.gov.companieshouse.kafka.serialization.AvroSerializer;
 import uk.gov.companieshouse.kafka.serialization.SerializerFactory;
 import uk.gov.companieshouse.ocr.OcrRequestMessage;
 import uk.gov.companieshouse.ocrapiconsumer.groups.Unit;
+import uk.gov.companieshouse.ocrapiconsumer.kafka.exception.RetryableErrorException;
 import uk.gov.companieshouse.ocrapiconsumer.request.OcrApiConsumerService;
 
 @Unit
@@ -59,7 +62,7 @@ class OcrApiConsumerKafkaConsumerTest {
         org.springframework.messaging.Message<OcrRequestMessage> message = createTestMessage(kafkaConsumer.getMainTopicName());
 
         // When
-        kafkaConsumer.consumeOcrApiRequestMessage(message, new ConsumerRecordMetadata(getRecordMetadata(kafkaConsumer.getMainTopicName()), null));
+        kafkaConsumer.consumeOcrApiRequestMessage(message, metaDatawithTopic(kafkaConsumer.getMainTopicName()));
 
         // Then
         verify(ocrApiConsumerService).ocrRequest(message.getPayload());
@@ -74,18 +77,83 @@ class OcrApiConsumerKafkaConsumerTest {
 
         // Given
         org.springframework.messaging.Message<OcrRequestMessage> message = createTestMessage(kafkaConsumer.getMainTopicName());
-        doThrow(new uk.gov.companieshouse.ocrapiconsumer.kafka.exception.RetryableErrorException("Dummy", new Exception("dummy cause")))
+        doThrow(newRetryableError())
 				.when(ocrApiConsumerService).ocrRequest(message.getPayload());
         when(serializerFactory.getGenericRecordSerializer(OcrRequestMessage.class)).thenReturn(serializer);
         when(serializer.toBinary(any())).thenReturn(new byte[4]);
 
         // When
-        kafkaConsumer.consumeOcrApiRequestMessage(message, new ConsumerRecordMetadata(getRecordMetadata(kafkaConsumer.getMainTopicName()), null));
+        kafkaConsumer.consumeOcrApiRequestMessage(message, metaDatawithTopic(kafkaConsumer.getMainTopicName()));
 
         // Then
         verify(kafkaProducer).sendMessage(any());
     }
 
+    @Test
+    @DisplayName("Successfully handle a message published on the Retry ocr-request")
+    void shouldRetryOcrApiRequest() {
+
+        // Given
+        org.springframework.messaging.Message<OcrRequestMessage> message = createTestMessage(kafkaConsumer.getRetryTopicName());
+
+        // When
+        kafkaConsumer.consumeOcrApiRequestRetryMessage(message, metaDatawithTopic(kafkaConsumer.getRetryTopicName()));
+
+        // Then
+        verify(ocrApiConsumerService).ocrRequest(message.getPayload());
+    }
+
+    // Test that we re-try a message when we get a RetryableErrorException
+    @Test
+    @DisplayName("A retryable error occurs on a message from the retry Topic but then successed before max count is set")
+    void retryableErrorOnceNotMaxOnRetryTopic()
+            throws SerializationException, ExecutionException, InterruptedException {
+
+        // Given
+        org.springframework.messaging.Message<OcrRequestMessage> message = createTestMessage(kafkaConsumer.getRetryTopicName());
+        String expectedCounterKey = CONTEXT_ID;
+
+        doThrow(newRetryableError()).doNothing()
+                .when(ocrApiConsumerService).ocrRequest(message.getPayload());
+
+        // When
+        kafkaConsumer.consumeOcrApiRequestRetryMessage(message, metaDatawithTopic(kafkaConsumer.getRetryTopicName()));
+
+        // Then
+        verify(kafkaProducer, never()).sendMessage(any());
+        assertEquals(null, kafkaConsumer.getRetryCounts().get(expectedCounterKey),
+                "retry count reset after ocr service works");
+
+    }
+
+    @Test
+    @DisplayName("A retryable error occurs on a message from the retry Topic and reaches max retries so publish to error topic")
+    void retryableErrorRetryAboveMaxRetriesTopic()
+            throws SerializationException, ExecutionException, InterruptedException {
+
+        // Given
+        org.springframework.messaging.Message<OcrRequestMessage> message = createTestMessage(
+                kafkaConsumer.getRetryTopicName());
+        String expectedCounterKey = CONTEXT_ID;
+
+        doThrow(newRetryableError()).doThrow(newRetryableError()).doThrow(newRetryableError())
+                .when(ocrApiConsumerService).ocrRequest(message.getPayload());
+
+        when(serializerFactory.getGenericRecordSerializer(OcrRequestMessage.class)).thenReturn(serializer);
+        when(serializer.toBinary(any())).thenReturn(new byte[4]);
+
+        // When
+        kafkaConsumer.consumeOcrApiRequestRetryMessage(message, metaDatawithTopic(kafkaConsumer.getRetryTopicName()));
+
+        // Then
+        verify(kafkaProducer).sendMessage(any());
+        assertEquals(null, kafkaConsumer.getRetryCounts().get(expectedCounterKey), "retry count reset moving to error");
+
+    }
+
+    private RetryableErrorException newRetryableError() {
+        return new uk.gov.companieshouse.ocrapiconsumer.kafka.exception.RetryableErrorException("Dummy", new Exception("dummy cause"));
+    }
 
     private org.springframework.messaging.Message<OcrRequestMessage> createTestMessage(String receivedTopic) {
         return new org.springframework.messaging.Message<OcrRequestMessage>() {
@@ -118,9 +186,10 @@ class OcrApiConsumerKafkaConsumerTest {
         };
     }
 
-    private RecordMetadata getRecordMetadata(String topicName) {
+    private ConsumerRecordMetadata metaDatawithTopic(String topicName) {
 
         TopicPartition topicPartition = new TopicPartition(topicName, 1);  
-        return new RecordMetadata(topicPartition, 0,0,0,0L,0, 0);
+        return new ConsumerRecordMetadata(new RecordMetadata(topicPartition, 0,0,0,0L,0, 0), null);
     }
+
 }

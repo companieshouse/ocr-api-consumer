@@ -194,7 +194,7 @@ public class OcrApiConsumerKafkaConsumer {
         return OCR_REQUEST_TOPICS;
     }
 
-    private String getRetryTopicName() {
+    String getRetryTopicName() {
         return OCR_REQUEST_RETRY_TOPICS;
     }
 
@@ -204,6 +204,11 @@ public class OcrApiConsumerKafkaConsumer {
 
     private int getMaxRetryAttempts() {
         return MAX_RETRY_ATTEMPTS;
+    }
+
+    // Use for unit testing
+    protected Map<String, Integer> getRetryCounts() {
+        return retryCounts;
     }
 
     // logging helper methods
