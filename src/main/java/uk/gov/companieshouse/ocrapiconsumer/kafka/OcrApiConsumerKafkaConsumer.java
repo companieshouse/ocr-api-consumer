@@ -20,6 +20,7 @@ import uk.gov.companieshouse.kafka.serialization.SerializerFactory;
 import uk.gov.companieshouse.logging.Logger;
 import uk.gov.companieshouse.logging.LoggerFactory;
 import uk.gov.companieshouse.ocr.OcrRequestMessage;
+import uk.gov.companieshouse.ocrapiconsumer.kafka.exception.FatalErrorException;
 import uk.gov.companieshouse.ocrapiconsumer.kafka.exception.RetryableErrorException;
 import uk.gov.companieshouse.ocrapiconsumer.request.OcrApiConsumerService;
 
@@ -98,7 +99,7 @@ public class OcrApiConsumerKafkaConsumer {
 
             ocrApiConsumerService.ocrRequest(ocrRequestMessage);
 
-            resetKeyFromRetryCounts(ocrRequestMessage.getResponseId()); // must be last statement before error handling
+            resetKeyFromRetryCounts(contextId); // must be last statement before error handling
 
         } catch (RetryableErrorException ree) {
             
@@ -121,27 +122,25 @@ public class OcrApiConsumerKafkaConsumer {
 
         }  else if (currentTopic.equals(getRetryTopicName())) {
 
-            String counterKey = message.getPayload().getResponseId();
-            int retryCount = retryCounts.getOrDefault(counterKey, 1);
+            int retryCount = retryCounts.getOrDefault(contextId, 1);
 
             if (retryCount > getMaxRetryAttempts()) {
 
                 repostMessage(message.getPayload(), getErrorTopicName());
-                resetKeyFromRetryCounts(counterKey);
+                resetKeyFromRetryCounts(contextId);
             } else {
 
-                retryCounts.put(counterKey, retryCounts.getOrDefault(counterKey, 0) + 1);
+                retryCounts.put(contextId, retryCounts.getOrDefault(contextId, 0) + 1);
 
                 // TODO delay Jira
 
-                LOG.infoContext(contextId, "Retrying processing message", null);
+                LOG.infoContext(contextId, "Retrying processing message [count: " + retryCounts.get(contextId) + "]", null);
                 handleOcrRequestMessage(message, currentTopic);
             }
 
         } else {
           
-           // TODO throw new  FatalErrorException 
-
+           throw new FatalErrorException("Logic error in code");
         }
     }
 
