@@ -62,7 +62,7 @@ class OcrApiConsumerKafkaConsumerTest {
         org.springframework.messaging.Message<OcrRequestMessage> message = createTestMessage(kafkaConsumer.getMainTopicName());
 
         // When
-        kafkaConsumer.consumeOcrApiRequestMessage(message, metaDatawithTopic(kafkaConsumer.getMainTopicName()));
+        kafkaConsumer.consumeOcrApiRequestMessage(message, metadataWithTopic(kafkaConsumer.getMainTopicName()));
 
         // Then
         verify(ocrApiConsumerService).ocrRequest(message.getPayload());
@@ -83,7 +83,7 @@ class OcrApiConsumerKafkaConsumerTest {
         when(serializer.toBinary(any())).thenReturn(new byte[4]);
 
         // When
-        kafkaConsumer.consumeOcrApiRequestMessage(message, metaDatawithTopic(kafkaConsumer.getMainTopicName()));
+        kafkaConsumer.consumeOcrApiRequestMessage(message, metadataWithTopic(kafkaConsumer.getMainTopicName()));
 
         // Then
         verify(kafkaProducer).sendMessage(any());
@@ -97,7 +97,7 @@ class OcrApiConsumerKafkaConsumerTest {
         org.springframework.messaging.Message<OcrRequestMessage> message = createTestMessage(kafkaConsumer.getRetryTopicName());
 
         // When
-        kafkaConsumer.consumeOcrApiRequestRetryMessage(message, metaDatawithTopic(kafkaConsumer.getRetryTopicName()));
+        kafkaConsumer.consumeOcrApiRequestRetryMessage(message, metadataWithTopic(kafkaConsumer.getRetryTopicName()));
 
         // Then
         verify(ocrApiConsumerService).ocrRequest(message.getPayload());
@@ -117,7 +117,7 @@ class OcrApiConsumerKafkaConsumerTest {
                 .when(ocrApiConsumerService).ocrRequest(message.getPayload());
 
         // When
-        kafkaConsumer.consumeOcrApiRequestRetryMessage(message, metaDatawithTopic(kafkaConsumer.getRetryTopicName()));
+        kafkaConsumer.consumeOcrApiRequestRetryMessage(message, metadataWithTopic(kafkaConsumer.getRetryTopicName()));
 
         // Then
         verify(kafkaProducer, never()).sendMessage(any());
@@ -143,7 +143,7 @@ class OcrApiConsumerKafkaConsumerTest {
         when(serializer.toBinary(any())).thenReturn(new byte[4]);
 
         // When
-        kafkaConsumer.consumeOcrApiRequestRetryMessage(message, metaDatawithTopic(kafkaConsumer.getRetryTopicName()));
+        kafkaConsumer.consumeOcrApiRequestRetryMessage(message, metadataWithTopic(kafkaConsumer.getRetryTopicName()));
 
         // Then
         verify(kafkaProducer).sendMessage(any());
@@ -186,7 +186,7 @@ class OcrApiConsumerKafkaConsumerTest {
         };
     }
 
-    private ConsumerRecordMetadata metaDatawithTopic(String topicName) {
+    private ConsumerRecordMetadata metadataWithTopic(String topicName) {
 
         TopicPartition topicPartition = new TopicPartition(topicName, 1);  
         return new ConsumerRecordMetadata(new RecordMetadata(topicPartition, 0,0,0,0L,0, 0), null);
