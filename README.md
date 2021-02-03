@@ -6,12 +6,20 @@ Service to consume requests for extraction of text from images and manage the re
 
 - Java 8 (drop 2 will use 11)
 - Maven
+- Docker
 
-## Usage
+## Usage without Docker
 
 - Run `make dev` to build JAR (versioned in target and unversioned in top level d) and run the unit tests
 - Run `java -jar ocr-api-consumer.jar` to run the application
-- Alternatively, `export OCR_API_CONSUMER_PORT={your-chosen-port-number}` and run ./start.sh to run the application on your chosen port number.
+- Alternatively, `export OCR_API_CONSUMER_PORT={your-chosen-port-number}` and run `./start.sh` to run the application on your chosen port number.
+
+## Usage with Docker
+
+The service can be run using docker, with the addition of the jib maven plugin.
+- Run `mvn clean`
+- Run `mvn compile jib:dockerBuild` to compile the project into a docker image
+- Run `docker run -e OCR_API_URL -t -i -p 8080:8080 ocr-api-consumer:unversioned` to run the service on port 8080.
 
 ## Environment Variables
 
