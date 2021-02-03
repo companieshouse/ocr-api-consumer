@@ -118,15 +118,15 @@ public class OcrApiConsumerKafkaConsumer {
 
             // TODO delay Jira
 
-            repostMessage(message.getPayload(), getRetryTopicName());
+            repostMessage(contextId, message.getPayload(), currentTopic, getRetryTopicName());
 
         }  else if (currentTopic.equals(getRetryTopicName())) {
 
             int retryCount = retryCounts.getOrDefault(contextId, 1);
 
-            if (retryCount > getMaxRetryAttempts()) {
+            if (retryCount >= getMaxRetryAttempts()) {
 
-                repostMessage(message.getPayload(), getErrorTopicName());
+                repostMessage(contextId, message.getPayload(), currentTopic, getErrorTopicName());
                 resetKeyFromRetryCounts(contextId);
             } else {
 
@@ -149,10 +149,12 @@ public class OcrApiConsumerKafkaConsumer {
         retryCounts.remove(counterKey);
     }
 
-    private void repostMessage(final OcrRequestMessage ocrRequestMessage, final String topic) {
+    private void repostMessage(String contextId, final OcrRequestMessage ocrRequestMessage, final String fromTopic, final String toTopic) {
 
-        Message retryMessage = createRepostMessage(ocrRequestMessage, topic);
+        Message retryMessage = createRepostMessage(ocrRequestMessage, toTopic);
+
         String failureMessage = "Can not repost message";
+        LOG.infoContext(contextId, "Reposting message from topic [" + fromTopic + "]" + " to topic [" + toTopic + "]", null);
 
         try {
             kafkaProducer.sendMessage(retryMessage);
