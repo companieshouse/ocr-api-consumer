@@ -25,12 +25,13 @@ The service can be run using docker, with the addition of the jib maven plugin.
 
 The following is a list of mandatory environment variables for the service to run:
 
-Name                                        | Description                         | Example Value
-------------------------------------------- | ----------------------------------- | -------------------------------------------------------------------------
-OCR_API_URL                                 | The URL of the ocr-api              | http://localhost:8080/api/ocr/image/tiff/extractText  (default value)
-KAFKA_BROKER_ADDR                           | Address of the Kafka Broker         | localhost:9092
+Name                                        | Description                          | Example Value
+------------------------------------------- | ------------------------------------ | -------------------------------------------------------------------------
+OCR_API_URL                                 | The URL of the ocr-api               | http://localhost:8080/api/ocr/image/tiff/extractText  (default value)
+KAFKA_BROKER_ADDR                           | Address of the Kafka Broker          | localhost:9092
 IS_ERROR_QUEUE_CONSUMER                     | True if an error instance of the app | false  
-CONSUMER_CONCURRENCY                        | Number of consumer threads          |
+CONSUMER_CONCURRENCY                        | Number of consumer threads           |
+RETRY_THROTTLE_RATE_SECONDS                 | Number of seconds before retrying    | 5
 
 ## Testing Locally (dev)
 

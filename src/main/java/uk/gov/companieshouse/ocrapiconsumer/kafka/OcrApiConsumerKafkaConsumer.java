@@ -6,8 +6,10 @@ import java.util.Date;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.annotation.TopicPartition;
 import org.springframework.kafka.listener.adapter.ConsumerRecordMetadata;
@@ -24,9 +26,11 @@ import uk.gov.companieshouse.ocrapiconsumer.kafka.exception.FatalErrorException;
 import uk.gov.companieshouse.ocrapiconsumer.kafka.exception.RetryableErrorException;
 import uk.gov.companieshouse.ocrapiconsumer.request.OcrApiConsumerService;
 
-
 @Service
 public class OcrApiConsumerKafkaConsumer {
+
+    @Value("${uk.gov.companieshouse.ocrapiconsumer.retry-seconds}")
+    protected static final int RETRY_THROTTLE_RATE_SECONDS;
 
     protected static final String OCR_REQUEST_TOPICS = "ocr-request";
     protected static final String OCR_REQUEST_RETRY_TOPICS = "ocr-request-retry";
@@ -39,7 +43,7 @@ public class OcrApiConsumerKafkaConsumer {
     private static final String OCR_REQUEST_GROUP = APPLICATION_NAME_SPACE + "-" + OCR_REQUEST_TOPICS;
     private static final String OCR_REQUEST_RETRY_GROUP = APPLICATION_NAME_SPACE + "-" + OCR_REQUEST_RETRY_TOPICS;
 
-    private static final String KAFKA_LISTENER_CONTAINER_FACTORY =   "kafkaListenerContainerFactory";
+    private static final String KAFKA_LISTENER_CONTAINER_FACTORY = "kafkaListenerContainerFactory";
 
     private static final int MAX_RETRY_ATTEMPTS = 3;
 
@@ -50,44 +54,33 @@ public class OcrApiConsumerKafkaConsumer {
     private OcrApiConsumerKafkaProducer kafkaProducer;
 
     @Autowired
-    public OcrApiConsumerKafkaConsumer(SerializerFactory serializerFactory, OcrApiConsumerKafkaProducer kafkaProducer, final OcrApiConsumerService ocrApiConsumerService) {
-
+    public OcrApiConsumerKafkaConsumer(SerializerFactory serializerFactory, OcrApiConsumerKafkaProducer kafkaProducer,
+            final OcrApiConsumerService ocrApiConsumerService) {
         this.retryCounts = new ConcurrentHashMap<>();
         this.serializerFactory = serializerFactory;
         this.kafkaProducer = kafkaProducer;
         this.ocrApiConsumerService = ocrApiConsumerService;
     }
 
-    @KafkaListener(
-        id = OCR_REQUEST_GROUP,
-        topics = OCR_REQUEST_TOPICS,
-        groupId = OCR_REQUEST_GROUP,
-        topicPartitions =
-        { @TopicPartition(topic = OCR_REQUEST_TOPICS, partitions = { "0-2" }),
-        },
-        autoStartup = "#{!${uk.gov.companieshouse.ocrapiconsumer.error-consumer}}",
-        containerFactory = KAFKA_LISTENER_CONTAINER_FACTORY)
-    public void consumeOcrApiRequestMessage(org.springframework.messaging.Message<OcrRequestMessage> message, ConsumerRecordMetadata metadata) {
+    @KafkaListener(id = OCR_REQUEST_GROUP, topics = OCR_REQUEST_TOPICS, groupId = OCR_REQUEST_GROUP, topicPartitions = {
+            @TopicPartition(topic = OCR_REQUEST_TOPICS, partitions = {
+                    "0-2" }), }, autoStartup = "#{!${uk.gov.companieshouse.ocrapiconsumer.error-consumer}}", containerFactory = KAFKA_LISTENER_CONTAINER_FACTORY)
+    public void consumeOcrApiRequestMessage(org.springframework.messaging.Message<OcrRequestMessage> message,
+            ConsumerRecordMetadata metadata) {
 
         logConsumeKafkaMessage(message.getPayload().getResponseId(), metadata);
 
         handleOcrRequestMessage(message, metadata.topic());
     }
 
+    @KafkaListener(id = OCR_REQUEST_RETRY_GROUP, topics = OCR_REQUEST_RETRY_TOPICS, groupId = OCR_REQUEST_RETRY_GROUP, autoStartup = "#{!${uk.gov.companieshouse.ocrapiconsumer.error-consumer}}", containerFactory = KAFKA_LISTENER_CONTAINER_FACTORY)
+    public void consumeOcrApiRequestRetryMessage(org.springframework.messaging.Message<OcrRequestMessage> message,
+            ConsumerRecordMetadata metadata) {
 
-    @KafkaListener(
-        id = OCR_REQUEST_RETRY_GROUP,
-        topics = OCR_REQUEST_RETRY_TOPICS,
-        groupId = OCR_REQUEST_RETRY_GROUP,
-        autoStartup = "#{!${uk.gov.companieshouse.ocrapiconsumer.error-consumer}}",
-        containerFactory = KAFKA_LISTENER_CONTAINER_FACTORY)
-    public void consumeOcrApiRequestRetryMessage(org.springframework.messaging.Message<OcrRequestMessage> message, ConsumerRecordMetadata metadata) {
-        
         logConsumeKafkaMessage(message.getPayload().getResponseId(), metadata);
 
         handleOcrRequestMessage(message, metadata.topic());
     }
-
 
     private void handleOcrRequestMessage(org.springframework.messaging.Message<OcrRequestMessage> message,
             String topicName) {
@@ -102,7 +95,7 @@ public class OcrApiConsumerKafkaConsumer {
             resetKeyFromRetryCounts(contextId); // must be last statement before error handling
 
         } catch (RetryableErrorException ree) {
-            
+
             LOG.errorContext(contextId, "Retryable Error consuming message", ree, null);
 
             retryMessage(contextId, message, topicName);
@@ -112,11 +105,19 @@ public class OcrApiConsumerKafkaConsumer {
         }
     }
 
+    private void delayRetry() {
+        try {
+            TimeUnit.SECONDS.sleep(RETRY_THROTTLE_RATE_SECONDS);
+        } catch (InterruptedException e) {
+            LOG.error("Error pausing thread", e);
+        }
+    }
+
     private void retryMessage(String contextId, org.springframework.messaging.Message<OcrRequestMessage> message, String currentTopic) {
 
         if (currentTopic.equals(getMainTopicName())) {
 
-            // TODO delay Jira
+            delayRetry();
 
             repostMessage(contextId, message.getPayload(), currentTopic, getRetryTopicName());
 
@@ -132,7 +133,7 @@ public class OcrApiConsumerKafkaConsumer {
 
                 retryCounts.put(contextId, retryCounts.getOrDefault(contextId, 0) + 1);
 
-                // TODO delay Jira
+                delayRetry();
 
                 LOG.infoContext(contextId, "Retrying processing message [count: " + retryCounts.get(contextId) + "]", null);
                 handleOcrRequestMessage(message, currentTopic);
