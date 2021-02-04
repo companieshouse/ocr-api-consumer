@@ -128,8 +128,15 @@ class OcrApiConsumerKafkaConsumerTest {
         doThrow(newRetryableError()).doNothing()
                 .when(ocrApiConsumerService).ocrRequest(message.getPayload());
 
+        StopWatch watch = new StopWatch();
+        watch.start();
+
         // When
         kafkaConsumer.consumeOcrApiRequestRetryMessage(message, metadataWithTopic(kafkaConsumer.getRetryTopicName()));
+
+        watch.stop();
+
+        assertTrue(watch.getTime() > (RETRY_THROTTLE_RATE_SECONDS * 1000));
 
         // Then
         verify(kafkaProducer, never()).sendMessage(any());
@@ -154,8 +161,15 @@ class OcrApiConsumerKafkaConsumerTest {
         when(serializerFactory.getGenericRecordSerializer(OcrRequestMessage.class)).thenReturn(serializer);
         when(serializer.toBinary(any())).thenReturn(new byte[4]);
 
+        StopWatch watch = new StopWatch();
+        watch.start();
+
         // When
         kafkaConsumer.consumeOcrApiRequestRetryMessage(message, metadataWithTopic(kafkaConsumer.getRetryTopicName()));
+
+        watch.stop();
+
+        assertTrue(watch.getTime() > (RETRY_THROTTLE_RATE_SECONDS * 1000));
 
         // Then
         verify(kafkaProducer).sendMessage(any());
