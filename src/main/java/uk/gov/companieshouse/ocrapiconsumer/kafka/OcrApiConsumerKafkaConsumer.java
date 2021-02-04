@@ -9,9 +9,7 @@ import java.util.concurrent.ExecutionException;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.kafka.annotation.KafkaListener;
-import org.springframework.kafka.annotation.PartitionOffset;
 import org.springframework.kafka.annotation.TopicPartition;
-import org.springframework.kafka.config.KafkaListenerEndpointRegistry;
 import org.springframework.kafka.listener.adapter.ConsumerRecordMetadata;
 import org.springframework.stereotype.Service;
 
@@ -23,6 +21,7 @@ import uk.gov.companieshouse.logging.Logger;
 import uk.gov.companieshouse.logging.LoggerFactory;
 import uk.gov.companieshouse.ocr.OcrRequestMessage;
 import uk.gov.companieshouse.ocrapiconsumer.kafka.exception.FatalErrorException;
+import uk.gov.companieshouse.ocrapiconsumer.kafka.exception.MaximumRetriesException;
 import uk.gov.companieshouse.ocrapiconsumer.kafka.exception.RetryableErrorException;
 import uk.gov.companieshouse.ocrapiconsumer.request.OcrApiConsumerService;
 
@@ -32,7 +31,6 @@ public class OcrApiConsumerKafkaConsumer {
 
     protected static final String OCR_REQUEST_TOPICS = "ocr-request";
     protected static final String OCR_REQUEST_RETRY_TOPICS = "ocr-request-retry";
-    protected static final String OCR_REQUEST_ERROR_TOPICS = "ocr-request-error";
 
     private static final String OCR_REQUEST_KEY_RETRY = OCR_REQUEST_RETRY_TOPICS;
 
@@ -40,29 +38,24 @@ public class OcrApiConsumerKafkaConsumer {
 
     private static final String OCR_REQUEST_GROUP = APPLICATION_NAME_SPACE + "-" + OCR_REQUEST_TOPICS;
     private static final String OCR_REQUEST_RETRY_GROUP = APPLICATION_NAME_SPACE + "-" + OCR_REQUEST_RETRY_TOPICS;
-    private static final String OCR_REQUEST_ERROR_GROUP = APPLICATION_NAME_SPACE + "-" + OCR_REQUEST_ERROR_TOPICS;
 
     private static final String KAFKA_LISTENER_CONTAINER_FACTORY =   "kafkaListenerContainerFactory";
 
     private static final int MAX_RETRY_ATTEMPTS = 3;
-
-    private static long errorRecoveryOffset = 0L;
 
     private final Map<String, Integer> retryCounts;
 
     private OcrApiConsumerService ocrApiConsumerService;
     private SerializerFactory serializerFactory;
     private OcrApiConsumerKafkaProducer kafkaProducer;
-    private final KafkaListenerEndpointRegistry registry;
 
     @Autowired
-    public OcrApiConsumerKafkaConsumer(SerializerFactory serializerFactory, OcrApiConsumerKafkaProducer kafkaProducer, final OcrApiConsumerService ocrApiConsumerService, KafkaListenerEndpointRegistry registry) {
+    public OcrApiConsumerKafkaConsumer(SerializerFactory serializerFactory, OcrApiConsumerKafkaProducer kafkaProducer, final OcrApiConsumerService ocrApiConsumerService) {
 
         this.retryCounts = new ConcurrentHashMap<>();
         this.serializerFactory = serializerFactory;
         this.kafkaProducer = kafkaProducer;
         this.ocrApiConsumerService = ocrApiConsumerService;
-        this.registry = registry;
     }
 
     @KafkaListener(
@@ -95,32 +88,6 @@ public class OcrApiConsumerKafkaConsumer {
         handleOcrRequestMessage(message, metadata.topic());
     }
 
-    //        topics = OCR_REQUEST_ERROR_TOPICS,
-
-
-    @KafkaListener(
-        id = OCR_REQUEST_ERROR_GROUP,
-        groupId = OCR_REQUEST_ERROR_GROUP,
-        autoStartup = "${uk.gov.companieshouse.ocrapiconsumer.error-consumer}",
-        concurrency = "${listen.concurrency:1}",
-        topicPartitions =
-           { @TopicPartition(topic = OCR_REQUEST_ERROR_TOPICS, partitions = { "0"},
-                partitionOffsets = @PartitionOffset(partition = "*", initialOffset ="0"))
-            },
-        containerFactory = KAFKA_LISTENER_CONTAINER_FACTORY)
-    public void errorOcrApiRequest(org.springframework.messaging.Message<OcrRequestMessage> message, ConsumerRecordMetadata metadata) {
-
-        logConsumeKafkaMessage(message.getPayload().getResponseId(), metadata);
-
-        if (metadata.offset() <= errorRecoveryOffset) {
-            repostMessage(message.getPayload().getResponseId(), message.getPayload(), getErrorTopicName(), getRetryTopicName());
-        } else {
-            LOG.infoContext(message.getPayload().getResponseId(), "Pausing error consumer as error recovery offset reached.", null);
-            
-            registry.getListenerContainer(OCR_REQUEST_ERROR_GROUP).pause();
-        }
-    }
-
 
     private void handleOcrRequestMessage(org.springframework.messaging.Message<OcrRequestMessage> message,
             String topicName) {
@@ -139,9 +106,14 @@ public class OcrApiConsumerKafkaConsumer {
             LOG.errorContext(contextId, "Retryable Error consuming message", ree, null);
 
             retryMessage(contextId, message, topicName);
+        } catch (MaximumRetriesException | FatalErrorException me) {
+            LOG.errorContext(contextId, me, null);
 
+            // TODO Send Error message to calling application (e.g. CHIPS) Jira
         } catch (Exception exception) {
             LOG.errorContext(contextId, "Unexpected Error when consuming message", exception, null);
+
+            // TODO Send Error message to calling application (e.g. CHIPS) Jira
         }
     }
 
@@ -159,8 +131,10 @@ public class OcrApiConsumerKafkaConsumer {
 
             if (retryCount >= getMaxRetryAttempts()) {
 
-                repostMessage(contextId, message.getPayload(), currentTopic, getErrorTopicName());
                 resetKeyFromRetryCounts(contextId);
+
+                throw new MaximumRetriesException();
+
             } else {
 
                 retryCounts.put(contextId, retryCounts.getOrDefault(contextId, 0) + 1);
@@ -229,10 +203,6 @@ public class OcrApiConsumerKafkaConsumer {
 
     String getRetryTopicName() {
         return OCR_REQUEST_RETRY_TOPICS;
-    }
-
-    private String getErrorTopicName() {
-        return OCR_REQUEST_ERROR_TOPICS;
     }
 
     private int getMaxRetryAttempts() {

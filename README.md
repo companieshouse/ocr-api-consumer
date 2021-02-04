@@ -2,10 +2,9 @@
 
 Service to consume requests for extraction of text from images and manage the requests to the OCR API.
 
-When this application starts up it will consume messages depending on the environment variable IS_ERROR_QUEUE_CONSUMER:
+When this application starts up it will consume messages on either the Main and Retry Topic.
 
-- IS_ERROR_QUEUE_CONSUMER = false: Main and Retry Topic. Here it will read from the last offset it has consumed on both topics
-- IS_ERROR_QUEUE_CONSUMER = true: Error topic. Here it will read in the latest offset in the error topic and store this. Then it process all records from the first offset unto the latest offset when the application was started (in error reading mode)
+There is no error topic processing so far since all clients require this data in a timely manner and so errors need to be sent back to the calling system in this case
 
 ## Requirements
 
@@ -33,16 +32,15 @@ The following is a list of mandatory environment variables for the service to ru
 
 Name                                        | Description                         | Example Value
 ------------------------------------------- | ----------------------------------- | -------------------------------------------------------------------------
-OCR_API_URL                                 | The URL of the ocr-api              | http://localhost:8080/api/ocr/image/tiff/extractText  (default value)
+OCR_API_URL                                 | The URL of the ocr-api              | `http://localhost:8080/api/ocr/image/tiff/extractText` (default value)
 KAFKA_BROKER_ADDR                           | Address of the Kafka Broker         | localhost:9092
-IS_ERROR_QUEUE_CONSUMER                     | True if an error instance of the app | false  
 CONSUMER_CONCURRENCY                        | Number of consumer threads          |
 
 ## Testing Locally (dev)
 
 ### Testing with postman
 
-Send a post request to http://localhost:9090/internal/ocr-requests with the following JSON body (each field is mandatory):
+Send a post request to `http://localhost:9090/internal/ocr-requests` with the following JSON body (each field is mandatory):
 
 ``` json
 {
