@@ -30,7 +30,7 @@ import uk.gov.companieshouse.ocrapiconsumer.request.OcrApiConsumerService;
 public class OcrApiConsumerKafkaConsumer {
 
     @Value("${uk.gov.companieshouse.ocrapiconsumer.retry-seconds}")
-    protected static final int RETRY_THROTTLE_RATE_SECONDS;
+    protected long RETRY_THROTTLE_RATE_SECONDS;
 
     protected static final String OCR_REQUEST_TOPICS = "ocr-request";
     protected static final String OCR_REQUEST_RETRY_TOPICS = "ocr-request-retry";

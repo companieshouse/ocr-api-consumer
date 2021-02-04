@@ -52,6 +52,7 @@ class OcrApiConsumerKafkaConsumerTest {
     @BeforeEach
     public void setup() {
         this.kafkaConsumer = new OcrApiConsumerKafkaConsumer(serializerFactory, kafkaProducer, ocrApiConsumerService);
+        kafkaConsumer.RETRY_THROTTLE_RATE_SECONDS = 5L;
     }
 
     @Test
