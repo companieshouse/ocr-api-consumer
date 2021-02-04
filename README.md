@@ -1,6 +1,11 @@
 # ocr-api-consumer
 
-Service to consume requests for extraction of text from images and manage the requests to the OCR API. Drop 1 will NOT include any Kafka.
+Service to consume requests for extraction of text from images and manage the requests to the OCR API.
+
+When this application starts up it will consume messages depending on the environment variable IS_ERROR_QUEUE_CONSUMER:
+
+- IS_ERROR_QUEUE_CONSUMER = false: Main and Retry Topic. Here it will read from the last offset it has consumed on both topics
+- IS_ERROR_QUEUE_CONSUMER = true: Error topic. Here it will read in the latest offset in the error topic and store this. Then it process all records from the first offset unto the latest offset when the application was started (in error reading mode)
 
 ## Requirements
 
@@ -17,6 +22,7 @@ Service to consume requests for extraction of text from images and manage the re
 ## Usage with Docker
 
 The service can be run using docker, with the addition of the jib maven plugin.
+
 - Run `mvn clean`
 - Run `mvn compile jib:dockerBuild` to compile the project into a docker image
 - Run `docker run -e OCR_API_URL -t -i -p 8080:8080 ocr-api-consumer:unversioned` to run the service on port 8080.
@@ -37,7 +43,8 @@ CONSUMER_CONCURRENCY                        | Number of consumer threads        
 ### Testing with postman
 
 Send a post request to http://localhost:9090/internal/ocr-requests with the following JSON body (each field is mandatory):
-```
+
+``` json
 {
   "image_endpoint": "http://testurl.com/cff/servlet/viewArticles?transaction_id=9613245852",
   "converted_text_endpoint": "http://testurl.com/ocr-results/",
@@ -46,7 +53,8 @@ Send a post request to http://localhost:9090/internal/ocr-requests with the foll
 ```
 
 ### Testing with curl
-```
+
+``` json
 curl --header "Content-Type: application/json" \
 --request POST \
 --data '{"image_endpoint": "http://testurl.com/cff/servlet/viewArticles?transaction_id=9613245852", "converted_text_endpoint": "http://testurl.com/ocr-results/", "response_id": "9613245852"}' \
