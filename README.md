@@ -2,7 +2,7 @@
 
 Service to consume requests for extraction of text from images and manage the requests to the OCR API.
 
-When this application starts up it will consume messages on either the Main and Retry Topic.
+When this application starts up it will consume messages on both the Main and Retry Topic.
 
 There is no error topic processing so far since all clients require this data in a timely manner and so errors need to be sent back to the calling system in this case
 
