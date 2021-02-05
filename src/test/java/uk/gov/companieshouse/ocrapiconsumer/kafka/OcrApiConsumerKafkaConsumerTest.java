@@ -28,6 +28,7 @@ import uk.gov.companieshouse.kafka.serialization.AvroSerializer;
 import uk.gov.companieshouse.kafka.serialization.SerializerFactory;
 import uk.gov.companieshouse.ocr.OcrRequestMessage;
 import uk.gov.companieshouse.ocrapiconsumer.groups.Unit;
+import uk.gov.companieshouse.ocrapiconsumer.kafka.exception.FatalErrorException;
 import uk.gov.companieshouse.ocrapiconsumer.kafka.exception.RetryableErrorException;
 import uk.gov.companieshouse.ocrapiconsumer.request.OcrApiConsumerService;
 
@@ -45,13 +46,15 @@ class OcrApiConsumerKafkaConsumerTest {
     private OcrApiConsumerKafkaProducer kafkaProducer;
     @Mock
     private OcrApiConsumerService ocrApiConsumerService;
+    @Mock
+    private OcrMessageErrorHandler ocrMessageErrorHandler;
 
     @InjectMocks
     private OcrApiConsumerKafkaConsumer kafkaConsumer;
 
     @BeforeEach
     public void setup() {
-        this.kafkaConsumer = new OcrApiConsumerKafkaConsumer(serializerFactory, kafkaProducer, ocrApiConsumerService);
+        this.kafkaConsumer = new OcrApiConsumerKafkaConsumer(serializerFactory, kafkaProducer, ocrApiConsumerService, ocrMessageErrorHandler);
     }
 
     @Test
@@ -127,7 +130,7 @@ class OcrApiConsumerKafkaConsumerTest {
     }
 
     @Test
-    @DisplayName("A retryable error occurs on a message from the retry Topic and reaches max retries so publish to error topic")
+    @DisplayName("A retryable error occurs on a message from the retry Topic and reaches max retries and logs error")
     void retryableErrorRetryAboveMaxRetriesTopic()
             throws SerializationException, ExecutionException, InterruptedException {
 
@@ -139,20 +142,43 @@ class OcrApiConsumerKafkaConsumerTest {
         doThrow(newRetryableError()).doThrow(newRetryableError()).doThrow(newRetryableError())
                 .when(ocrApiConsumerService).ocrRequest(message.getPayload());
 
-        when(serializerFactory.getGenericRecordSerializer(OcrRequestMessage.class)).thenReturn(serializer);
-        when(serializer.toBinary(any())).thenReturn(new byte[4]);
+        // When
+        kafkaConsumer.consumeOcrApiRequestRetryMessage(message, metadataWithTopic(kafkaConsumer.getRetryTopicName()));
+
+        // Then
+        verify(kafkaProducer, never()).sendMessage(any());
+        verify(ocrMessageErrorHandler).handleMaximumRetriesException(any(), any());;
+        assertEquals(null, kafkaConsumer.getRetryCounts().get(expectedCounterKey), "retry count reset sending error message");
+    }
+
+    @Test
+    @DisplayName("A retryable error occurs on a message and then any exception except MaximumRetriesException")
+    void GeneralException()
+            throws SerializationException, ExecutionException, InterruptedException {
+
+        // Given
+        org.springframework.messaging.Message<OcrRequestMessage> message = createTestMessage(
+                kafkaConsumer.getRetryTopicName());
+        String expectedCounterKey = CONTEXT_ID;
+
+        doThrow(newRetryableError()).doThrow(newFatalError())
+                .when(ocrApiConsumerService).ocrRequest(message.getPayload());
 
         // When
         kafkaConsumer.consumeOcrApiRequestRetryMessage(message, metadataWithTopic(kafkaConsumer.getRetryTopicName()));
 
         // Then
-        verify(kafkaProducer).sendMessage(any());
-        assertEquals(null, kafkaConsumer.getRetryCounts().get(expectedCounterKey), "retry count reset moving to error");
-
+        verify(kafkaProducer, never()).sendMessage(any());
+        verify(ocrMessageErrorHandler).generalException(any(), any());;
+        assertEquals(null, kafkaConsumer.getRetryCounts().get(expectedCounterKey), "retry count reset sending error message");
     }
 
     private RetryableErrorException newRetryableError() {
-        return new uk.gov.companieshouse.ocrapiconsumer.kafka.exception.RetryableErrorException("Dummy", new Exception("dummy cause"));
+        return new RetryableErrorException("Dummy", new Exception("dummy cause"));
+    }
+
+    private FatalErrorException newFatalError() {
+        return new FatalErrorException("Dummy");
     }
 
     private org.springframework.messaging.Message<OcrRequestMessage> createTestMessage(String receivedTopic) {
