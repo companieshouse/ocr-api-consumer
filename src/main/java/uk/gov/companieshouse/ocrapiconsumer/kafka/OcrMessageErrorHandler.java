@@ -20,19 +20,16 @@ public class OcrMessageErrorHandler {
     public void handleMaximumRetriesException(String contextId, MaximumRetriesException mre) {
         LOG.errorContext(contextId, "Maximum Retries reached", mre, null);
 
-        // TODO Send Error message to calling application (e.g. CHIPS) Jira
     }
 
     public void generalExceptionAfterRetry(String contextId, Exception mre) {
         LOG.errorContext(contextId, "Unexpected Error when retrying message", mre, null);
 
-        // TODO Send Error message to calling application (e.g. CHIPS) Jira
     }
 
 	public void generalException(String contextId, Exception exception) {
         LOG.errorContext(contextId, "Unexpected Error ", exception, null);
 
-        // TODO Send Error message to calling application (e.g. CHIPS) Jira
 	}
     
 }
