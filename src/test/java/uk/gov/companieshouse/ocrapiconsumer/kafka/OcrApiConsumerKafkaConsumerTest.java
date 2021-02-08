@@ -1,6 +1,7 @@
 package uk.gov.companieshouse.ocrapiconsumer.kafka;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
@@ -147,8 +148,8 @@ class OcrApiConsumerKafkaConsumerTest {
 
         // Then
         verify(kafkaProducer, never()).sendMessage(any());
-        verify(ocrMessageErrorHandler).handleMaximumRetriesException(any(), any());;
-        assertEquals(null, kafkaConsumer.getRetryCounts().get(expectedCounterKey), "retry count reset sending error message");
+        verify(ocrMessageErrorHandler).handleMaximumRetriesException(any(), any());
+        assertNull(kafkaConsumer.getRetryCounts().get(expectedCounterKey), "retry count reset sending error message");
     }
 
     @Test
@@ -169,8 +170,8 @@ class OcrApiConsumerKafkaConsumerTest {
 
         // Then
         verify(kafkaProducer, never()).sendMessage(any());
-        verify(ocrMessageErrorHandler).generalException(any(), any());;
-        assertEquals(null, kafkaConsumer.getRetryCounts().get(expectedCounterKey), "retry count reset sending error message");
+        verify(ocrMessageErrorHandler).generalException(any(), any());
+        assertNull(kafkaConsumer.getRetryCounts().get(expectedCounterKey), "retry count reset sending error message");
     }
 
     private RetryableErrorException newRetryableError() {
