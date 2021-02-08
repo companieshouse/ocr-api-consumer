@@ -3,9 +3,13 @@ package uk.gov.companieshouse.ocrapiconsumer.kafka;
 import static uk.gov.companieshouse.ocrapiconsumer.OcrApiConsumerApplication.APPLICATION_NAME_SPACE;
 
 import java.util.Date;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.annotation.TopicPartition;
 import org.springframework.kafka.listener.adapter.ConsumerRecordMetadata;
@@ -18,69 +22,142 @@ import uk.gov.companieshouse.kafka.serialization.SerializerFactory;
 import uk.gov.companieshouse.logging.Logger;
 import uk.gov.companieshouse.logging.LoggerFactory;
 import uk.gov.companieshouse.ocr.OcrRequestMessage;
+import uk.gov.companieshouse.ocrapiconsumer.kafka.exception.FatalErrorException;
 import uk.gov.companieshouse.ocrapiconsumer.kafka.exception.RetryableErrorException;
 import uk.gov.companieshouse.ocrapiconsumer.request.OcrApiConsumerService;
-
 
 @Service
 public class OcrApiConsumerKafkaConsumer {
 
+    @Value("${uk.gov.companieshouse.ocrapiconsumer.retry-seconds}")
+    protected long retryThrottleRateSeconds;
+
     protected static final String OCR_REQUEST_TOPICS = "ocr-request";
     protected static final String OCR_REQUEST_RETRY_TOPICS = "ocr-request-retry";
+    protected static final String OCR_REQUEST_ERROR_TOPICS = "ocr-request-error";
 
     private static final String OCR_REQUEST_KEY_RETRY = OCR_REQUEST_RETRY_TOPICS;
 
     private static final Logger LOG = LoggerFactory.getLogger(APPLICATION_NAME_SPACE);
 
     private static final String OCR_REQUEST_GROUP = APPLICATION_NAME_SPACE + "-" + OCR_REQUEST_TOPICS;
-    private static final String KAFKA_LISTENER_CONTAINER_FACTORY =   "kafkaListenerContainerFactory";
+    private static final String OCR_REQUEST_RETRY_GROUP = APPLICATION_NAME_SPACE + "-" + OCR_REQUEST_RETRY_TOPICS;
+
+    private static final String KAFKA_LISTENER_CONTAINER_FACTORY = "kafkaListenerContainerFactory";
+
+    private static final int MAX_RETRY_ATTEMPTS = 3;
+
+    private final Map<String, Integer> retryCounts;
 
     private OcrApiConsumerService ocrApiConsumerService;
     private SerializerFactory serializerFactory;
     private OcrApiConsumerKafkaProducer kafkaProducer;
 
     @Autowired
-    public OcrApiConsumerKafkaConsumer(SerializerFactory serializerFactory, OcrApiConsumerKafkaProducer kafkaProducer, final OcrApiConsumerService ocrApiConsumerService) {
-
+    public OcrApiConsumerKafkaConsumer(SerializerFactory serializerFactory, OcrApiConsumerKafkaProducer kafkaProducer,
+            final OcrApiConsumerService ocrApiConsumerService) {
+        this.retryCounts = new ConcurrentHashMap<>();
         this.serializerFactory = serializerFactory;
         this.kafkaProducer = kafkaProducer;
         this.ocrApiConsumerService = ocrApiConsumerService;
     }
 
-    @KafkaListener(
-        id = OCR_REQUEST_GROUP,
-        topics = OCR_REQUEST_TOPICS,
-        groupId = OCR_REQUEST_GROUP,
-        topicPartitions =
-        { @TopicPartition(topic = OCR_REQUEST_TOPICS, partitions = { "0-2" }),
-        },
-        autoStartup = "#{!${uk.gov.companieshouse.ocrapiconsumer.error-consumer}}",
-        containerFactory = KAFKA_LISTENER_CONTAINER_FACTORY)
-    public void consumeOcrApiRequestMessage(org.springframework.messaging.Message<OcrRequestMessage> message, ConsumerRecordMetadata meta) {
+    @KafkaListener(id = OCR_REQUEST_GROUP, topics = OCR_REQUEST_TOPICS, groupId = OCR_REQUEST_GROUP, topicPartitions = {
+            @TopicPartition(topic = OCR_REQUEST_TOPICS, partitions = {
+                    "0-2" }), }, autoStartup = "#{!${uk.gov.companieshouse.ocrapiconsumer.error-consumer}}", containerFactory = KAFKA_LISTENER_CONTAINER_FACTORY)
+    public void consumeOcrApiRequestMessage(org.springframework.messaging.Message<OcrRequestMessage> message,
+            ConsumerRecordMetadata metadata) {
+
+        logConsumeKafkaMessage(message.getPayload().getResponseId(), metadata);
+
+        handleOcrRequestMessage(message, metadata.topic());
+    }
+
+    @KafkaListener(id = OCR_REQUEST_RETRY_GROUP, topics = OCR_REQUEST_RETRY_TOPICS, groupId = OCR_REQUEST_RETRY_GROUP, autoStartup = "#{!${uk.gov.companieshouse.ocrapiconsumer.error-consumer}}", containerFactory = KAFKA_LISTENER_CONTAINER_FACTORY)
+    public void consumeOcrApiRequestRetryMessage(org.springframework.messaging.Message<OcrRequestMessage> message,
+            ConsumerRecordMetadata metadata) {
+
+        logConsumeKafkaMessage(message.getPayload().getResponseId(), metadata);
+
+        handleOcrRequestMessage(message, metadata.topic());
+    }
+
+    private void handleOcrRequestMessage(org.springframework.messaging.Message<OcrRequestMessage> message,
+            String topicName) {
 
         OcrRequestMessage ocrRequestMessage = message.getPayload();
-
-        LOG.infoContext(ocrRequestMessage.getResponseId(), "Consuming Message from offset [" + meta.offset() + "] on topic [" + meta.topic() + "] partition [" + meta.partition() + "]", null);
+        String contextId = ocrRequestMessage.getResponseId();
 
         try {
 
             ocrApiConsumerService.ocrRequest(ocrRequestMessage);
 
-        } catch (RetryableErrorException ree) {
-            
-            LOG.errorContext(ocrRequestMessage.getResponseId(), "Retryable Error consuming message", ree, null);
+            resetKeyFromRetryCounts(contextId); // must be last statement before error handling
 
-            repostMessage(ocrRequestMessage, OCR_REQUEST_RETRY_TOPICS);
+        } catch (RetryableErrorException ree) {
+
+            LOG.errorContext(contextId, "Retryable Error consuming message", ree, null);
+
+            retryMessage(contextId, message, topicName);
 
         } catch (Exception exception) {
-            LOG.errorContext(ocrRequestMessage.getResponseId(), "Unexpected Error when consuming message", exception, null);
+            LOG.errorContext(contextId, "Unexpected Error when consuming message", exception, null);
         }
     }
 
-    private void repostMessage(final OcrRequestMessage ocrRequestMessage, final String topic) {
+    @SuppressWarnings("java:S2142")
+    private void delayRetry() {
+        try {
+            TimeUnit.SECONDS.sleep(retryThrottleRateSeconds);
+        } catch (InterruptedException e) {
+            // We want to continue processing even if somehow our delay was cut short
+            LOG.error("Error pausing thread", e);
+        }
+    }
 
-        Message retryMessage = createRepostMessage(ocrRequestMessage, topic);
+    private void retryMessage(String contextId, org.springframework.messaging.Message<OcrRequestMessage> message, String currentTopic) {
+
+        if (currentTopic.equals(getMainTopicName())) {
+
+            delayRetry();
+
+            repostMessage(contextId, message.getPayload(), currentTopic, getRetryTopicName());
+
+        }  else if (currentTopic.equals(getRetryTopicName())) {
+
+            int retryCount = retryCounts.getOrDefault(contextId, 1);
+
+            if (retryCount >= getMaxRetryAttempts()) {
+
+                repostMessage(contextId, message.getPayload(), currentTopic, getErrorTopicName());
+                resetKeyFromRetryCounts(contextId);
+            } else {
+
+                retryCounts.put(contextId, retryCounts.getOrDefault(contextId, 0) + 1);
+
+                delayRetry();
+
+                LOG.infoContext(contextId, "Retrying processing message [count: " + retryCounts.get(contextId) + "]", null);
+                handleOcrRequestMessage(message, currentTopic);
+            }
+
+        } else {
+          
+           throw new FatalErrorException("Logic error in code");
+        }
+    }
+
+
+    private void resetKeyFromRetryCounts(String counterKey) {
+        retryCounts.remove(counterKey);
+    }
+
+    private void repostMessage(String contextId, final OcrRequestMessage ocrRequestMessage, final String fromTopic, final String toTopic) {
+
+        Message retryMessage = createRepostMessage(ocrRequestMessage, toTopic);
+
         String failureMessage = "Can not repost message";
+        LOG.infoContext(contextId, "Reposting message from topic [" + fromTopic + "]" + " to topic [" + toTopic + "]", null);
 
         try {
             kafkaProducer.sendMessage(retryMessage);
@@ -115,4 +192,32 @@ public class OcrApiConsumerKafkaConsumer {
 
         return retryMessage;
     }
+
+    protected String getMainTopicName() {
+        return OCR_REQUEST_TOPICS;
+    }
+
+    String getRetryTopicName() {
+        return OCR_REQUEST_RETRY_TOPICS;
+    }
+
+    private String getErrorTopicName() {
+        return OCR_REQUEST_ERROR_TOPICS;
+    }
+
+    private int getMaxRetryAttempts() {
+        return MAX_RETRY_ATTEMPTS;
+    }
+
+    // Use for unit testing
+    protected Map<String, Integer> getRetryCounts() {
+        return retryCounts;
+    }
+
+    // logging helper methods
+    private void logConsumeKafkaMessage(String contextId, ConsumerRecordMetadata meta) {
+
+        LOG.infoContext(contextId, "Consuming Message from offset [" + meta.offset() + "] on topic [" + meta.topic() + "] partition [" + meta.partition() + "] thread id [" + Thread.currentThread().getId() + "]", null);
+    }
+
 }
