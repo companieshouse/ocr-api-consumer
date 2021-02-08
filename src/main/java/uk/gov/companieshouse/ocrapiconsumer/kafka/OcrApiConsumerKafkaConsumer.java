@@ -30,7 +30,7 @@ import uk.gov.companieshouse.ocrapiconsumer.request.OcrApiConsumerService;
 public class OcrApiConsumerKafkaConsumer {
 
     @Value("${uk.gov.companieshouse.ocrapiconsumer.retry-seconds}")
-    protected long RETRY_THROTTLE_RATE_SECONDS;
+    protected long retryThrottleRateSeconds;
 
     protected static final String OCR_REQUEST_TOPICS = "ocr-request";
     protected static final String OCR_REQUEST_RETRY_TOPICS = "ocr-request-retry";
@@ -107,7 +107,7 @@ public class OcrApiConsumerKafkaConsumer {
 
     private void delayRetry() {
         try {
-            TimeUnit.SECONDS.sleep(RETRY_THROTTLE_RATE_SECONDS);
+            TimeUnit.SECONDS.sleep(retryThrottleRateSeconds);
         } catch (InterruptedException e) {
             LOG.error("Error pausing thread", e);
         }
