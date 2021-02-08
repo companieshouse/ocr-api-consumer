@@ -1,6 +1,7 @@
 package uk.gov.companieshouse.ocrapiconsumer.kafka;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
@@ -11,6 +12,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
+import org.apache.commons.lang.time.StopWatch;
 import org.apache.kafka.clients.producer.RecordMetadata;
 import org.apache.kafka.common.TopicPartition;
 import org.junit.jupiter.api.BeforeEach;
@@ -37,6 +39,8 @@ class OcrApiConsumerKafkaConsumerTest {
 
     private static final String CONTEXT_ID = "1";
 
+    private static final long RETRY_THROTTLE_RATE_SECONDS = 3L;
+
     @Mock
     private SerializerFactory serializerFactory;
     @Mock
@@ -52,6 +56,7 @@ class OcrApiConsumerKafkaConsumerTest {
     @BeforeEach
     public void setup() {
         this.kafkaConsumer = new OcrApiConsumerKafkaConsumer(serializerFactory, kafkaProducer, ocrApiConsumerService);
+        kafkaConsumer.retryThrottleRateSeconds = RETRY_THROTTLE_RATE_SECONDS;
     }
 
     @Test
@@ -82,8 +87,15 @@ class OcrApiConsumerKafkaConsumerTest {
         when(serializerFactory.getGenericRecordSerializer(OcrRequestMessage.class)).thenReturn(serializer);
         when(serializer.toBinary(any())).thenReturn(new byte[4]);
 
+        StopWatch watch = new StopWatch();
+        watch.start();
+
         // When
         kafkaConsumer.consumeOcrApiRequestMessage(message, metadataWithTopic(kafkaConsumer.getMainTopicName()));
+
+        watch.stop();
+
+        assertTrue(watch.getTime() > (RETRY_THROTTLE_RATE_SECONDS * 1000));
 
         // Then
         verify(kafkaProducer).sendMessage(any());
@@ -116,8 +128,15 @@ class OcrApiConsumerKafkaConsumerTest {
         doThrow(newRetryableError()).doNothing()
                 .when(ocrApiConsumerService).ocrRequest(message.getPayload());
 
+        StopWatch watch = new StopWatch();
+        watch.start();
+
         // When
         kafkaConsumer.consumeOcrApiRequestRetryMessage(message, metadataWithTopic(kafkaConsumer.getRetryTopicName()));
+
+        watch.stop();
+
+        assertTrue(watch.getTime() > (RETRY_THROTTLE_RATE_SECONDS * 1000));
 
         // Then
         verify(kafkaProducer, never()).sendMessage(any());
@@ -142,8 +161,15 @@ class OcrApiConsumerKafkaConsumerTest {
         when(serializerFactory.getGenericRecordSerializer(OcrRequestMessage.class)).thenReturn(serializer);
         when(serializer.toBinary(any())).thenReturn(new byte[4]);
 
+        StopWatch watch = new StopWatch();
+        watch.start();
+
         // When
         kafkaConsumer.consumeOcrApiRequestRetryMessage(message, metadataWithTopic(kafkaConsumer.getRetryTopicName()));
+
+        watch.stop();
+
+        assertTrue(watch.getTime() > (RETRY_THROTTLE_RATE_SECONDS * 1000));
 
         // Then
         verify(kafkaProducer).sendMessage(any());
