@@ -31,7 +31,7 @@ OCR_API_URL                                 | The URL of the ocr-api            
 KAFKA_BROKER_ADDR                           | Address of the Kafka Broker                  | localhost:9092
 IS_ERROR_QUEUE_CONSUMER                     | True if an error instance of the app         | false  
 CONSUMER_CONCURRENCY                        | Number of consumer threads                   |
-OCR_REQUEST_TIMEOUT                         | Optional read timeout for API calls (millis) | 60000
+OCR_REQUEST_TIMEOUT_SECONDS                 | Optional request timeout for API calls       | 300
 
 ## Testing Locally (dev)
 

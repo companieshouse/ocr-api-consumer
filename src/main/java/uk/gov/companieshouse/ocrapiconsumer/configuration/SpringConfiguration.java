@@ -13,11 +13,12 @@ import java.time.Duration;
 @Configuration
 public class SpringConfiguration {
 
-    private static final int DEFAULT_REQUEST_TIMEOUT = 300_000;
+    private static final int DEFAULT_REQUEST_TIMEOUT_SECONDS = 300;
+    private static final String OCR_REQUEST_TIMEOUT_SECONDS = "OCR_REQUEST_TIMEOUT_SECONDS";
 
     private int getTimeout(final EnvironmentReader environmentReader) {
-        Integer timeout = environmentReader.getOptionalInteger("OCR_REQUEST_TIMEOUT");
-        return timeout == null ? DEFAULT_REQUEST_TIMEOUT : timeout;
+        Integer timeout = environmentReader.getOptionalInteger(OCR_REQUEST_TIMEOUT_SECONDS);
+        return timeout == null ? DEFAULT_REQUEST_TIMEOUT_SECONDS : timeout;
     }
 
     @Bean
@@ -28,8 +29,10 @@ public class SpringConfiguration {
     @Bean
     RestTemplate restTemplate(final RestTemplateBuilder restTemplateBuilder,
                               final EnvironmentReader environmentReader) {
+        Duration timeoutInSeconds = Duration.ofSeconds(getTimeout(environmentReader));
         return restTemplateBuilder
-                .setReadTimeout(Duration.ofMillis(getTimeout(environmentReader)))
+                .setConnectTimeout(timeoutInSeconds)
+                .setReadTimeout(timeoutInSeconds)
                 .build();
     }
 

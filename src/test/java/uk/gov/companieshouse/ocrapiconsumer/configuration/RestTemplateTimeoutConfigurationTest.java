@@ -2,7 +2,6 @@ package uk.gov.companieshouse.ocrapiconsumer.configuration;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -22,9 +21,9 @@ import java.time.Duration;
 @ExtendWith(MockitoExtension.class)
 class RestTemplateTimeoutConfigurationTest {
 
-    private static final int DEFAULT_REQUEST_TIMEOUT = 300_000;
-    private static final Integer MOCK_TIMEOUT = 60_000;
-    private static final String OCR_REQUEST_TIMEOUT = "OCR_REQUEST_TIMEOUT";
+    private static final int DEFAULT_REQUEST_TIMEOUT_SECONDS = 300;
+    private static final Integer MOCK_TIMEOUT_SECONDS = 60;
+    private static final String OCR_REQUEST_TIMEOUT_SECONDS = "OCR_REQUEST_TIMEOUT_SECONDS";
 
     @Mock
     private RestTemplateBuilder mockRestTemplateBuilder;
@@ -41,16 +40,19 @@ class RestTemplateTimeoutConfigurationTest {
     @Test
     void testReadTimeoutEnvVariableUsed() {
         //given
-        Duration expected = Duration.ofMillis(MOCK_TIMEOUT);
-        doReturn(MOCK_TIMEOUT).when(environmentReader).getOptionalInteger(OCR_REQUEST_TIMEOUT);
-        doReturn(mockRestTemplateBuilder).when(mockRestTemplateBuilder).setReadTimeout(any());
+        Duration expected = Duration.ofSeconds(MOCK_TIMEOUT_SECONDS);
+        doReturn(MOCK_TIMEOUT_SECONDS).when(environmentReader).getOptionalInteger(OCR_REQUEST_TIMEOUT_SECONDS);
+        doReturn(mockRestTemplateBuilder).when(mockRestTemplateBuilder)
+                .setReadTimeout(Duration.ofSeconds(MOCK_TIMEOUT_SECONDS));
+        doReturn(mockRestTemplateBuilder).when(mockRestTemplateBuilder)
+                .setConnectTimeout(Duration.ofSeconds(MOCK_TIMEOUT_SECONDS));
         doReturn(new RestTemplate()).when(mockRestTemplateBuilder).build();
 
         // when
         RestTemplate restTemplate = springConfiguration.restTemplate(mockRestTemplateBuilder, environmentReader);
 
         // then
-        verify(environmentReader, times(1)).getOptionalInteger(OCR_REQUEST_TIMEOUT);
+        verify(environmentReader, times(1)).getOptionalInteger(OCR_REQUEST_TIMEOUT_SECONDS);
         verify(mockRestTemplateBuilder).setReadTimeout(timeout.capture());
         Duration actual = timeout.getValue();
         assertThat(actual, is(expected));
@@ -60,9 +62,12 @@ class RestTemplateTimeoutConfigurationTest {
     @Test
     void testReadTimeoutDefaultUsed() {
         // given
-        Duration expected = Duration.ofMillis(DEFAULT_REQUEST_TIMEOUT);
-        doReturn(null).when(environmentReader).getOptionalInteger(OCR_REQUEST_TIMEOUT);
-        doReturn(mockRestTemplateBuilder).when(mockRestTemplateBuilder).setReadTimeout(any());
+        Duration expected = Duration.ofSeconds(DEFAULT_REQUEST_TIMEOUT_SECONDS);
+        doReturn(null).when(environmentReader).getOptionalInteger(OCR_REQUEST_TIMEOUT_SECONDS);
+        doReturn(mockRestTemplateBuilder).when(mockRestTemplateBuilder)
+                .setReadTimeout(Duration.ofSeconds(DEFAULT_REQUEST_TIMEOUT_SECONDS));
+        doReturn(mockRestTemplateBuilder).when(mockRestTemplateBuilder)
+                .setConnectTimeout(Duration.ofSeconds(DEFAULT_REQUEST_TIMEOUT_SECONDS));
         doReturn(new RestTemplate()).when(mockRestTemplateBuilder).build();
 
         // when
@@ -70,7 +75,7 @@ class RestTemplateTimeoutConfigurationTest {
 
         // then
         verify(mockRestTemplateBuilder).setReadTimeout(timeout.capture());
-        verify(environmentReader, times(1)).getOptionalInteger(OCR_REQUEST_TIMEOUT);
+        verify(environmentReader, times(1)).getOptionalInteger(OCR_REQUEST_TIMEOUT_SECONDS);
         Duration actual = timeout.getValue();
         assertThat(actual, is(expected));
 
