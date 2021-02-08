@@ -105,10 +105,12 @@ public class OcrApiConsumerKafkaConsumer {
         }
     }
 
+    @SuppressWarnings("java:S2142")
     private void delayRetry() {
         try {
             TimeUnit.SECONDS.sleep(retryThrottleRateSeconds);
         } catch (InterruptedException e) {
+            // We want to continue processing even if somehow our delay was cut short
             LOG.error("Error pausing thread", e);
         }
     }
