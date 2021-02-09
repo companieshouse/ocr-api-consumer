@@ -95,7 +95,7 @@ public class OcrApiConsumerKafkaConsumer {
             String topicName) {
 
         OcrRequestMessage ocrRequestMessage = message.getPayload();
-        String contextId = ocrRequestMessage.getResponseId();
+        String contextId = ocrRequestMessage.getContextId();
 
         try {
 
