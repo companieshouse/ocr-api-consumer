@@ -5,6 +5,8 @@ import static org.hamcrest.Matchers.is;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static uk.gov.companieshouse.ocrapiconsumer.configuration.SpringConfiguration.DEFAULT_REQUEST_TIMEOUT_SECONDS;
+import static uk.gov.companieshouse.ocrapiconsumer.configuration.SpringConfiguration.OCR_REQUEST_TIMEOUT_SECONDS;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -21,9 +23,7 @@ import java.time.Duration;
 @ExtendWith(MockitoExtension.class)
 class RestTemplateTimeoutConfigurationTest {
 
-    private static final int DEFAULT_REQUEST_TIMEOUT_SECONDS = 300;
     private static final Integer MOCK_TIMEOUT_SECONDS = 60;
-    private static final String OCR_REQUEST_TIMEOUT_SECONDS = "OCR_REQUEST_TIMEOUT_SECONDS";
 
     @Mock
     private RestTemplateBuilder mockRestTemplateBuilder;

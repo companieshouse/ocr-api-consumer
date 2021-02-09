@@ -37,7 +37,7 @@ OCR_API_URL                                 | The URL of the ocr-api            
 KAFKA_BROKER_ADDR                           | Address of the Kafka Broker            | localhost:9092
 CONSUMER_CONCURRENCY                        | Number of consumer threads             | 3
 RETRY_THROTTLE_RATE_SECONDS                 | Number of seconds before retrying      | 3
-OCR_REQUEST_TIMEOUT_SECONDS                 | Optional request timeout for API calls | 300
+OCR_REQUEST_TIMEOUT_SECONDS                 | Optional request timeout for API calls | 300 (default value)
 
 ## Testing Locally (dev)
 
