@@ -219,7 +219,7 @@ class OcrApiConsumerKafkaConsumerTest {
             private OcrRequestMessage createOcrRequest() {
 
                 OcrRequestMessage ocrRequestMessage = new OcrRequestMessage();
-                ocrRequestMessage.setResponseId(CONTEXT_ID);
+                ocrRequestMessage.setContextId(CONTEXT_ID);
 
                 return ocrRequestMessage;
             }
