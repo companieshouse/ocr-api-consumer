@@ -112,7 +112,8 @@ public class OcrApiConsumerKafkaConsumer {
 
             } catch (MaximumRetriesException mre) {
                 resetKeyFromRetryCounts(contextId);
-                ocrMessageErrorHandler.handleMaximumRetriesException(contextId, mre);
+                ocrMessageErrorHandler
+                        .handleMaximumRetriesException(contextId, mre, message.getPayload().getConvertedTextEndpoint());
 
             } catch (Exception ex) {
                 resetKeyFromRetryCounts(contextId);

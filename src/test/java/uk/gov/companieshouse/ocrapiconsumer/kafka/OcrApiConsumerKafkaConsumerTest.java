@@ -174,7 +174,7 @@ class OcrApiConsumerKafkaConsumerTest {
 
         // Then
         verify(kafkaProducer, never()).sendMessage(any());
-        verify(ocrMessageErrorHandler).handleMaximumRetriesException(any(), any());
+        verify(ocrMessageErrorHandler).handleMaximumRetriesException(any(), any(), any());
         assertNull(kafkaConsumer.getRetryCounts().get(expectedCounterKey), "retry count reset sending error message");
     }
 

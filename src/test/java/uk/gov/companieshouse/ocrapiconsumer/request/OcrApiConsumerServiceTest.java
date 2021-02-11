@@ -23,7 +23,7 @@ class OcrApiConsumerServiceTest extends TestParent {
     private ChipsImageAdapter chipsImageAdapter;
 
     @Mock
-    private ChipsExtractedTextAdapter chipsExtractedTextAdapter;
+    private CallbackExtractedTextAdapter callbackExtractedTextAdapter;
 
     @InjectMocks
     private OcrApiConsumerService ocrApiConsumerService;
@@ -41,11 +41,11 @@ class OcrApiConsumerServiceTest extends TestParent {
         when(ocrApiRequestAdapter.sendOcrRequestToOcrApi(MOCK_TIFF_CONTENT, RESPONSE_ID)).thenReturn(response);
 
         // when
-        ocrApiConsumerService.logOcrRequest(IMAGE_ENDPOINT, CONVERTED_TEXT_ENDPOINT, RESPONSE_ID);
+        ocrApiConsumerService.logOcrRequest(IMAGE_ENDPOINT, EXTRACTED_TEXT_ENDPOINT, RESPONSE_ID);
 
         // then
         verify(chipsImageAdapter).getTiffImageFromChips(IMAGE_ENDPOINT);
         verify(ocrApiRequestAdapter).sendOcrRequestToOcrApi(MOCK_TIFF_CONTENT, RESPONSE_ID);
-        verify(chipsExtractedTextAdapter).sendTextResult(CONVERTED_TEXT_ENDPOINT, extractTextResultDTO);
+        verify(callbackExtractedTextAdapter).sendTextResult(EXTRACTED_TEXT_ENDPOINT, extractTextResultDTO);
     }
 }

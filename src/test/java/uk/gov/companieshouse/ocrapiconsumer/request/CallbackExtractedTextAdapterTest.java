@@ -17,7 +17,7 @@ import uk.gov.companieshouse.ocrapiconsumer.groups.Unit;
 
 @Unit
 @ExtendWith(MockitoExtension.class)
-class ChipsExtractedTextAdapterTest extends TestParent {
+class CallbackExtractedTextAdapterTest extends TestParent {
 
     private ExtractTextResultDTO extractTextResultDTO;
 
@@ -25,7 +25,7 @@ class ChipsExtractedTextAdapterTest extends TestParent {
     private RestTemplate restTemplate;
 
     @InjectMocks
-    private ChipsExtractedTextAdapter chipsExtractedTextAdapter;
+    private CallbackExtractedTextAdapter callbackExtractedTextAdapter;
 
     @BeforeEach
     void setupTests() {
@@ -35,13 +35,26 @@ class ChipsExtractedTextAdapterTest extends TestParent {
     @Test
     void testSendExtractedTextSuccessfully() {
         // given
-        when(restTemplate.postForEntity(eq(CONVERTED_TEXT_ENDPOINT), any(), any()))
+        when(restTemplate.postForEntity(eq(EXTRACTED_TEXT_ENDPOINT), any(), any()))
                 .thenReturn(new ResponseEntity<>(HttpStatus.OK));
 
         // when
-        chipsExtractedTextAdapter.sendTextResult(CONVERTED_TEXT_ENDPOINT, extractTextResultDTO);
+        callbackExtractedTextAdapter.sendTextResult(EXTRACTED_TEXT_ENDPOINT, extractTextResultDTO);
 
         // then
-        verify(restTemplate).postForEntity(eq(CONVERTED_TEXT_ENDPOINT), any(), any());
+        verify(restTemplate).postForEntity(eq(EXTRACTED_TEXT_ENDPOINT), any(), any());
+    }
+
+    @Test
+    void testSendExtractedTextError() {
+        // given
+        when(restTemplate.postForEntity(eq(EXTRACTED_TEXT_ENDPOINT), any(), any()))
+                .thenReturn(new ResponseEntity<>(HttpStatus.OK));
+
+        // when
+        callbackExtractedTextAdapter.sendTextResultError(EXTRACTED_TEXT_ENDPOINT, EXTRACTED_TEXT_ENDPOINT);
+
+        // then
+        verify(restTemplate).postForEntity(eq(EXTRACTED_TEXT_ENDPOINT), any(), any());
     }
 }
