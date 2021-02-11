@@ -3,6 +3,7 @@ package uk.gov.companieshouse.ocrapiconsumer.kafka;
 import static uk.gov.companieshouse.ocrapiconsumer.OcrApiConsumerApplication.APPLICATION_NAME_SPACE;
 
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
@@ -235,9 +236,15 @@ public class OcrApiConsumerKafkaConsumer {
     }
 
     // logging helper methods
-    private void logConsumeKafkaMessage(String contextId, ConsumerRecordMetadata meta) {
+    private void logConsumeKafkaMessage(String contextId, ConsumerRecordMetadata metadata) {
 
-        LOG.infoContext(contextId, "Consuming Message from offset [" + meta.offset() + "] on topic [" + meta.topic() + "] partition [" + meta.partition() + "] thread id [" + Thread.currentThread().getId() + "]", null);
+        Map<String, Object> metadataMap = new HashMap<>();
+        metadataMap.put("topic", metadata.topic());
+        metadataMap.put("partition", metadata.partition());
+        metadataMap.put("offset", metadata.offset());
+        metadataMap.put("application thread ID", metadata.partition());
+
+        LOG.infoContext(contextId, "Consuming ocr-request Message ", metadataMap);
     }
 
 }
