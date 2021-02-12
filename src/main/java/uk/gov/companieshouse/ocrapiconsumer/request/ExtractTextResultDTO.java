@@ -8,6 +8,24 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  */
 public class ExtractTextResultDTO {
 
+    protected static final String OCR_CONVERSION_ERROR_TEXT = "UNABLE_TO_PROCESS_OCR_CONVERSION";
+
+    /**
+     * Creates an extracted text result with default values and the context id, for use in non-retryable errors.
+     * @param contextId The context ID of the application.
+     * @return          An ExtractTextResultDTO object with default values.
+     */
+    static ExtractTextResultDTO createErrorExtractTextResultDTOFromContextId(String contextId) {
+        ExtractTextResultDTO extractedTextError = new ExtractTextResultDTO();
+        extractedTextError.setAverageConfidenceScore(0);
+        extractedTextError.setLowestConfidenceScore(0);
+        extractedTextError.setOcrProcessingTimeMs(0L);
+        extractedTextError.setTotalProcessingTimeMs(0L);
+        extractedTextError.setResponseId(contextId);
+        extractedTextError.setExtractedText(OCR_CONVERSION_ERROR_TEXT);
+        return extractedTextError;
+    }
+
     /**
      *  The text for the OCR request
      */

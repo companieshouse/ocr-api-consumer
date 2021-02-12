@@ -3,7 +3,7 @@ package uk.gov.companieshouse.ocrapiconsumer.request;
 import org.springframework.http.ResponseEntity;
 
 public class TestParent {
-    protected static final String RESPONSE_ID = "ABC";
+    protected static final String CONTEXT_ID = "ABC";
     protected static final String IMAGE_ENDPOINT = "https://image-endpoint";
     protected static final String EXTRACTED_TEXT_ENDPOINT = "https://converted-text-endpoint";
     protected static final byte[] MOCK_TIFF_CONTENT = {0, 1, 2};
@@ -18,7 +18,7 @@ public class TestParent {
 
     protected ExtractTextResultDTO createMockTextResult() {
         ExtractTextResultDTO extractTextResultDTO = new ExtractTextResultDTO();
-        extractTextResultDTO.setResponseId(RESPONSE_ID);
+        extractTextResultDTO.setResponseId(CONTEXT_ID);
         extractTextResultDTO.setLowestConfidenceScore(LOWEST_CONFIDENCE_SCORE);
         extractTextResultDTO.setAverageConfidenceScore(AVERAGE_CONFIDENCE_SCORE);
         extractTextResultDTO.setExtractedText(EXTRACTED_TEXT);
@@ -28,7 +28,7 @@ public class TestParent {
     }
 
     protected OcrRequest createMockOcrRequest() {
-        ocrRequest = new OcrRequest(IMAGE_ENDPOINT, EXTRACTED_TEXT_ENDPOINT, RESPONSE_ID);
+        ocrRequest = new OcrRequest(IMAGE_ENDPOINT, EXTRACTED_TEXT_ENDPOINT, CONTEXT_ID);
         return ocrRequest;
     }
 

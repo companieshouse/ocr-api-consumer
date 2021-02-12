@@ -1,16 +1,20 @@
 package uk.gov.companieshouse.ocrapiconsumer.request;
 
+import static uk.gov.companieshouse.ocrapiconsumer.OcrApiConsumerApplication.APPLICATION_NAME_SPACE;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
+import uk.gov.companieshouse.logging.Logger;
+import uk.gov.companieshouse.logging.LoggerFactory;
 import uk.gov.companieshouse.ocrapiconsumer.kafka.exception.RetryableErrorException;
 
 @Component
 public class CallbackExtractedTextAdapter {
 
-    public static final String OCR_CONVERSION_ERROR_TEXT = "UNABLE_TO_PROCESS_OCR_CONVERSION";
+    private static final Logger LOG = LoggerFactory.getLogger(APPLICATION_NAME_SPACE);
+
     private final RestTemplate restTemplate;
 
     @Autowired
@@ -19,7 +23,7 @@ public class CallbackExtractedTextAdapter {
     }
 
     /**
-     * Sends the extracted text to CHIPS for use in rules.
+     * Sends the extracted text to the extracted text endpoint.
      * @param   extractedTextEndpoint   The endpoint to send the extracted text to.
      * @param   extractedText           The extracted text DTO object.
      */
@@ -35,30 +39,21 @@ public class CallbackExtractedTextAdapter {
     }
 
     /**
-     * Sends the extracted text with default values to CHIPS for non-retryable errors
+     * Sends the extracted text with default values to the extracted text endpoint for non-retryable errors
      * @param   contextId               The context ID of the application.
      * @param   extractedTextEndpoint   The endpoint to send the extracted text to.
      */
     public void sendTextResultError(String contextId, String extractedTextEndpoint) {
-        ExtractTextResultDTO extractedTextError = createErrorExtractTextResultDTO(contextId);
+        ExtractTextResultDTO extractedTextError = ExtractTextResultDTO
+                .createErrorExtractTextResultDTOFromContextId(contextId);
 
-        HttpEntity<ExtractTextResultDTO> entity = new HttpEntity<>(extractedTextError);
-        restTemplate.postForEntity(extractedTextEndpoint, entity, String.class);
+        try {
+            HttpEntity<ExtractTextResultDTO> entity = new HttpEntity<>(extractedTextError);
+            restTemplate.postForEntity(extractedTextEndpoint, entity, String.class);
+        } catch (Exception e) {
+            // Log the exception instead of re-throwing as it could cause an infinite loop of RetryableErrorExceptions
+            LOG.errorContext(contextId, e, null);
+        }
     }
 
-    /**
-     * Creates an extracted text result with default values, for use in non-retryable errors.
-     * @param contextId The context ID of the application.
-     * @return          An ExtractTextResultDTO object with default values.
-     */
-    private ExtractTextResultDTO createErrorExtractTextResultDTO(String contextId) {
-        ExtractTextResultDTO extractedTextError = new ExtractTextResultDTO();
-        extractedTextError.setAverageConfidenceScore(0);
-        extractedTextError.setLowestConfidenceScore(0);
-        extractedTextError.setOcrProcessingTimeMs(0);
-        extractedTextError.setTotalProcessingTimeMs(0);
-        extractedTextError.setResponseId(contextId);
-        extractedTextError.setExtractedText(OCR_CONVERSION_ERROR_TEXT);
-        return extractedTextError;
-    }
 }

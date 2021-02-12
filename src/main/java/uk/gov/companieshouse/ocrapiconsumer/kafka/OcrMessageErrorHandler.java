@@ -30,14 +30,14 @@ public class OcrMessageErrorHandler {
         callbackExtractedTextAdapter.sendTextResultError(contextId, extractedTextEndpoint);
     }
 
-    public void generalExceptionAfterRetry(String contextId, Exception mre) {
+    public void generalExceptionAfterRetry(String contextId, Exception mre, String extractedTextEndpoint) {
         LOG.errorContext(contextId, "Unexpected Error when retrying message", mre, null);
-
+        callbackExtractedTextAdapter.sendTextResultError(contextId, extractedTextEndpoint);
     }
 
-	public void generalException(String contextId, Exception exception) {
+	public void generalException(String contextId, Exception exception, String extractedTextEndpoint) {
         LOG.errorContext(contextId, "Unexpected Error ", exception, null);
-
-	}
+        callbackExtractedTextAdapter.sendTextResultError(contextId, extractedTextEndpoint);
+    }
     
 }
