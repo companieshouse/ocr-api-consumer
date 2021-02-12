@@ -20,15 +20,15 @@ public class OcrApiConsumerService {
     private static final Logger LOG = LoggerFactory.getLogger(OcrApiConsumerApplication.APPLICATION_NAME_SPACE);
     private final OcrApiRequestAdapter ocrApiRequestAdapter;
     private final ChipsImageAdapter chipsImageAdapter;
-    private final ChipsExtractedTextAdapter chipsExtractedTextAdapter;
+    private final CallbackExtractedTextAdapter callbackExtractedTextAdapter;
 
     @Autowired
     public OcrApiConsumerService(OcrApiRequestAdapter ocrApiRequestAdapter,
                                  ChipsImageAdapter chipsImageAdapter,
-                                 ChipsExtractedTextAdapter chipsExtractedTextAdapter) {
+                                 CallbackExtractedTextAdapter callbackExtractedTextAdapter) {
         this.ocrApiRequestAdapter = ocrApiRequestAdapter;
         this.chipsImageAdapter = chipsImageAdapter;
-        this.chipsExtractedTextAdapter = chipsExtractedTextAdapter;
+        this.callbackExtractedTextAdapter = callbackExtractedTextAdapter;
     }
 
     public void ocrRequest(OcrRequestMessage message) {
@@ -80,7 +80,7 @@ public class OcrApiConsumerService {
     }
 
     private void sendTextResult(OcrRequest ocrRequest, ExtractTextResultDTO extractedText) {
-        chipsExtractedTextAdapter.sendTextResult( ocrRequest.getConvertedTextEndpoint(), extractedText);
+        callbackExtractedTextAdapter.sendTextResult( ocrRequest.getConvertedTextEndpoint(), extractedText);
     }
 
 
