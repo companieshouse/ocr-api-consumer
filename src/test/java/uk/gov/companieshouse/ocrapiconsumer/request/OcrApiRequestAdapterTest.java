@@ -41,7 +41,7 @@ class OcrApiRequestAdapterTest extends TestParent {
 
         // when
         ResponseEntity<ExtractTextResultDTO> actual = ocrApiRequestAdapter
-                .sendOcrRequestToOcrApi(MOCK_TIFF_CONTENT, RESPONSE_ID);
+                .sendOcrRequestToOcrApi(MOCK_TIFF_CONTENT, CONTEXT_ID);
 
         // then
         assertThat(actual, is(expected));
