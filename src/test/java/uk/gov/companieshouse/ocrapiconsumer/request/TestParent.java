@@ -3,6 +3,7 @@ package uk.gov.companieshouse.ocrapiconsumer.request;
 import org.springframework.http.ResponseEntity;
 
 public class TestParent {
+    protected static final String CONTEXT_ID = "XYZ";
     protected static final String RESPONSE_ID = "ABC";
     protected static final String IMAGE_ENDPOINT = "https://image-endpoint";
     protected static final String CONVERTED_TEXT_ENDPOINT = "https://converted-text-endpoint";
