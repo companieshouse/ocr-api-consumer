@@ -32,7 +32,7 @@ The following is a list of mandatory environment variables for the service to ru
 
 Name                                        | Description                          | Example Value
 ------------------------------------------- | ------------------------------------ | -------------------------------------------------------------------------
-OCR_API_URL                                 | The URL of the ocr-api               | http://localhost:8080/api/ocr/image/tiff/extractText  (default value)
+OCR_API_URL                                 | The URL of the ocr-api               | `http://localhost:8080/api/ocr/image/tiff/extractText`
 KAFKA_BROKER_ADDR                           | Address of the Kafka Broker          | localhost:9092
 CONSUMER_CONCURRENCY                        | Number of consumer threads           | 3
 RETRY_THROTTLE_RATE_SECONDS                 | Number of seconds before retrying    | 3

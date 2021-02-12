@@ -12,6 +12,7 @@ import uk.gov.companieshouse.ocr.OcrRequestMessage;
 import uk.gov.companieshouse.ocrapiconsumer.OcrApiConsumerApplication;
 
 import java.io.IOException;
+import java.util.Map;
 
 @Service
 public class OcrApiConsumerService {
@@ -56,12 +57,14 @@ public class OcrApiConsumerService {
         ResponseEntity<ExtractTextResultDTO> response = sendRequestToOcrMicroservice(ocrRequest.getContextId(), image, ocrRequest.getResponseId());
 
         ExtractTextResultDTO extractedText = null;
+        Map<String, Object> metadata = null;
         if (response != null) {
             extractedText = response.getBody();
+            metadata = extractedText != null ? extractedText.metadataMap() : null;
         }
 
         LOG.debugContext(ocrRequest.getContextId(),
-                "Sending the extracted text response for the articles of association", null);
+                "Sending the extracted text response for the articles of association", metadata);
         sendTextResult(ocrRequest, extractedText);
     }
 
@@ -100,9 +103,18 @@ public class OcrApiConsumerService {
         LOG.debugContext(contextId, "Sending image to ocr microservice for conversion", null);
 
         ResponseEntity<ExtractTextResultDTO> response = sendRequestToOcrMicroservice(contextId, image, responseId);
-        LOG.debugContext(contextId, "Processing time: " + response.getBody().getOcrProcessingTimeMs(), null);
-        LOG.debugContext(contextId, "Total processing time: " + response.getBody().getTotalProcessingTimeMs(), null);
-        LOG.debugContext(contextId, "Lowest confidence score: " + response.getBody().getLowestConfidenceScore(), null);
-        LOG.debugContext(contextId, "Average confidence score: " + response.getBody().getAverageConfidenceScore(), null);
+        ExtractTextResultDTO extractTextResult = response.getBody();
+
+        if (extractTextResult != null) {
+            LOG.debugContext(contextId, "Processing time: " + extractTextResult.getOcrProcessingTimeMs(), null);
+            LOG.debugContext(contextId, "Total processing time: " + extractTextResult.getTotalProcessingTimeMs(),
+                    null);
+            LOG.debugContext(contextId, "Lowest confidence score: " + extractTextResult.getLowestConfidenceScore(),
+                    null);
+            LOG.debugContext(contextId, "Average confidence score: " + extractTextResult.getAverageConfidenceScore(),
+                    null);
+        } else {
+            LOG.debugContext(contextId, "Null response body", null);
+        }
     }
 }
