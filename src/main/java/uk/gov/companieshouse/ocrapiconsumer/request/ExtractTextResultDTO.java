@@ -1,10 +1,12 @@
 package uk.gov.companieshouse.ocrapiconsumer.request;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
  * This class is the extracted text result returned by the ocr-api
- * Can import this class from the ocr-api for drop 2
  */
 public class ExtractTextResultDTO {
 
@@ -105,6 +107,19 @@ public class ExtractTextResultDTO {
 
     public void setResponseId(String responseId) {
         this.responseId = responseId;
+    }
+
+    public Map<String,Object>  metadataMap() {
+
+        Map<String,Object> map = new HashMap<>();
+
+        map.put("lowestConfidenceScore", lowestConfidenceScore);
+        map.put("averageConfidenceScore", averageConfidenceScore);
+        map.put("ocrProcessingTimeMs", ocrProcessingTimeMs);
+        map.put("totalProcessingTimeMs", totalProcessingTimeMs);
+        map.put("response_id", responseId);
+
+        return map;        
     }
 
 }

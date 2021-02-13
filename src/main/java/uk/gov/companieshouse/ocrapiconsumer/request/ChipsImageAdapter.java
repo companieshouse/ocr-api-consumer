@@ -26,9 +26,9 @@ public class ChipsImageAdapter {
      * @param   imageEndpoint   The endpoint that the image is retrieved from.
      * @return  A byte array of tiff image contents used for the OCR text extraction.
      */
-    public byte[] getTiffImageFromChips(String imageEndpoint) {
+    public byte[] getTiffImageFromChips(String contextId, String imageEndpoint) {
         
-        LOG.debug("Get Image from [" + imageEndpoint + "]");
+        LOG.debugContext(contextId, "Image from [" + imageEndpoint + "]",null);
         try {
             return restTemplate.getForEntity(imageEndpoint, byte[].class).getBody();
 

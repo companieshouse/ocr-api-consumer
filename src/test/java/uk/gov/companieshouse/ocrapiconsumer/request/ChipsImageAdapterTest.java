@@ -31,7 +31,7 @@ class ChipsImageAdapterTest extends TestParent {
                 .thenReturn(new ResponseEntity<>(MOCK_TIFF_CONTENT, HttpStatus.OK));
 
         // when
-        byte[] actual = chipsImageAdapter.getTiffImageFromChips(IMAGE_ENDPOINT);
+        byte[] actual = chipsImageAdapter.getTiffImageFromChips(CONTEXT_ID, IMAGE_ENDPOINT);
 
         // then
         assertThat(actual, is(expected));

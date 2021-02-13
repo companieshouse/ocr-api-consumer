@@ -49,7 +49,7 @@ class RestTemplateTimeoutConfigurationTest {
         doReturn(new RestTemplate()).when(mockRestTemplateBuilder).build();
 
         // when
-        RestTemplate restTemplate = springConfiguration.restTemplate(mockRestTemplateBuilder, environmentReader);
+       springConfiguration.restTemplate(mockRestTemplateBuilder, environmentReader);
 
         // then
         verify(environmentReader, times(1)).getOptionalInteger(OCR_REQUEST_TIMEOUT_SECONDS);
@@ -71,7 +71,7 @@ class RestTemplateTimeoutConfigurationTest {
         doReturn(new RestTemplate()).when(mockRestTemplateBuilder).build();
 
         // when
-        RestTemplate restTemplate = springConfiguration.restTemplate(mockRestTemplateBuilder, environmentReader);
+        springConfiguration.restTemplate(mockRestTemplateBuilder, environmentReader);
 
         // then
         verify(mockRestTemplateBuilder).setReadTimeout(timeout.capture());

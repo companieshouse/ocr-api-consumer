@@ -39,25 +39,29 @@ public class OcrApiConsumerController {
      * Receives an OCR request from CHIPS and calls the service to:
      * - log it asynchronously
      * - return status code 202 (ACCEPTED)
-     * @param   ocrRequest  A request object containing the 3 mandatory JSON fields.
+     * @param   ocrRequest  A request object containing the 3 mandatory JSON fields and one optional field (context id)
      * @return              The HTTP Status code 202 ACCEPTED
      */
     @PostMapping(REQUEST_ENDPOINT)
     public ResponseEntity<HttpStatus> receiveOcrRequest(@Valid @RequestBody OcrRequest ocrRequest) {
 
-        service.logOcrRequest(ocrRequest.getImageEndpoint(),
-                ocrRequest.getConvertedTextEndpoint(),
-                ocrRequest.getResponseId());
+        service.logOcrRequest(ocrRequest);
         return new ResponseEntity<>(HttpStatus.ACCEPTED);
     }
 
+    /**
+     * Sends a standard (packaged) image to ocr_request as a basic test without needing a client system such
+     * as CHIPS initialiating a call.
+     * @param ocrRequest
+     * @return HTTP 200 OK
+     */
     @PostMapping("/internal/ocr-api-request")
     public ResponseEntity<HttpStatus> sendTestOcrApiRequest(@Valid @RequestBody OcrRequest ocrRequest) {
         String version = System.getProperty("java.version");
         String responseId = ocrRequest.getResponseId();
         LOG.debugContext(responseId, "Java version: " + version, null);
 
-        service.sendOcrApiRequest(responseId);
+        service.sendOcrApiRequestForStandardTiff(responseId);
         return new ResponseEntity<>(HttpStatus.OK);
     }
 
