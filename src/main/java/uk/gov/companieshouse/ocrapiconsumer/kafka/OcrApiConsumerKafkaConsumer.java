@@ -15,6 +15,7 @@ import org.springframework.kafka.annotation.TopicPartition;
 import org.springframework.kafka.listener.adapter.ConsumerRecordMetadata;
 import org.springframework.stereotype.Service;
 
+import uk.gov.companieshouse.environment.EnvironmentReader;
 import uk.gov.companieshouse.kafka.exceptions.SerializationException;
 import uk.gov.companieshouse.kafka.message.Message;
 import uk.gov.companieshouse.kafka.serialization.AvroSerializer;
@@ -22,6 +23,7 @@ import uk.gov.companieshouse.kafka.serialization.SerializerFactory;
 import uk.gov.companieshouse.logging.Logger;
 import uk.gov.companieshouse.logging.LoggerFactory;
 import uk.gov.companieshouse.ocr.OcrRequestMessage;
+import uk.gov.companieshouse.ocrapiconsumer.common.EnvironmentVariable;
 import uk.gov.companieshouse.ocrapiconsumer.kafka.exception.FatalErrorException;
 import uk.gov.companieshouse.ocrapiconsumer.kafka.exception.MaximumRetriesException;
 import uk.gov.companieshouse.ocrapiconsumer.kafka.exception.RetryableErrorException;
@@ -29,9 +31,6 @@ import uk.gov.companieshouse.ocrapiconsumer.request.OcrApiConsumerService;
 
 @Service
 public class OcrApiConsumerKafkaConsumer {
-
-    @Value("${uk.gov.companieshouse.ocrapiconsumer.retry-seconds}")
-    protected long retryThrottleRateSeconds;
 
     protected static final String OCR_REQUEST_TOPICS = "ocr-request";
     protected static final String OCR_REQUEST_RETRY_TOPICS = "ocr-request-retry";
@@ -49,19 +48,27 @@ public class OcrApiConsumerKafkaConsumer {
 
     private final Map<String, Integer> retryCounts;
 
-    private OcrApiConsumerService ocrApiConsumerService;
-    private OcrMessageErrorHandler ocrMessageErrorHandler;
-    private SerializerFactory serializerFactory;
-    private OcrApiConsumerKafkaProducer kafkaProducer;
+    private final OcrApiConsumerService ocrApiConsumerService;
+    private final OcrMessageErrorHandler ocrMessageErrorHandler;
+    private final SerializerFactory serializerFactory;
+    private final OcrApiConsumerKafkaProducer kafkaProducer;
+    private final EnvironmentReader environmentReader;
+
+    protected long retryThrottleRateSeconds;
 
     @Autowired
-    public OcrApiConsumerKafkaConsumer(SerializerFactory serializerFactory, OcrApiConsumerKafkaProducer kafkaProducer, final OcrApiConsumerService ocrApiConsumerService, OcrMessageErrorHandler ocrMessageErrorHandler) {
+    public OcrApiConsumerKafkaConsumer(SerializerFactory serializerFactory,
+                                       OcrApiConsumerKafkaProducer kafkaProducer,
+                                       final OcrApiConsumerService ocrApiConsumerService,
+                                       OcrMessageErrorHandler ocrMessageErrorHandler,
+                                       final EnvironmentReader environmentReader) {
 
         this.retryCounts = new ConcurrentHashMap<>();
         this.serializerFactory = serializerFactory;
         this.kafkaProducer = kafkaProducer;
         this.ocrApiConsumerService = ocrApiConsumerService;
         this.ocrMessageErrorHandler = ocrMessageErrorHandler;
+        this.environmentReader = environmentReader;
     }
 
     @KafkaListener(
@@ -129,6 +136,8 @@ public class OcrApiConsumerKafkaConsumer {
 
     @SuppressWarnings("java:S2142")
     private void delayRetry() {
+        retryThrottleRateSeconds = environmentReader
+                .getMandatoryLong(EnvironmentVariable.RETRY_THROTTLE_RATE_SECONDS.name());
         try {
             TimeUnit.SECONDS.sleep(retryThrottleRateSeconds);
         } catch (InterruptedException e) {

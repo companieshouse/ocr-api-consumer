@@ -5,6 +5,7 @@ import static uk.gov.companieshouse.ocrapiconsumer.OcrApiConsumerApplication.APP
 import java.util.concurrent.ExecutionException;
 
 import org.springframework.stereotype.Service;
+import uk.gov.companieshouse.environment.EnvironmentReader;
 import uk.gov.companieshouse.kafka.message.Message;
 import uk.gov.companieshouse.kafka.producer.ProducerConfig;
 import uk.gov.companieshouse.logging.Logger;
@@ -19,6 +20,10 @@ public class OcrApiConsumerKafkaProducer extends KafkaProducer {
     private static final Logger LOG = LoggerFactory.getLogger(APPLICATION_NAME_SPACE);
 
     private static final int REQUEST_TIMEOUT_MILLISECONDS = 3000;
+
+    protected OcrApiConsumerKafkaProducer(EnvironmentReader environmentReader) {
+        super(environmentReader);
+    }
 
     /**
      * Sends message to Kafka topic

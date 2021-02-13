@@ -16,6 +16,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import uk.gov.companieshouse.environment.EnvironmentReader;
 import uk.gov.companieshouse.kafka.exceptions.ProducerConfigException;
 import uk.gov.companieshouse.kafka.message.Message;
 import uk.gov.companieshouse.kafka.producer.Acks;
@@ -28,14 +29,21 @@ import uk.gov.companieshouse.ocrapiconsumer.groups.Unit;
 @ExtendWith(MockitoExtension.class)
 class OcrApiConsumerKafkaProducerTest {
 
+    @Mock
+    private EnvironmentReader environmentReader;
+
     @InjectMocks
-    private TestOcrProducer ocrApiConsumerKafkaProducer = new TestOcrProducer();
+    private TestOcrProducer ocrApiConsumerKafkaProducer = new TestOcrProducer(environmentReader);
 
     @Mock
     private CHKafkaProducer chKafkaProducer;
 
     private class TestOcrProducer extends OcrApiConsumerKafkaProducer {
         ProducerConfig produceConfig = new ProducerConfig();
+
+        protected TestOcrProducer(EnvironmentReader environmentReader) {
+            super(environmentReader);
+        }
 
         protected ProducerConfig createProducerConfig() {
             return produceConfig;

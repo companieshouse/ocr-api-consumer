@@ -3,7 +3,9 @@ package uk.gov.companieshouse.ocrapiconsumer.kafka;
 import static uk.gov.companieshouse.ocrapiconsumer.OcrApiConsumerApplication.APPLICATION_NAME_SPACE;
 
 import org.springframework.beans.factory.InitializingBean;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import uk.gov.companieshouse.environment.EnvironmentReader;
 import uk.gov.companieshouse.kafka.exceptions.ProducerConfigException;
 import uk.gov.companieshouse.kafka.producer.Acks;
 import uk.gov.companieshouse.kafka.producer.CHKafkaProducer;
@@ -25,6 +27,13 @@ public abstract class KafkaProducer implements InitializingBean {
 
     @Value("${spring.kafka.bootstrap-servers}")
     private String brokerAddresses;
+
+    private final EnvironmentReader environmentReader;
+
+    @Autowired
+    protected KafkaProducer(final EnvironmentReader environmentReader) {
+        this.environmentReader = environmentReader;
+    }
 
     @Override
     public void afterPropertiesSet() {
@@ -50,7 +59,6 @@ public abstract class KafkaProducer implements InitializingBean {
 
 
     protected void setBrokerAddress(ProducerConfig config) {
-     
         if (brokerAddresses != null && !brokerAddresses.isEmpty()) {
             config.setBrokerAddresses(brokerAddresses.split(","));
         } else {
