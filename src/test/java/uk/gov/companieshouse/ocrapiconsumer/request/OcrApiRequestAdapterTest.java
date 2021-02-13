@@ -65,6 +65,6 @@ class OcrApiRequestAdapterTest extends TestParent {
                 .thenThrow(RestClientException.class);
 
         assertThrows(RetryableErrorException.class, () ->
-                ocrApiRequestAdapter.sendOcrRequestToOcrApi(MOCK_TIFF_CONTENT, CONTEXT_ID));
+                ocrApiRequestAdapter.sendOcrRequestToOcrApi(CONTEXT_ID, MOCK_TIFF_CONTENT, RESPONSE_ID));
     }
 }

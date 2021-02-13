@@ -135,7 +135,7 @@ public class OcrApiConsumerKafkaConsumer {
     }
 
     @SuppressWarnings("java:S2142")
-    private void delayRetry() {
+    private void delayRetry(String contextId) {
         retryThrottleRateSeconds = environmentReader
                 .getMandatoryLong(EnvironmentVariable.RETRY_THROTTLE_RATE_SECONDS.name());
 
