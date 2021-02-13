@@ -21,10 +21,6 @@ public class OcrApiConsumerKafkaProducer extends KafkaProducer {
 
     private static final int REQUEST_TIMEOUT_MILLISECONDS = 3000;
 
-    protected OcrApiConsumerKafkaProducer(EnvironmentReader environmentReader) {
-        super(environmentReader);
-    }
-
     /**
      * Sends message to Kafka topic
      * @param message message

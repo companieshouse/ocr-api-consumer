@@ -1,17 +1,17 @@
 package uk.gov.companieshouse.ocrapiconsumer.kafka;
 
 import static uk.gov.companieshouse.ocrapiconsumer.OcrApiConsumerApplication.APPLICATION_NAME_SPACE;
-
 import org.springframework.beans.factory.InitializingBean;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import uk.gov.companieshouse.environment.EnvironmentReader;
+import uk.gov.companieshouse.environment.exception.EnvironmentVariableException;
+import uk.gov.companieshouse.environment.impl.EnvironmentReaderImpl;
 import uk.gov.companieshouse.kafka.exceptions.ProducerConfigException;
 import uk.gov.companieshouse.kafka.producer.Acks;
 import uk.gov.companieshouse.kafka.producer.CHKafkaProducer;
 import uk.gov.companieshouse.kafka.producer.ProducerConfig;
 import uk.gov.companieshouse.logging.Logger;
 import uk.gov.companieshouse.logging.LoggerFactory;
+import uk.gov.companieshouse.ocrapiconsumer.common.EnvironmentVariable;
 
 public abstract class KafkaProducer implements InitializingBean {
 
@@ -19,21 +19,15 @@ public abstract class KafkaProducer implements InitializingBean {
     + "[Hint: The property 'kafka.broker.addresses' uses the value of this environment variable in live "
     + "environments and that of 'spring.embedded.kafka.brokers' property in test.]";
 
-    protected CHKafkaProducer chKafkaProducer;
 
     private static final int PRODUCER_RETRIES = 10;
 
     private static final Logger LOG = LoggerFactory.getLogger(APPLICATION_NAME_SPACE);
 
-    @Value("${spring.kafka.bootstrap-servers}")
+    protected CHKafkaProducer chKafkaProducer;
+    protected EnvironmentReader environmentReader;
+
     private String brokerAddresses;
-
-    private final EnvironmentReader environmentReader;
-
-    @Autowired
-    protected KafkaProducer(final EnvironmentReader environmentReader) {
-        this.environmentReader = environmentReader;
-    }
 
     @Override
     public void afterPropertiesSet() {
@@ -59,9 +53,11 @@ public abstract class KafkaProducer implements InitializingBean {
 
 
     protected void setBrokerAddress(ProducerConfig config) {
-        if (brokerAddresses != null && !brokerAddresses.isEmpty()) {
+        try {
+            environmentReader = createEnvironmentReader();
+            brokerAddresses = environmentReader.getMandatoryString(EnvironmentVariable.KAFKA_BROKER_ADDR.name());
             config.setBrokerAddresses(brokerAddresses.split(","));
-        } else {
+        } catch(EnvironmentVariableException environmentVariableException) {
             throw new ProducerConfigException(EXPECTED_CONFIG_ERROR_MESSAGE);
         }
     }
@@ -85,6 +81,10 @@ public abstract class KafkaProducer implements InitializingBean {
 
     protected void setBrokerAddresses(String brokerAddresses) {
         this.brokerAddresses = brokerAddresses;
+    }
+
+    protected EnvironmentReader createEnvironmentReader() {
+        return new EnvironmentReaderImpl();
     }
 }
 
