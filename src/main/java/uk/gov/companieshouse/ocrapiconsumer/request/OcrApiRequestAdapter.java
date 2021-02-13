@@ -31,11 +31,12 @@ public class OcrApiRequestAdapter {
 
     /**
      * Sends the OCR request to the ocr-api
+     * @param   contextId             Context Logging key between microservices
      * @param   tiffContent           The image content retrieved from CHIPS.
      * @param   responseId            The request ID.
      * @return  A response entity containing the extracted text result DTO.
      */
-    public ResponseEntity<ExtractTextResultDTO> sendOcrRequestToOcrApi(byte[] tiffContent, String responseId) {
+    public ResponseEntity<ExtractTextResultDTO> sendOcrRequestToOcrApi(String contextId, byte[] tiffContent, String responseId) {
         String ocrApiUrl = readOcrApiUrlFromEnv();
 
         HttpHeaders headers = new HttpHeaders();
@@ -56,6 +57,7 @@ public class OcrApiRequestAdapter {
 
         try {
             HttpEntity<MultiValueMap<String, Object>> entity = new HttpEntity<>(params, headers);
+            
             return restTemplate.postForEntity(ocrApiUrl, entity, ExtractTextResultDTO.class);
 
         } catch (Exception e) {

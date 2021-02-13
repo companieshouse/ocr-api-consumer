@@ -36,16 +36,17 @@ class OcrApiConsumerServiceTest extends TestParent {
 
     @Test
     void testOcrApiServiceLogsSuccessfully() {
+
+        OcrRequest testOcrRequest = new OcrRequest(IMAGE_ENDPOINT, EXTRACTED_TEXT_ENDPOINT, RESPONSE_ID);
+
         // given
-        when(chipsImageAdapter.getTiffImageFromChips(IMAGE_ENDPOINT)).thenReturn(MOCK_TIFF_CONTENT);
-        when(ocrApiRequestAdapter.sendOcrRequestToOcrApi(MOCK_TIFF_CONTENT, CONTEXT_ID)).thenReturn(response);
+        when(chipsImageAdapter.getTiffImageFromChips(testOcrRequest.getContextId(), testOcrRequest.getImageEndpoint())).thenReturn(MOCK_TIFF_CONTENT);
+        when(ocrApiRequestAdapter.sendOcrRequestToOcrApi(testOcrRequest.getContextId(), MOCK_TIFF_CONTENT, testOcrRequest.getResponseId())).thenReturn(response);
 
         // when
-        ocrApiConsumerService.logOcrRequest(IMAGE_ENDPOINT, EXTRACTED_TEXT_ENDPOINT, CONTEXT_ID);
+        ocrApiConsumerService.logOcrRequest(testOcrRequest);
 
         // then
-        verify(chipsImageAdapter).getTiffImageFromChips(IMAGE_ENDPOINT);
-        verify(ocrApiRequestAdapter).sendOcrRequestToOcrApi(MOCK_TIFF_CONTENT, CONTEXT_ID);
-        verify(callbackExtractedTextAdapter).sendTextResult(EXTRACTED_TEXT_ENDPOINT, extractTextResultDTO);
+        verify(callbackExtractedTextAdapter).sendTextResult(testOcrRequest.getConvertedTextEndpoint(), extractTextResultDTO);
     }
 }

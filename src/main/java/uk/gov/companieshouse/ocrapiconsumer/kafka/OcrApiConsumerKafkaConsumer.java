@@ -1,6 +1,15 @@
 package uk.gov.companieshouse.ocrapiconsumer.kafka;
 
 import static uk.gov.companieshouse.ocrapiconsumer.OcrApiConsumerApplication.APPLICATION_NAME_SPACE;
+
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.annotation.TopicPartition;
@@ -19,12 +28,6 @@ import uk.gov.companieshouse.ocrapiconsumer.kafka.exception.FatalErrorException;
 import uk.gov.companieshouse.ocrapiconsumer.kafka.exception.MaximumRetriesException;
 import uk.gov.companieshouse.ocrapiconsumer.kafka.exception.RetryableErrorException;
 import uk.gov.companieshouse.ocrapiconsumer.request.OcrApiConsumerService;
-
-import java.util.Date;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
 
 @Service
 public class OcrApiConsumerKafkaConsumer {
@@ -78,7 +81,7 @@ public class OcrApiConsumerKafkaConsumer {
         containerFactory = KAFKA_LISTENER_CONTAINER_FACTORY)
     public void consumeOcrApiRequestMessage(org.springframework.messaging.Message<OcrRequestMessage> message, ConsumerRecordMetadata metadata) {
 
-        logConsumeKafkaMessage(message.getPayload().getResponseId(), metadata);
+        logConsumeKafkaMessage(message.getPayload().getContextId(), metadata);
 
         handleOcrRequestMessage(message, metadata.topic());
     }
@@ -90,7 +93,7 @@ public class OcrApiConsumerKafkaConsumer {
         containerFactory = KAFKA_LISTENER_CONTAINER_FACTORY)
     public void consumeOcrApiRequestRetryMessage(org.springframework.messaging.Message<OcrRequestMessage> message, ConsumerRecordMetadata metadata) {
         
-        logConsumeKafkaMessage(message.getPayload().getResponseId(), metadata);
+        logConsumeKafkaMessage(message.getPayload().getContextId(), metadata);
 
         handleOcrRequestMessage(message, metadata.topic());
     }
@@ -99,7 +102,7 @@ public class OcrApiConsumerKafkaConsumer {
             String topicName) {
 
         OcrRequestMessage ocrRequestMessage = message.getPayload();
-        String contextId = ocrRequestMessage.getResponseId();
+        String contextId = ocrRequestMessage.getContextId();
         String extractedTextEndpoint = ocrRequestMessage.getConvertedTextEndpoint();
 
         try {
@@ -135,11 +138,14 @@ public class OcrApiConsumerKafkaConsumer {
     private void delayRetry() {
         retryThrottleRateSeconds = environmentReader
                 .getMandatoryLong(EnvironmentVariable.RETRY_THROTTLE_RATE_SECONDS.name());
+
+        LOG.infoContext(contextId, "Pausing thread [" + retryThrottleRateSeconds + "] seconds before retrying",  null);
+
         try {
             TimeUnit.SECONDS.sleep(retryThrottleRateSeconds);
         } catch (InterruptedException e) {
             // We want to continue processing even if somehow our delay was cut short
-            LOG.error("Error pausing thread", e);
+            LOG.errorContext(contextId, "Error pausing thread", e, null);
         }
     }
 
@@ -147,7 +153,7 @@ public class OcrApiConsumerKafkaConsumer {
 
         if (currentTopic.equals(getMainTopicName())) {
 
-            delayRetry();
+            delayRetry(contextId);
 
             repostMessage(contextId, message.getPayload(), currentTopic, getRetryTopicName());
 
@@ -163,7 +169,7 @@ public class OcrApiConsumerKafkaConsumer {
 
                 retryCounts.put(contextId, retryCounts.getOrDefault(contextId, 0) + 1);
 
-                delayRetry();
+                delayRetry(contextId);
 
                 LOG.infoContext(contextId, "Retrying processing message [count: " + retryCounts.get(contextId) + "]", null);
                 handleOcrRequestMessage(message, currentTopic);
@@ -182,27 +188,28 @@ public class OcrApiConsumerKafkaConsumer {
 
     private void repostMessage(String contextId, final OcrRequestMessage ocrRequestMessage, final String fromTopic, final String toTopic) {
 
-        Message retryMessage = createRepostMessage(ocrRequestMessage, toTopic);
+        Message retryMessage = createRepostMessage(contextId, ocrRequestMessage, toTopic);
 
-        String failureMessage = "Can not repost message";
         LOG.infoContext(contextId, "Reposting message from topic [" + fromTopic + "]" + " to topic [" + toTopic + "]", null);
 
+        String failureMessage = "Can not repost message";
         try {
             kafkaProducer.sendMessage(retryMessage);
 
         } catch (InterruptedException ie) {
 
-            LOG.error(failureMessage, ie);
+            LOG.errorContext(contextId, failureMessage, ie, null);
 
             Thread.currentThread().interrupt();
 
         }  catch (ExecutionException ee) {
 
-            LOG.error(failureMessage, ee);
+            LOG.errorContext(contextId, failureMessage, ee, null);
         }
     }
 
-    private Message createRepostMessage(final OcrRequestMessage ocrRequestMessage, final String topic) {
+    private Message createRepostMessage(String contextId, final OcrRequestMessage ocrRequestMessage,
+            final String topic) {
 
         Message retryMessage = new Message();
         AvroSerializer<OcrRequestMessage> serializer = serializerFactory.getGenericRecordSerializer(OcrRequestMessage.class);
@@ -212,7 +219,7 @@ public class OcrApiConsumerKafkaConsumer {
         try {
             retryMessage.setValue(serializer.toBinary(ocrRequestMessage));
         } catch (SerializationException exception) {
-            LOG.error("Can not serialise message", exception);
+            LOG.errorContext(contextId, "Can not serialise message", exception, null);
         }
 
         retryMessage.setTopic(topic);
@@ -239,9 +246,15 @@ public class OcrApiConsumerKafkaConsumer {
     }
 
     // logging helper methods
-    private void logConsumeKafkaMessage(String contextId, ConsumerRecordMetadata meta) {
+    private void logConsumeKafkaMessage(String contextId, ConsumerRecordMetadata metadata) {
 
-        LOG.infoContext(contextId, "Consuming Message from offset [" + meta.offset() + "] on topic [" + meta.topic() + "] partition [" + meta.partition() + "] thread id [" + Thread.currentThread().getId() + "]", null);
+        Map<String, Object> metadataMap = new HashMap<>();
+        metadataMap.put("topic", metadata.topic());
+        metadataMap.put("partition", metadata.partition());
+        metadataMap.put("offset", metadata.offset());
+        metadataMap.put("application thread ID", metadata.partition());
+
+        LOG.infoContext(contextId, "Consuming ocr-request Message ", metadataMap);
     }
 
 }
