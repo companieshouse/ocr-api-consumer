@@ -1,15 +1,13 @@
 package uk.gov.companieshouse.ocrapiconsumer.kafka;
 
 import static uk.gov.companieshouse.ocrapiconsumer.OcrApiConsumerApplication.APPLICATION_NAME_SPACE;
-
-import java.util.concurrent.ExecutionException;
-
 import org.springframework.stereotype.Service;
-import uk.gov.companieshouse.environment.EnvironmentReader;
 import uk.gov.companieshouse.kafka.message.Message;
 import uk.gov.companieshouse.kafka.producer.ProducerConfig;
 import uk.gov.companieshouse.logging.Logger;
 import uk.gov.companieshouse.logging.LoggerFactory;
+
+import java.util.concurrent.ExecutionException;
 
 /**
  *  OcrApiConsumerProducer ultimately wraps the CH Kafka Producer 
