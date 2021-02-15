@@ -11,7 +11,7 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 import uk.gov.companieshouse.environment.EnvironmentReader;
-import uk.gov.companieshouse.environment.impl.EnvironmentReaderImpl;
+import uk.gov.companieshouse.ocrapiconsumer.common.EnvironmentVariable;
 import uk.gov.companieshouse.ocrapiconsumer.kafka.exception.RetryableErrorException;
 
 @Component
@@ -21,10 +21,12 @@ public class OcrApiRequestAdapter {
     private static final String RESPONSE_ID_REQUEST_PARAMETER_NAME = "responseId";
 
     private final RestTemplate restTemplate;
+    private final EnvironmentReader environmentReader;
 
     @Autowired
-    public OcrApiRequestAdapter(RestTemplate restTemplate) {
+    public OcrApiRequestAdapter(RestTemplate restTemplate, EnvironmentReader environmentReader) {
         this.restTemplate = restTemplate;
+        this.environmentReader = environmentReader;
     }
 
     /**
@@ -67,9 +69,8 @@ public class OcrApiRequestAdapter {
      * Reads in the OCR API URL from environment variables using the Environment Reader.
      * @return  The OCR API URL as a string
      */
-    public String readOcrApiUrlFromEnv() {
+    private String readOcrApiUrlFromEnv() {
         // Get the ocr api url from env variables
-        final EnvironmentReader environmentReader = new EnvironmentReaderImpl();
-        return environmentReader.getMandatoryUrl("OCR_API_URL");
+        return environmentReader.getMandatoryUrl(EnvironmentVariable.OCR_API_URL.name());
     }
 }

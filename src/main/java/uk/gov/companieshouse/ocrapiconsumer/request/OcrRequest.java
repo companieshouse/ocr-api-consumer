@@ -26,6 +26,9 @@ public class OcrRequest {
     @JsonProperty("context_id")
     private String contextId;
 
+    public OcrRequest() {
+        // added for jackson deserialising
+    }
 
     public OcrRequest(String contextId, String imageEndpoint, String convertedTextEndpoint, String responseId) {
 

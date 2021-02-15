@@ -5,8 +5,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.client.RestTemplate;
 import uk.gov.companieshouse.environment.EnvironmentReader;
-import uk.gov.companieshouse.environment.impl.EnvironmentReaderImpl;
 import uk.gov.companieshouse.kafka.serialization.SerializerFactory;
+import uk.gov.companieshouse.ocrapiconsumer.common.EnvironmentVariable;
 
 import java.time.Duration;
 
@@ -14,16 +14,10 @@ import java.time.Duration;
 public class SpringConfiguration {
 
     protected static final int DEFAULT_REQUEST_TIMEOUT_SECONDS = 300;
-    protected static final String OCR_REQUEST_TIMEOUT_SECONDS = "OCR_REQUEST_TIMEOUT_SECONDS";
 
     private int getTimeout(final EnvironmentReader environmentReader) {
-        Integer timeout = environmentReader.getOptionalInteger(OCR_REQUEST_TIMEOUT_SECONDS);
+        Integer timeout = environmentReader.getOptionalInteger(EnvironmentVariable.OCR_REQUEST_TIMEOUT_SECONDS.name());
         return timeout == null ? DEFAULT_REQUEST_TIMEOUT_SECONDS : timeout;
-    }
-
-    @Bean
-    EnvironmentReader environmentReader() {
-        return new EnvironmentReaderImpl();
     }
 
     @Bean

@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -26,10 +27,12 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.kafka.listener.adapter.ConsumerRecordMetadata;
 import org.springframework.messaging.MessageHeaders;
 
+import uk.gov.companieshouse.environment.EnvironmentReader;
 import uk.gov.companieshouse.kafka.exceptions.SerializationException;
 import uk.gov.companieshouse.kafka.serialization.AvroSerializer;
 import uk.gov.companieshouse.kafka.serialization.SerializerFactory;
 import uk.gov.companieshouse.ocr.OcrRequestMessage;
+import uk.gov.companieshouse.ocrapiconsumer.common.EnvironmentVariable;
 import uk.gov.companieshouse.ocrapiconsumer.groups.Unit;
 import uk.gov.companieshouse.ocrapiconsumer.kafka.exception.FatalErrorException;
 import uk.gov.companieshouse.ocrapiconsumer.kafka.exception.RetryableErrorException;
@@ -53,13 +56,16 @@ class OcrApiConsumerKafkaConsumerTest {
     private OcrApiConsumerService ocrApiConsumerService;
     @Mock
     private OcrMessageErrorHandler ocrMessageErrorHandler;
+    @Mock
+    private EnvironmentReader environmentReader;
 
     @InjectMocks
     private OcrApiConsumerKafkaConsumer kafkaConsumer;
 
     @BeforeEach
     public void setup() {
-        this.kafkaConsumer = new OcrApiConsumerKafkaConsumer(serializerFactory, kafkaProducer, ocrApiConsumerService, ocrMessageErrorHandler);
+        this.kafkaConsumer = new OcrApiConsumerKafkaConsumer(serializerFactory, kafkaProducer, ocrApiConsumerService,
+                ocrMessageErrorHandler, environmentReader);
         kafkaConsumer.retryThrottleRateSeconds = RETRY_THROTTLE_RATE_SECONDS;
     }
 
@@ -88,6 +94,9 @@ class OcrApiConsumerKafkaConsumerTest {
         org.springframework.messaging.Message<OcrRequestMessage> message = createTestMessage(kafkaConsumer.getMainTopicName());
         doThrow(newRetryableError())
 				.when(ocrApiConsumerService).ocrRequest(message.getPayload());
+
+        doReturn(RETRY_THROTTLE_RATE_SECONDS).when(environmentReader)
+                .getMandatoryLong(EnvironmentVariable.RETRY_THROTTLE_RATE_SECONDS.name());
         when(serializerFactory.getGenericRecordSerializer(OcrRequestMessage.class)).thenReturn(serializer);
         when(serializer.toBinary(any())).thenReturn(new byte[4]);
 
@@ -129,6 +138,8 @@ class OcrApiConsumerKafkaConsumerTest {
         org.springframework.messaging.Message<OcrRequestMessage> message = createTestMessage(kafkaConsumer.getRetryTopicName());
         String expectedCounterKey = CONTEXT_ID;
 
+        doReturn(RETRY_THROTTLE_RATE_SECONDS).when(environmentReader)
+                .getMandatoryLong(EnvironmentVariable.RETRY_THROTTLE_RATE_SECONDS.name());
         doThrow(newRetryableError()).doNothing()
                 .when(ocrApiConsumerService).ocrRequest(message.getPayload());
 
@@ -159,6 +170,8 @@ class OcrApiConsumerKafkaConsumerTest {
                 kafkaConsumer.getRetryTopicName());
         String expectedCounterKey = CONTEXT_ID;
 
+        doReturn(RETRY_THROTTLE_RATE_SECONDS).when(environmentReader)
+                .getMandatoryLong(EnvironmentVariable.RETRY_THROTTLE_RATE_SECONDS.name());
         doThrow(newRetryableError()).doThrow(newRetryableError()).doThrow(newRetryableError())
                 .when(ocrApiConsumerService).ocrRequest(message.getPayload());
 
