@@ -14,7 +14,6 @@ import java.time.Duration;
 public class SpringConfiguration {
 
     protected static final int DEFAULT_REQUEST_TIMEOUT_SECONDS = 300;
-    protected static final String OCR_REQUEST_TIMEOUT_SECONDS = "OCR_REQUEST_TIMEOUT_SECONDS";
 
     private int getTimeout(final EnvironmentReader environmentReader) {
         Integer timeout = environmentReader.getOptionalInteger(EnvironmentVariable.OCR_REQUEST_TIMEOUT_SECONDS.name());
