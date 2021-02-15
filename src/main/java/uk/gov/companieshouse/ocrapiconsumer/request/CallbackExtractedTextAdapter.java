@@ -47,6 +47,8 @@ public class CallbackExtractedTextAdapter {
         ExtractTextResultDTO extractedTextError = ExtractTextResultDTO
                 .createErrorExtractTextResultDTOFromContextId(contextId);
 
+        LOG.infoContext(contextId, "Sending Error Message back to client", extractedTextError.metadataMap());
+        
         try {
             HttpEntity<ExtractTextResultDTO> entity = new HttpEntity<>(extractedTextError);
             restTemplate.postForEntity(extractedTextEndpoint, entity, String.class);
