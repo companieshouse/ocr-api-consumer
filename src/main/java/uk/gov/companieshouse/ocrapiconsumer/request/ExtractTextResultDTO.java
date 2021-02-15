@@ -15,18 +15,26 @@ public class ExtractTextResultDTO {
     /**
      * Creates an extracted text result with default values and the context id, for use in non-retryable errors.
      * @param contextId The context ID of the application.
+     * @param responseId2
      * @return          An ExtractTextResultDTO object with default values.
      */
-    static ExtractTextResultDTO createErrorExtractTextResultDTOFromContextId(String contextId) {
+    static ExtractTextResultDTO createErrorExtractTextResultDTOFromContextId(String contextId, String responseId) {
         ExtractTextResultDTO extractedTextError = new ExtractTextResultDTO();
+        extractedTextError.setContextId(contextId);
         extractedTextError.setAverageConfidenceScore(0);
         extractedTextError.setLowestConfidenceScore(0);
         extractedTextError.setOcrProcessingTimeMs(0L);
         extractedTextError.setTotalProcessingTimeMs(0L);
-        extractedTextError.setResponseId(contextId);
+        extractedTextError.setResponseId(responseId);
         extractedTextError.setExtractedText(OCR_CONVERSION_ERROR_TEXT);
         return extractedTextError;
     }
+
+    /**
+     *  The input CHS contextId of the OCR request
+     */
+    @JsonProperty("context_id")
+    private String contextId;
 
     /**
      *  The text for the OCR request
@@ -60,6 +68,14 @@ public class ExtractTextResultDTO {
      */
     @JsonProperty("response_id")
     private String responseId;
+
+    public String getContextId() {
+        return contextId;
+    }
+
+    public void setContextId(String contextId) {
+        this.contextId = contextId;
+    }
 
     public String getExtractedText() {
         return extractedText;
@@ -118,6 +134,7 @@ public class ExtractTextResultDTO {
         map.put("ocrProcessingTimeMs", ocrProcessingTimeMs);
         map.put("totalProcessingTimeMs", totalProcessingTimeMs);
         map.put("response_id", responseId);
+        map.put("context_id", contextId);
 
         return map;        
     }

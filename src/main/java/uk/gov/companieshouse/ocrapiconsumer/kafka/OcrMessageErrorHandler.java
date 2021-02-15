@@ -25,19 +25,19 @@ public class OcrMessageErrorHandler {
         this.callbackExtractedTextAdapter = callbackExtractedTextAdapter;
     }
 
-    public void handleMaximumRetriesException(String contextId, MaximumRetriesException mre, String extractedTextEndpoint) {
+    public void handleMaximumRetriesException(String contextId, String responseId, MaximumRetriesException mre, String extractedTextEndpoint) {
         LOG.errorContext(contextId, "Maximum Retries reached", mre, null);
-        callbackExtractedTextAdapter.sendTextResultError(contextId, extractedTextEndpoint);
+        callbackExtractedTextAdapter.sendTextResultError(contextId, responseId, extractedTextEndpoint);
     }
 
-    public void generalExceptionAfterRetry(String contextId, Exception mre, String extractedTextEndpoint) {
+    public void generalExceptionAfterRetry(String contextId, String responseId, Exception mre, String extractedTextEndpoint) {
         LOG.errorContext(contextId, "Unexpected Error when retrying message", mre, null);
-        callbackExtractedTextAdapter.sendTextResultError(contextId, extractedTextEndpoint);
+        callbackExtractedTextAdapter.sendTextResultError(contextId, responseId, extractedTextEndpoint);
     }
 
-	public void generalException(String contextId, Exception exception, String extractedTextEndpoint) {
+	public void generalException(String contextId, String responseId, Exception exception, String extractedTextEndpoint) {
         LOG.errorContext(contextId, "Unexpected Error ", exception, null);
-        callbackExtractedTextAdapter.sendTextResultError(contextId, extractedTextEndpoint);
+        callbackExtractedTextAdapter.sendTextResultError(contextId, responseId, extractedTextEndpoint);
     }
     
 }
