@@ -103,6 +103,7 @@ public class OcrApiConsumerKafkaConsumer {
 
         OcrRequestMessage ocrRequestMessage = message.getPayload();
         String contextId = ocrRequestMessage.getContextId();
+        String responseId = ocrRequestMessage.getResponseId();
         String extractedTextEndpoint = ocrRequestMessage.getConvertedTextEndpoint();
 
         try {
@@ -121,15 +122,15 @@ public class OcrApiConsumerKafkaConsumer {
             } catch (MaximumRetriesException mre) {
                 resetKeyFromRetryCounts(contextId);
                 ocrMessageErrorHandler
-                        .handleMaximumRetriesException(contextId, mre, extractedTextEndpoint);
+                        .handleMaximumRetriesException(contextId, responseId, mre, extractedTextEndpoint);
 
             } catch (Exception ex) {
                 resetKeyFromRetryCounts(contextId);
-                ocrMessageErrorHandler.generalExceptionAfterRetry(contextId, ex, extractedTextEndpoint);
+                ocrMessageErrorHandler.generalExceptionAfterRetry(contextId, responseId, ex, extractedTextEndpoint);
             }
         } catch (Exception exception) {
             resetKeyFromRetryCounts(contextId);
-            ocrMessageErrorHandler.generalException(contextId, exception, extractedTextEndpoint);
+            ocrMessageErrorHandler.generalException(contextId, responseId, exception, extractedTextEndpoint);
 
         }
     }

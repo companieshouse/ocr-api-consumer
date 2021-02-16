@@ -30,12 +30,12 @@ class OcrMessageErrorHandlerTest extends TestParent {
         MaximumRetriesException mre = new MaximumRetriesException();
 
         // when
-        ocrMessageErrorHandler.handleMaximumRetriesException(CONTEXT_ID,
+        ocrMessageErrorHandler.handleMaximumRetriesException(CONTEXT_ID, RESPONSE_ID,
                 mre, EXTRACTED_TEXT_ENDPOINT);
 
         // then
         verify(callbackExtractedTextAdapter, times(1))
-                .sendTextResultError(CONTEXT_ID, EXTRACTED_TEXT_ENDPOINT);
+                .sendTextResultError(CONTEXT_ID, RESPONSE_ID, EXTRACTED_TEXT_ENDPOINT);
     }
 
     @Test
@@ -45,12 +45,11 @@ class OcrMessageErrorHandlerTest extends TestParent {
         Exception e = new Exception();
 
         // when
-        ocrMessageErrorHandler.generalExceptionAfterRetry(CONTEXT_ID,
-                e, EXTRACTED_TEXT_ENDPOINT);
+        ocrMessageErrorHandler.generalExceptionAfterRetry(CONTEXT_ID, RESPONSE_ID, e, EXTRACTED_TEXT_ENDPOINT);
 
         // then
         verify(callbackExtractedTextAdapter, times(1))
-                .sendTextResultError(CONTEXT_ID, EXTRACTED_TEXT_ENDPOINT);
+                .sendTextResultError(CONTEXT_ID, RESPONSE_ID, EXTRACTED_TEXT_ENDPOINT);
     }
 
     @Test
@@ -60,11 +59,10 @@ class OcrMessageErrorHandlerTest extends TestParent {
         Exception e = new Exception();
 
         // when
-        ocrMessageErrorHandler.generalException(CONTEXT_ID,
-                e, EXTRACTED_TEXT_ENDPOINT);
+        ocrMessageErrorHandler.generalException(CONTEXT_ID, RESPONSE_ID, e, EXTRACTED_TEXT_ENDPOINT);
 
         // then
         verify(callbackExtractedTextAdapter, times(1))
-                .sendTextResultError(CONTEXT_ID, EXTRACTED_TEXT_ENDPOINT);
+                .sendTextResultError(CONTEXT_ID, RESPONSE_ID, EXTRACTED_TEXT_ENDPOINT);
     }
 }

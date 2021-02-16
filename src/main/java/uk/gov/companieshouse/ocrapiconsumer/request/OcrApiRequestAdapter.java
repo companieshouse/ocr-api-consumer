@@ -19,6 +19,7 @@ public class OcrApiRequestAdapter {
 
     private static final String FILE_REQUEST_PARAMETER_NAME = "file";
     private static final String RESPONSE_ID_REQUEST_PARAMETER_NAME = "responseId";
+    private static final String CONTEXT_ID_REQUEST_PARAMETER_NAME = "contextId";
 
     private final RestTemplate restTemplate;
     private final EnvironmentReader environmentReader;
@@ -53,6 +54,7 @@ public class OcrApiRequestAdapter {
 
         MultiValueMap<String, Object> params = new LinkedMultiValueMap<>();
         params.add(FILE_REQUEST_PARAMETER_NAME, byteArrayResource);
+        params.add(CONTEXT_ID_REQUEST_PARAMETER_NAME, contextId);
         params.add(RESPONSE_ID_REQUEST_PARAMETER_NAME, responseId);
 
         try {
