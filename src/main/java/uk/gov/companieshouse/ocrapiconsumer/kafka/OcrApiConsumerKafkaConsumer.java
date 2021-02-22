@@ -3,7 +3,7 @@ package uk.gov.companieshouse.ocrapiconsumer.kafka;
 import static uk.gov.companieshouse.ocrapiconsumer.OcrApiConsumerApplication.APPLICATION_NAME_SPACE;
 
 import java.util.Date;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
@@ -12,7 +12,6 @@ import java.util.concurrent.TimeUnit;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.kafka.annotation.KafkaListener;
-import org.springframework.kafka.annotation.TopicPartition;
 import org.springframework.kafka.listener.adapter.ConsumerRecordMetadata;
 import org.springframework.stereotype.Service;
 import uk.gov.companieshouse.environment.EnvironmentReader;
@@ -75,13 +74,11 @@ public class OcrApiConsumerKafkaConsumer {
         id = OCR_REQUEST_GROUP,
         topics = OCR_REQUEST_TOPICS,
         groupId = OCR_REQUEST_GROUP,
-        topicPartitions =
-        { @TopicPartition(topic = OCR_REQUEST_TOPICS, partitions = { "0-2" }),
-        },
+        concurrency ="${kafka.consumer.main.topic.concurrency}",
         containerFactory = KAFKA_LISTENER_CONTAINER_FACTORY)
     public void consumeOcrApiRequestMessage(org.springframework.messaging.Message<OcrRequestMessage> message, ConsumerRecordMetadata metadata) {
 
-        logConsumeKafkaMessage(message.getPayload().getContextId(), metadata);
+        logConsumeKafkaMessage(message.getPayload(), metadata);
 
         handleOcrRequestMessage(message, metadata.topic());
     }
@@ -90,10 +87,11 @@ public class OcrApiConsumerKafkaConsumer {
         id = OCR_REQUEST_RETRY_GROUP,
         topics = OCR_REQUEST_RETRY_TOPICS,
         groupId = OCR_REQUEST_RETRY_GROUP,
+        concurrency ="${kafka.consumer.retry.topic.concurrency}",
         containerFactory = KAFKA_LISTENER_CONTAINER_FACTORY)
     public void consumeOcrApiRequestRetryMessage(org.springframework.messaging.Message<OcrRequestMessage> message, ConsumerRecordMetadata metadata) {
         
-        logConsumeKafkaMessage(message.getPayload().getContextId(), metadata);
+        logConsumeKafkaMessage(message.getPayload(), metadata);
 
         handleOcrRequestMessage(message, metadata.topic());
     }
@@ -159,6 +157,7 @@ public class OcrApiConsumerKafkaConsumer {
             repostMessage(contextId, message.getPayload(), currentTopic, getRetryTopicName());
 
         }  else if (currentTopic.equals(getRetryTopicName())) {
+
 
             int retryCount = retryCounts.getOrDefault(contextId, 1);
 
@@ -247,15 +246,17 @@ public class OcrApiConsumerKafkaConsumer {
     }
 
     // logging helper methods
-    private void logConsumeKafkaMessage(String contextId, ConsumerRecordMetadata metadata) {
+    private void logConsumeKafkaMessage(OcrRequestMessage ocrRequestMessage, ConsumerRecordMetadata metadata) {
 
-        Map<String, Object> metadataMap = new HashMap<>();
+        Map<String, Object> metadataMap = new LinkedHashMap<>();
         metadataMap.put("topic", metadata.topic());
         metadataMap.put("partition", metadata.partition());
         metadataMap.put("offset", metadata.offset());
-        metadataMap.put("application thread ID", metadata.partition());
+        metadataMap.put("thread_id", Long.valueOf(Thread.currentThread().getId()));
+        metadataMap.put("attempt", ocrRequestMessage.getAttempt());
+        metadataMap.put("created_at", ocrRequestMessage.getCreatedAt());
 
-        LOG.infoContext(contextId, "Consuming ocr-request Message ", metadataMap);
+        LOG.infoContext(ocrRequestMessage.getContextId(), "Consuming ocr-request Message ", metadataMap);
     }
 
 }
