@@ -45,7 +45,6 @@ public class KafkaConfig {
         ConcurrentKafkaListenerContainerFactory<String, OcrRequestMessage> factory = new ConcurrentKafkaListenerContainerFactory<>();
 
         factory.setConsumerFactory(consumerFactory(environmentReader));
-        factory.setConcurrency(getConcurrency(environmentReader));
 
         return factory;
     }
@@ -61,10 +60,6 @@ public class KafkaConfig {
         props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
 
         return props;
-    }
-
-    private Integer getConcurrency(final EnvironmentReader environmentReader) {
-        return environmentReader.getMandatoryInteger(EnvironmentVariable.CONSUMER_CONCURRENCY.name());
     }
 
     private String getBootstrapServers(final EnvironmentReader environmentReader) {
