@@ -1,6 +1,6 @@
 package uk.gov.companieshouse.ocrapiconsumer.request;
 
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -127,12 +127,12 @@ public class ExtractTextResultDTO {
 
     public Map<String,Object>  metadataMap() {
 
-        Map<String,Object> map = new HashMap<>();
+        Map<String,Object> map = new LinkedHashMap<>();
 
-        map.put("lowestConfidenceScore", lowestConfidenceScore);
-        map.put("averageConfidenceScore", averageConfidenceScore);
-        map.put("ocrProcessingTimeMs", ocrProcessingTimeMs);
-        map.put("totalProcessingTimeMs", totalProcessingTimeMs);
+        map.put("lowest_confidence_score", lowestConfidenceScore);
+        map.put("average_confidence_score", averageConfidenceScore);
+        map.put("ocr_processing_time_ms", ocrProcessingTimeMs);
+        map.put("total_processing_time_ms", totalProcessingTimeMs);
         map.put("response_id", responseId);
         map.put("context_id", contextId);
 
