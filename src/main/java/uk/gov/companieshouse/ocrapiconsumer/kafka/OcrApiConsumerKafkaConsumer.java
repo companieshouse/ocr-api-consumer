@@ -41,6 +41,7 @@ public class OcrApiConsumerKafkaConsumer {
     private static final String KAFKA_LISTENER_CONTAINER_FACTORY = "kafkaListenerContainerFactory";
 
     private static final int MAX_RETRY_ATTEMPTS = 3;
+    private static final String ATTEMPT_SO_FAR = "attempt_so_far";
 
     private final OcrApiConsumerService ocrApiConsumerService;
     private final OcrMessageErrorHandler ocrMessageErrorHandler;
@@ -142,7 +143,7 @@ public class OcrApiConsumerKafkaConsumer {
     private void retryMessage(org.springframework.messaging.Message<OcrRequestMessage> message, String currentTopic) {
 
         OcrRequestMessage ocrRequestMessage = message.getPayload();
-        Integer nextAttempt = ocrRequestMessage.getAttempt() + 1;
+        int nextAttempt = ocrRequestMessage.getAttempt() + 1;
 
         if (nextAttempt > getMaxRetryAttempts()) {
 
@@ -158,8 +159,10 @@ public class OcrApiConsumerKafkaConsumer {
 
         Message retryMessage = createRepostMessage(ocrRequestMessage, toTopic);
         String contextId = ocrRequestMessage.getContextId();
+        Map<String, Object> dataMap = new LinkedHashMap<>();
+        dataMap.put(ATTEMPT_SO_FAR, ocrRequestMessage.getAttempt());
 
-        LOG.infoContext(contextId, "Reposting message from topic [" + fromTopic + "]" + " to topic [" + toTopic + "]", null);
+        LOG.infoContext(contextId, "Reposting message from topic [" + fromTopic + "]" + " to topic [" + toTopic + "]", dataMap);
 
         String failureMessage = "Can not repost message";
         try {
@@ -215,7 +218,7 @@ public class OcrApiConsumerKafkaConsumer {
         metadataMap.put("partition", metadata.partition());
         metadataMap.put("offset", metadata.offset());
         metadataMap.put("thread_id", Long.valueOf(Thread.currentThread().getId()));
-        metadataMap.put("attempt_so_far", ocrRequestMessage.getAttempt());
+        metadataMap.put(ATTEMPT_SO_FAR, ocrRequestMessage.getAttempt());
         metadataMap.put("created_at", ocrRequestMessage.getCreatedAt());
 
         LOG.infoContext(ocrRequestMessage.getContextId(), "Consuming ocr-request Message ", metadataMap);
