@@ -11,6 +11,7 @@ import java.util.concurrent.TimeUnit;
 
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.annotation.TopicPartition;
 import org.springframework.kafka.listener.adapter.ConsumerRecordMetadata;
@@ -44,7 +45,6 @@ public class OcrApiConsumerKafkaConsumer {
 
     private static final String KAFKA_LISTENER_CONTAINER_FACTORY = "kafkaListenerContainerFactory";
 
-    private static final int MAX_RETRY_ATTEMPTS = 3;
 
     private final Map<String, Integer> retryCounts;
 
@@ -53,6 +53,9 @@ public class OcrApiConsumerKafkaConsumer {
     private final SerializerFactory serializerFactory;
     private final OcrApiConsumerKafkaProducer kafkaProducer;
     private final EnvironmentReader environmentReader;
+
+    @Value("${kafka.maximum.retry.attempts}")
+    protected int maximumRetryAttempts;
 
     protected long retryThrottleRateSeconds;
 
@@ -73,10 +76,10 @@ public class OcrApiConsumerKafkaConsumer {
 
     @KafkaListener(
         id = OCR_REQUEST_GROUP,
-        topics = OCR_REQUEST_TOPICS,
+        topics = "${kafka.consumer.main.topic}",
         groupId = OCR_REQUEST_GROUP,
         topicPartitions =
-        { @TopicPartition(topic = OCR_REQUEST_TOPICS, partitions = { "0-2" }),
+        { @TopicPartition(topic = "${kafka.consumer.main.topic}", partitions = { "0-2" }),
         },
         containerFactory = KAFKA_LISTENER_CONTAINER_FACTORY)
     public void consumeOcrApiRequestMessage(org.springframework.messaging.Message<OcrRequestMessage> message, ConsumerRecordMetadata metadata) {
@@ -88,7 +91,7 @@ public class OcrApiConsumerKafkaConsumer {
 
     @KafkaListener(
         id = OCR_REQUEST_RETRY_GROUP,
-        topics = OCR_REQUEST_RETRY_TOPICS,
+        topics = "${kafka.consumer.retry.topic}",
         groupId = OCR_REQUEST_RETRY_GROUP,
         containerFactory = KAFKA_LISTENER_CONTAINER_FACTORY)
     public void consumeOcrApiRequestRetryMessage(org.springframework.messaging.Message<OcrRequestMessage> message, ConsumerRecordMetadata metadata) {
@@ -161,7 +164,7 @@ public class OcrApiConsumerKafkaConsumer {
 
             int retryCount = retryCounts.getOrDefault(contextId, 1);
 
-            if (retryCount >= getMaxRetryAttempts()) {
+            if (retryCount >= getMaximumRetryAttempts()) {
 
                 throw new MaximumRetriesException();
 
@@ -236,8 +239,8 @@ public class OcrApiConsumerKafkaConsumer {
         return OCR_REQUEST_RETRY_TOPICS;
     }
 
-    private int getMaxRetryAttempts() {
-        return MAX_RETRY_ATTEMPTS;
+    private int getMaximumRetryAttempts() {
+        return maximumRetryAttempts;
     }
 
     // Use for unit testing

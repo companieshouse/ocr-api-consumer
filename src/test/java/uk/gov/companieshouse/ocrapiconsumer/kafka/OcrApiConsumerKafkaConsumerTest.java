@@ -46,6 +46,8 @@ class OcrApiConsumerKafkaConsumerTest {
 
     private static final long RETRY_THROTTLE_RATE_SECONDS = 3L;
 
+    private static final int MAXIMUM_RETRY_ATTEMPTS = 3;
+
     @Mock
     private SerializerFactory serializerFactory;
     @Mock
@@ -67,6 +69,7 @@ class OcrApiConsumerKafkaConsumerTest {
         this.kafkaConsumer = new OcrApiConsumerKafkaConsumer(serializerFactory, kafkaProducer, ocrApiConsumerService,
                 ocrMessageErrorHandler, environmentReader);
         kafkaConsumer.retryThrottleRateSeconds = RETRY_THROTTLE_RATE_SECONDS;
+        kafkaConsumer.maximumRetryAttempts = MAXIMUM_RETRY_ATTEMPTS;
     }
 
     @Test
