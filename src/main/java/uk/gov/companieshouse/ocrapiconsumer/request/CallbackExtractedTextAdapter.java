@@ -40,12 +40,15 @@ public class CallbackExtractedTextAdapter {
 
     /**
      * Sends the extracted text with default values to the extracted text endpoint for non-retryable errors
-     * @param   contextId               The context ID of the application.
+     * @param   contextId               The CHS context ID 
+     * @param   responseId              The Response ID of the request
      * @param   extractedTextEndpoint   The endpoint to send the extracted text to.
      */
-    public void sendTextResultError(String contextId, String extractedTextEndpoint) {
+    public void sendTextResultError(String contextId, String responseId, String extractedTextEndpoint) {
         ExtractTextResultDTO extractedTextError = ExtractTextResultDTO
-                .createErrorExtractTextResultDTOFromContextId(contextId);
+                .createErrorExtractTextResultDTOFromContextId(contextId, responseId);
+
+        LOG.infoContext(contextId, "Sending Error Message back to client", extractedTextError.metadataMap());
 
         try {
             HttpEntity<ExtractTextResultDTO> entity = new HttpEntity<>(extractedTextError);

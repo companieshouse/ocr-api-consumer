@@ -1,6 +1,6 @@
 package uk.gov.companieshouse.ocrapiconsumer.request;
 
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -15,18 +15,26 @@ public class ExtractTextResultDTO {
     /**
      * Creates an extracted text result with default values and the context id, for use in non-retryable errors.
      * @param contextId The context ID of the application.
+     * @param responseId2
      * @return          An ExtractTextResultDTO object with default values.
      */
-    static ExtractTextResultDTO createErrorExtractTextResultDTOFromContextId(String contextId) {
+    static ExtractTextResultDTO createErrorExtractTextResultDTOFromContextId(String contextId, String responseId) {
         ExtractTextResultDTO extractedTextError = new ExtractTextResultDTO();
+        extractedTextError.setContextId(contextId);
         extractedTextError.setAverageConfidenceScore(0);
         extractedTextError.setLowestConfidenceScore(0);
         extractedTextError.setOcrProcessingTimeMs(0L);
         extractedTextError.setTotalProcessingTimeMs(0L);
-        extractedTextError.setResponseId(contextId);
+        extractedTextError.setResponseId(responseId);
         extractedTextError.setExtractedText(OCR_CONVERSION_ERROR_TEXT);
         return extractedTextError;
     }
+
+    /**
+     *  The input CHS contextId of the OCR request
+     */
+    @JsonProperty("context_id")
+    private String contextId;
 
     /**
      *  The text for the OCR request
@@ -60,6 +68,14 @@ public class ExtractTextResultDTO {
      */
     @JsonProperty("response_id")
     private String responseId;
+
+    public String getContextId() {
+        return contextId;
+    }
+
+    public void setContextId(String contextId) {
+        this.contextId = contextId;
+    }
 
     public String getExtractedText() {
         return extractedText;
@@ -111,13 +127,14 @@ public class ExtractTextResultDTO {
 
     public Map<String,Object>  metadataMap() {
 
-        Map<String,Object> map = new HashMap<>();
+        Map<String,Object> map = new LinkedHashMap<>();
 
-        map.put("lowestConfidenceScore", lowestConfidenceScore);
-        map.put("averageConfidenceScore", averageConfidenceScore);
-        map.put("ocrProcessingTimeMs", ocrProcessingTimeMs);
-        map.put("totalProcessingTimeMs", totalProcessingTimeMs);
+        map.put("lowest_confidence_score", lowestConfidenceScore);
+        map.put("average_confidence_score", averageConfidenceScore);
+        map.put("ocr_processing_time_ms", ocrProcessingTimeMs);
+        map.put("total_processing_time_ms", totalProcessingTimeMs);
         map.put("response_id", responseId);
+        map.put("context_id", contextId);
 
         return map;        
     }

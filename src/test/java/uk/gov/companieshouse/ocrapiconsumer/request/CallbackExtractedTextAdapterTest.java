@@ -68,7 +68,7 @@ class CallbackExtractedTextAdapterTest extends TestParent {
                 .thenReturn(new ResponseEntity<>(HttpStatus.OK));
 
         // when
-        callbackExtractedTextAdapter.sendTextResultError(CONTEXT_ID, EXTRACTED_TEXT_ENDPOINT);
+        callbackExtractedTextAdapter.sendTextResultError(CONTEXT_ID, RESPONSE_ID, EXTRACTED_TEXT_ENDPOINT);
 
         // then
         verify(restTemplate, times(1)).postForEntity(eq(EXTRACTED_TEXT_ENDPOINT), any(), any());
