@@ -17,8 +17,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
-import uk.gov.companieshouse.environment.EnvironmentReader;
-import uk.gov.companieshouse.ocrapiconsumer.common.EnvironmentVariable;
 import uk.gov.companieshouse.ocrapiconsumer.groups.Unit;
 import uk.gov.companieshouse.ocrapiconsumer.kafka.exception.RetryableErrorException;
 
@@ -29,9 +27,6 @@ class OcrApiRequestAdapterTest extends TestParent {
     private static final String DUMMY_OCR_API_URL = "https://dummyurl.com/ocr";
     @Mock
     private RestTemplate restTemplate;
-
-    @Mock
-    private EnvironmentReader environmentReader;
 
     @InjectMocks
     private OcrApiRequestAdapter ocrApiRequestAdapter;
@@ -46,7 +41,7 @@ class OcrApiRequestAdapterTest extends TestParent {
     void testSendOcrRequestSuccessful() {
         // given
         ResponseEntity<ExtractTextResultDTO> expected = response;
-        when(environmentReader.getMandatoryUrl(EnvironmentVariable.OCR_API_URL.name())).thenReturn(DUMMY_OCR_API_URL);
+        ocrApiRequestAdapter.ocrApiUrl = DUMMY_OCR_API_URL;
         when(restTemplate.postForEntity(eq(DUMMY_OCR_API_URL), any(), eq(ExtractTextResultDTO.class))).thenReturn(response);
 
         // when

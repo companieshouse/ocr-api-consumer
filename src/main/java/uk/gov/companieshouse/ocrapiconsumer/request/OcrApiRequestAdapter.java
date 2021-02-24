@@ -1,6 +1,7 @@
 package uk.gov.companieshouse.ocrapiconsumer.request;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -10,8 +11,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
-import uk.gov.companieshouse.environment.EnvironmentReader;
-import uk.gov.companieshouse.ocrapiconsumer.common.EnvironmentVariable;
 import uk.gov.companieshouse.ocrapiconsumer.kafka.exception.RetryableErrorException;
 
 @Component
@@ -22,12 +21,13 @@ public class OcrApiRequestAdapter {
     private static final String CONTEXT_ID_REQUEST_PARAMETER_NAME = "contextId";
 
     private final RestTemplate restTemplate;
-    private final EnvironmentReader environmentReader;
+
+    @Value("${ocr.api.url}")
+    protected String ocrApiUrl;
 
     @Autowired
-    public OcrApiRequestAdapter(RestTemplate restTemplate, EnvironmentReader environmentReader) {
+    public OcrApiRequestAdapter(RestTemplate restTemplate) {
         this.restTemplate = restTemplate;
-        this.environmentReader = environmentReader;
     }
 
     /**
@@ -38,8 +38,6 @@ public class OcrApiRequestAdapter {
      * @return  A response entity containing the extracted text result DTO.
      */
     public ResponseEntity<ExtractTextResultDTO> sendOcrRequestToOcrApi(String contextId, byte[] tiffContent, String responseId) {
-        String ocrApiUrl = readOcrApiUrlFromEnv();
-
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.MULTIPART_FORM_DATA);
 
@@ -65,14 +63,5 @@ public class OcrApiRequestAdapter {
         } catch (Exception e) {
              throw new RetryableErrorException("Fail calling ocr-api [" + e.getMessage() + "]", e);
         }
-    }
-
-    /**
-     * Reads in the OCR API URL from environment variables using the Environment Reader.
-     * @return  The OCR API URL as a string
-     */
-    private String readOcrApiUrlFromEnv() {
-        // Get the ocr api url from env variables
-        return environmentReader.getMandatoryUrl(EnvironmentVariable.OCR_API_URL.name());
     }
 }

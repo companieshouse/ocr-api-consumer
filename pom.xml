@@ -20,9 +20,6 @@
 
         <included.tests>unit-test</included.tests>
 
-        <!-- Environment Reader -->
-        <environment-reader.version>1.3.8</environment-reader.version>
-
         <!-- Structured Logging -->
         <structured-logging.version>1.9.4</structured-logging.version>
 
@@ -88,13 +85,6 @@
             <groupId>uk.gov.companieshouse</groupId>
             <artifactId>kafka-models</artifactId>
             <version>${kafka-models.version}</version>
-        </dependency>
-
-
-        <dependency>
-            <groupId>uk.gov.companieshouse</groupId>
-            <artifactId>environment-reader-library</artifactId>
-            <version>${environment-reader.version}</version>
         </dependency>
 
         <dependency>

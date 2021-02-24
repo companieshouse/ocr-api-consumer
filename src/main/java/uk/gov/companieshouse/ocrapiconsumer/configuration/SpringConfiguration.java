@@ -1,12 +1,11 @@
 package uk.gov.companieshouse.ocrapiconsumer.configuration;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.client.RestTemplate;
-import uk.gov.companieshouse.environment.EnvironmentReader;
 import uk.gov.companieshouse.kafka.serialization.SerializerFactory;
-import uk.gov.companieshouse.ocrapiconsumer.common.EnvironmentVariable;
 
 import java.time.Duration;
 
@@ -15,15 +14,16 @@ public class SpringConfiguration {
 
     protected static final int DEFAULT_REQUEST_TIMEOUT_SECONDS = 300;
 
-    private int getTimeout(final EnvironmentReader environmentReader) {
-        Integer timeout = environmentReader.getOptionalInteger(EnvironmentVariable.OCR_REQUEST_TIMEOUT_SECONDS.name());
-        return timeout == null ? DEFAULT_REQUEST_TIMEOUT_SECONDS : timeout;
+    @Value("${ocr.request.timeout.seconds}")
+    protected int ocrRequestTimeoutSeconds;
+
+    private int getTimeout() {
+        return ocrRequestTimeoutSeconds == 0 ? DEFAULT_REQUEST_TIMEOUT_SECONDS : ocrRequestTimeoutSeconds;
     }
 
     @Bean
-    RestTemplate restTemplate(final RestTemplateBuilder restTemplateBuilder,
-                              final EnvironmentReader environmentReader) {
-        Duration timeoutInSeconds = Duration.ofSeconds(getTimeout(environmentReader));
+    RestTemplate restTemplate(final RestTemplateBuilder restTemplateBuilder) {
+        Duration timeoutInSeconds = Duration.ofSeconds(getTimeout());
         return restTemplateBuilder
                 .setConnectTimeout(timeoutInSeconds)
                 .setReadTimeout(timeoutInSeconds)
