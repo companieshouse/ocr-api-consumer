@@ -39,6 +39,7 @@ CONSUMER_CONCURRENCY_RETRY                  | Number of consumer threads for ret
 RETRY_THROTTLE_RATE_SECONDS                 | Number of seconds before retrying                 | 3
 OCR_REQUEST_TIMEOUT_SECONDS                 | Optional request timeout for API calls            | 300 (default value)
 OCR_REQUEST_TOPIC                           | The kafka request topic for the ocr-api-consumer  | ocr-request
+OCR_REQUEST_GROUP_NAME                      | The kafka request group name                      | ocr-api-consumer-ocr-request
 MAXIMUM_RETRY_ATTEMPTS                      | The maximum amount of retries for the kafka topic | 3
 
 ## Testing Locally (dev)

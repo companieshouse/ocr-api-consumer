@@ -39,9 +39,6 @@ public class OcrApiConsumerKafkaConsumer {
 
     private static final Logger LOG = LoggerFactory.getLogger(APPLICATION_NAME_SPACE);
 
-    private static final String OCR_REQUEST_GROUP = APPLICATION_NAME_SPACE + "-" + OCR_REQUEST_TOPICS;
-    private static final String OCR_REQUEST_RETRY_GROUP = APPLICATION_NAME_SPACE + "-" + OCR_REQUEST_RETRY_TOPICS;
-
     private static final String KAFKA_LISTENER_CONTAINER_FACTORY = "kafkaListenerContainerFactory";
 
 
@@ -74,9 +71,9 @@ public class OcrApiConsumerKafkaConsumer {
     }
 
     @KafkaListener(
-        id = OCR_REQUEST_GROUP,
+        id = "${kafka.ocr.request.group.name}",
         topics = "${kafka.consumer.main.topic}",
-        groupId = OCR_REQUEST_GROUP,
+        groupId = "${kafka.ocr.request.group.name}",
         concurrency ="${kafka.consumer.main.topic.concurrency}",
         containerFactory = KAFKA_LISTENER_CONTAINER_FACTORY)
     public void consumeOcrApiRequestMessage(org.springframework.messaging.Message<OcrRequestMessage> message, ConsumerRecordMetadata metadata) {
@@ -87,13 +84,13 @@ public class OcrApiConsumerKafkaConsumer {
     }
 
     @KafkaListener(
-        id = OCR_REQUEST_RETRY_GROUP,
+        id = "${kafka.ocr.request.retry.group.name}",
         topics = "${kafka.consumer.retry.topic}",
-        groupId = OCR_REQUEST_RETRY_GROUP,
+        groupId = "${kafka.ocr.request.retry.group.name}",
         concurrency ="${kafka.consumer.retry.topic.concurrency}",
         containerFactory = KAFKA_LISTENER_CONTAINER_FACTORY)
     public void consumeOcrApiRequestRetryMessage(org.springframework.messaging.Message<OcrRequestMessage> message, ConsumerRecordMetadata metadata) {
-        
+
         logConsumeKafkaMessage(message.getPayload(), metadata);
 
         handleOcrRequestMessage(message, metadata.topic());
