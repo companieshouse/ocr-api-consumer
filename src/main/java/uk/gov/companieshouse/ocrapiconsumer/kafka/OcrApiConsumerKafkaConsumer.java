@@ -1,19 +1,11 @@
 package uk.gov.companieshouse.ocrapiconsumer.kafka;
 
 import static uk.gov.companieshouse.ocrapiconsumer.OcrApiConsumerApplication.APPLICATION_NAME_SPACE;
-
-import java.util.Date;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-
-
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.listener.adapter.ConsumerRecordMetadata;
 import org.springframework.stereotype.Service;
-import uk.gov.companieshouse.environment.EnvironmentReader;
 import uk.gov.companieshouse.kafka.exceptions.SerializationException;
 import uk.gov.companieshouse.kafka.message.Message;
 import uk.gov.companieshouse.kafka.serialization.AvroSerializer;
@@ -21,56 +13,62 @@ import uk.gov.companieshouse.kafka.serialization.SerializerFactory;
 import uk.gov.companieshouse.logging.Logger;
 import uk.gov.companieshouse.logging.LoggerFactory;
 import uk.gov.companieshouse.ocr.OcrRequestMessage;
-import uk.gov.companieshouse.ocrapiconsumer.common.EnvironmentVariable;
 import uk.gov.companieshouse.ocrapiconsumer.kafka.exception.FatalErrorException;
 import uk.gov.companieshouse.ocrapiconsumer.kafka.exception.MaximumRetriesException;
 import uk.gov.companieshouse.ocrapiconsumer.kafka.exception.RetryableErrorException;
 import uk.gov.companieshouse.ocrapiconsumer.request.OcrApiConsumerService;
 
+import java.util.Date;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+
 @Service
 public class OcrApiConsumerKafkaConsumer {
 
-    protected static final String OCR_REQUEST_TOPICS = "ocr-request";
-    protected static final String OCR_REQUEST_RETRY_TOPICS = "ocr-request-retry";
 
     private static final Logger LOG = LoggerFactory.getLogger(APPLICATION_NAME_SPACE);
 
-    private static final String OCR_REQUEST_GROUP = APPLICATION_NAME_SPACE + "-" + OCR_REQUEST_TOPICS;
-    private static final String OCR_REQUEST_RETRY_GROUP = APPLICATION_NAME_SPACE + "-" + OCR_REQUEST_RETRY_TOPICS;
-
     private static final String KAFKA_LISTENER_CONTAINER_FACTORY = "kafkaListenerContainerFactory";
 
-    private static final int MAX_RETRY_ATTEMPTS = 3;
     private static final String ATTEMPT_SO_FAR = "attempt_so_far";
 
     private final OcrApiConsumerService ocrApiConsumerService;
     private final OcrMessageErrorHandler ocrMessageErrorHandler;
     private final SerializerFactory serializerFactory;
     private final OcrApiConsumerKafkaProducer kafkaProducer;
-    private final EnvironmentReader environmentReader;
 
+    @Value("${kafka.consumer.main.topic}")
+    protected String ocrRequestTopics;
+
+    @Value("${kafka.consumer.retry.topic}")
+    protected String ocrRequestRetryTopics;
+
+    @Value("${kafka.maximum.retry.attempts}")
+    protected int maximumRetryAttempts;
+
+    @Value("${kafka.retry.throttle.rate.seconds}")
     protected long retryThrottleRateSeconds;
 
     @Autowired
     public OcrApiConsumerKafkaConsumer(SerializerFactory serializerFactory,
                                        OcrApiConsumerKafkaProducer kafkaProducer,
                                        final OcrApiConsumerService ocrApiConsumerService,
-                                       OcrMessageErrorHandler ocrMessageErrorHandler,
-                                       final EnvironmentReader environmentReader) {
+                                       OcrMessageErrorHandler ocrMessageErrorHandler) {
 
         this.serializerFactory = serializerFactory;
         this.kafkaProducer = kafkaProducer;
         this.ocrApiConsumerService = ocrApiConsumerService;
         this.ocrMessageErrorHandler = ocrMessageErrorHandler;
-        this.environmentReader = environmentReader;
     }
 
     @KafkaListener(
-        id = OCR_REQUEST_GROUP,
-        topics = OCR_REQUEST_TOPICS,
-        groupId = OCR_REQUEST_GROUP,
-        concurrency ="${kafka.consumer.main.topic.concurrency}",
-        containerFactory = KAFKA_LISTENER_CONTAINER_FACTORY)
+            id = "${kafka.ocr.request.group.name}",
+            topics = "${kafka.consumer.main.topic}",
+            groupId = "${kafka.ocr.request.group.name}",
+            concurrency = "${kafka.consumer.main.topic.concurrency}",
+            containerFactory = KAFKA_LISTENER_CONTAINER_FACTORY)
     public void consumeOcrApiRequestMessage(org.springframework.messaging.Message<OcrRequestMessage> message, ConsumerRecordMetadata metadata) {
 
         logConsumeKafkaMessage(message.getPayload(), metadata);
@@ -79,13 +77,13 @@ public class OcrApiConsumerKafkaConsumer {
     }
 
     @KafkaListener(
-        id = OCR_REQUEST_RETRY_GROUP,
-        topics = OCR_REQUEST_RETRY_TOPICS,
-        groupId = OCR_REQUEST_RETRY_GROUP,
-        concurrency ="${kafka.consumer.retry.topic.concurrency}",
-        containerFactory = KAFKA_LISTENER_CONTAINER_FACTORY)
+            id = "${kafka.ocr.request.retry.group.name}",
+            topics = "${kafka.consumer.retry.topic}",
+            groupId = "${kafka.ocr.request.retry.group.name}",
+            concurrency = "${kafka.consumer.retry.topic.concurrency}",
+            containerFactory = KAFKA_LISTENER_CONTAINER_FACTORY)
     public void consumeOcrApiRequestRetryMessage(org.springframework.messaging.Message<OcrRequestMessage> message, ConsumerRecordMetadata metadata) {
-        
+
         logConsumeKafkaMessage(message.getPayload(), metadata);
 
         delayRetry(message.getPayload().getContextId());
@@ -94,7 +92,7 @@ public class OcrApiConsumerKafkaConsumer {
     }
 
     private void handleOcrRequestMessage(org.springframework.messaging.Message<OcrRequestMessage> message,
-            String topicName) {
+                                         String topicName) {
 
         OcrRequestMessage ocrRequestMessage = message.getPayload();
         String contextId = ocrRequestMessage.getContextId();
@@ -108,7 +106,7 @@ public class OcrApiConsumerKafkaConsumer {
         } catch (RetryableErrorException ree) {
 
             LOG.errorContext(contextId, "Retryable Error consuming message", ree, null);
-            
+
             try {
                 retryMessage(message, topicName);
 
@@ -127,10 +125,8 @@ public class OcrApiConsumerKafkaConsumer {
 
     @SuppressWarnings("java:S2142")
     private void delayRetry(String contextId) {
-        retryThrottleRateSeconds = environmentReader
-                .getMandatoryLong(EnvironmentVariable.RETRY_THROTTLE_RATE_SECONDS.name());
 
-        LOG.infoContext(contextId, "Pausing thread [" + retryThrottleRateSeconds + "] seconds before retrying",  null);
+        LOG.infoContext(contextId, "Pausing thread [" + retryThrottleRateSeconds + "] seconds before retrying", null);
 
         try {
             TimeUnit.SECONDS.sleep(retryThrottleRateSeconds);
@@ -140,16 +136,17 @@ public class OcrApiConsumerKafkaConsumer {
         }
     }
 
+
     private void retryMessage(org.springframework.messaging.Message<OcrRequestMessage> message, String currentTopic) {
+
 
         OcrRequestMessage ocrRequestMessage = message.getPayload();
         int nextAttempt = ocrRequestMessage.getAttempt() + 1;
 
-        if (nextAttempt > getMaxRetryAttempts()) {
+        if (nextAttempt > getMaximumRetryAttempts()) {
 
             throw new MaximumRetriesException();
-        }
-        else {
+        } else {
             ocrRequestMessage.setAttempt(nextAttempt);
             repostMessage(ocrRequestMessage, currentTopic, getRetryTopicName());
         }
@@ -174,14 +171,14 @@ public class OcrApiConsumerKafkaConsumer {
 
             throw new FatalErrorException(failureMessage, ie);
 
-        }  catch (ExecutionException ee) {
+        } catch (ExecutionException ee) {
 
             throw new FatalErrorException(failureMessage, ee);
         }
     }
 
     private Message createRepostMessage(final OcrRequestMessage ocrRequestMessage,
-            final String topic) {
+                                        final String topic) {
 
         Message retryMessage = new Message();
         AvroSerializer<OcrRequestMessage> serializer = serializerFactory.getGenericRecordSerializer(OcrRequestMessage.class);
@@ -199,15 +196,16 @@ public class OcrApiConsumerKafkaConsumer {
     }
 
     protected String getMainTopicName() {
-        return OCR_REQUEST_TOPICS;
+        return ocrRequestTopics;
     }
 
     String getRetryTopicName() {
-        return OCR_REQUEST_RETRY_TOPICS;
+        return ocrRequestRetryTopics;
     }
 
-    protected int getMaxRetryAttempts() {
-        return MAX_RETRY_ATTEMPTS;
+
+    protected int getMaximumRetryAttempts() {
+        return maximumRetryAttempts;
     }
 
     // logging helper methods
@@ -217,7 +215,7 @@ public class OcrApiConsumerKafkaConsumer {
         metadataMap.put("topic", metadata.topic());
         metadataMap.put("partition", metadata.partition());
         metadataMap.put("offset", metadata.offset());
-        metadataMap.put("thread_id", Long.valueOf(Thread.currentThread().getId()));
+        metadataMap.put("thread_id", Thread.currentThread().getId());
         metadataMap.put(ATTEMPT_SO_FAR, ocrRequestMessage.getAttempt());
         metadataMap.put("created_at", ocrRequestMessage.getCreatedAt());
 
