@@ -5,7 +5,6 @@ import static uk.gov.companieshouse.ocrapiconsumer.OcrApiConsumerApplication.APP
 import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
@@ -35,14 +34,11 @@ public class OcrApiConsumerKafkaConsumer {
     protected static final String OCR_REQUEST_TOPICS = "ocr-request";
     protected static final String OCR_REQUEST_RETRY_TOPICS = "ocr-request-retry";
 
-    private static final String OCR_REQUEST_KEY_RETRY = OCR_REQUEST_RETRY_TOPICS;
-
     private static final Logger LOG = LoggerFactory.getLogger(APPLICATION_NAME_SPACE);
 
     private static final String KAFKA_LISTENER_CONTAINER_FACTORY = "kafkaListenerContainerFactory";
 
-
-    private final Map<String, Integer> retryCounts;
+    private static final String ATTEMPT_SO_FAR = "attempt_so_far";
 
     private final OcrApiConsumerService ocrApiConsumerService;
     private final OcrMessageErrorHandler ocrMessageErrorHandler;
@@ -62,7 +58,6 @@ public class OcrApiConsumerKafkaConsumer {
                                        OcrMessageErrorHandler ocrMessageErrorHandler,
                                        final EnvironmentReader environmentReader) {
 
-        this.retryCounts = new ConcurrentHashMap<>();
         this.serializerFactory = serializerFactory;
         this.kafkaProducer = kafkaProducer;
         this.ocrApiConsumerService = ocrApiConsumerService;
@@ -93,6 +88,8 @@ public class OcrApiConsumerKafkaConsumer {
 
         logConsumeKafkaMessage(message.getPayload(), metadata);
 
+        delayRetry(message.getPayload().getContextId());
+
         handleOcrRequestMessage(message, metadata.topic());
     }
 
@@ -108,26 +105,21 @@ public class OcrApiConsumerKafkaConsumer {
 
             ocrApiConsumerService.ocrRequest(ocrRequestMessage);
 
-            resetKeyFromRetryCounts(contextId); // must be last statement before error handling
-
         } catch (RetryableErrorException ree) {
 
             LOG.errorContext(contextId, "Retryable Error consuming message", ree, null);
             
             try {
-                retryMessage(contextId, message, topicName);
+                retryMessage(message, topicName);
 
             } catch (MaximumRetriesException mre) {
-                resetKeyFromRetryCounts(contextId);
                 ocrMessageErrorHandler
                         .handleMaximumRetriesException(contextId, responseId, mre, extractedTextEndpoint);
 
             } catch (Exception ex) {
-                resetKeyFromRetryCounts(contextId);
                 ocrMessageErrorHandler.generalExceptionAfterRetry(contextId, responseId, ex, extractedTextEndpoint);
             }
         } catch (Exception exception) {
-            resetKeyFromRetryCounts(contextId);
             ocrMessageErrorHandler.generalException(contextId, responseId, exception, extractedTextEndpoint);
 
         }
@@ -148,49 +140,31 @@ public class OcrApiConsumerKafkaConsumer {
         }
     }
 
-    private void retryMessage(String contextId, org.springframework.messaging.Message<OcrRequestMessage> message, String currentTopic) {
 
-        if (currentTopic.equals(getMainTopicName())) {
-
-            delayRetry(contextId);
-
-            repostMessage(contextId, message.getPayload(), currentTopic, getRetryTopicName());
-
-        }  else if (currentTopic.equals(getRetryTopicName())) {
+    private void retryMessage(org.springframework.messaging.Message<OcrRequestMessage> message, String currentTopic) {
 
 
-            int retryCount = retryCounts.getOrDefault(contextId, 1);
+        OcrRequestMessage ocrRequestMessage = message.getPayload();
+        int nextAttempt = ocrRequestMessage.getAttempt() + 1;
 
-            if (retryCount >= getMaximumRetryAttempts()) {
+        if (nextAttempt > getMaximumRetryAttempts()) {
 
-                throw new MaximumRetriesException();
-
-            } else {
-
-                retryCounts.put(contextId, retryCounts.getOrDefault(contextId, 0) + 1);
-
-                delayRetry(contextId);
-
-                LOG.infoContext(contextId, "Retrying processing message [count: " + retryCounts.get(contextId) + "]", null);
-                handleOcrRequestMessage(message, currentTopic);
-            }
-
-        } else {
-          
-           throw new FatalErrorException("Logic error in code");
+            throw new MaximumRetriesException();
+        }
+        else {
+            ocrRequestMessage.setAttempt(nextAttempt);
+            repostMessage(ocrRequestMessage, currentTopic, getRetryTopicName());
         }
     }
 
+    private void repostMessage(final OcrRequestMessage ocrRequestMessage, final String fromTopic, final String toTopic) {
 
-    private void resetKeyFromRetryCounts(String counterKey) {
-        retryCounts.remove(counterKey);
-    }
+        Message retryMessage = createRepostMessage(ocrRequestMessage, toTopic);
+        String contextId = ocrRequestMessage.getContextId();
+        Map<String, Object> dataMap = new LinkedHashMap<>();
+        dataMap.put(ATTEMPT_SO_FAR, ocrRequestMessage.getAttempt());
 
-    private void repostMessage(String contextId, final OcrRequestMessage ocrRequestMessage, final String fromTopic, final String toTopic) {
-
-        Message retryMessage = createRepostMessage(contextId, ocrRequestMessage, toTopic);
-
-        LOG.infoContext(contextId, "Reposting message from topic [" + fromTopic + "]" + " to topic [" + toTopic + "]", null);
+        LOG.infoContext(contextId, "Reposting message from topic [" + fromTopic + "]" + " to topic [" + toTopic + "]", dataMap);
 
         String failureMessage = "Can not repost message";
         try {
@@ -198,28 +172,26 @@ public class OcrApiConsumerKafkaConsumer {
 
         } catch (InterruptedException ie) {
 
-            LOG.errorContext(contextId, failureMessage, ie, null);
-
             Thread.currentThread().interrupt();
+
+            throw new FatalErrorException(failureMessage, ie);
 
         }  catch (ExecutionException ee) {
 
-            LOG.errorContext(contextId, failureMessage, ee, null);
+            throw new FatalErrorException(failureMessage, ee);
         }
     }
 
-    private Message createRepostMessage(String contextId, final OcrRequestMessage ocrRequestMessage,
+    private Message createRepostMessage(final OcrRequestMessage ocrRequestMessage,
             final String topic) {
 
         Message retryMessage = new Message();
         AvroSerializer<OcrRequestMessage> serializer = serializerFactory.getGenericRecordSerializer(OcrRequestMessage.class);
 
-        retryMessage.setKey(OCR_REQUEST_KEY_RETRY);
-
         try {
             retryMessage.setValue(serializer.toBinary(ocrRequestMessage));
         } catch (SerializationException exception) {
-            LOG.errorContext(contextId, "Can not serialise message", exception, null);
+            throw new FatalErrorException("Can not serialise ocr-request message", exception);
         }
 
         retryMessage.setTopic(topic);
@@ -236,13 +208,9 @@ public class OcrApiConsumerKafkaConsumer {
         return OCR_REQUEST_RETRY_TOPICS;
     }
 
-    private int getMaximumRetryAttempts() {
-        return maximumRetryAttempts;
-    }
 
-    // Use for unit testing
-    protected Map<String, Integer> getRetryCounts() {
-        return retryCounts;
+    protected int getMaximumRetryAttempts() {
+        return maximumRetryAttempts;
     }
 
     // logging helper methods
@@ -252,8 +220,8 @@ public class OcrApiConsumerKafkaConsumer {
         metadataMap.put("topic", metadata.topic());
         metadataMap.put("partition", metadata.partition());
         metadataMap.put("offset", metadata.offset());
-        metadataMap.put("thread_id", Long.valueOf(Thread.currentThread().getId()));
-        metadataMap.put("attempt", ocrRequestMessage.getAttempt());
+        metadataMap.put("thread_id", Thread.currentThread().getId());
+        metadataMap.put(ATTEMPT_SO_FAR, ocrRequestMessage.getAttempt());
         metadataMap.put("created_at", ocrRequestMessage.getCreatedAt());
 
         LOG.infoContext(ocrRequestMessage.getContextId(), "Consuming ocr-request Message ", metadataMap);
