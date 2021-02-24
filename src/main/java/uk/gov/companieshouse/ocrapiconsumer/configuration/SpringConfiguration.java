@@ -11,14 +11,11 @@ import java.time.Duration;
 
 @Configuration
 public class SpringConfiguration {
-
-    protected static final int DEFAULT_REQUEST_TIMEOUT_SECONDS = 300;
-
     @Value("${ocr.request.timeout.seconds}")
     protected int ocrRequestTimeoutSeconds;
 
     private int getTimeout() {
-        return ocrRequestTimeoutSeconds == 0 ? DEFAULT_REQUEST_TIMEOUT_SECONDS : ocrRequestTimeoutSeconds;
+        return ocrRequestTimeoutSeconds;
     }
 
     @Bean
