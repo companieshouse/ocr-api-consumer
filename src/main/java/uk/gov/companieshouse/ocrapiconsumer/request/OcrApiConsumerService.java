@@ -84,9 +84,7 @@ public class OcrApiConsumerService {
     }
 
 
-    public void sendOcrApiRequestForStandardTiff(String responseId) {
-
-        String contextId = responseId;
+    public void sendOcrApiRequestForStandardTiff(String contextId) {
 
         LOG.debugContext(contextId, "Creating byte array from test image", null);
 
@@ -101,7 +99,7 @@ public class OcrApiConsumerService {
         LOG.info("Length of byte array: " + image.length);
         LOG.debugContext(contextId, "Sending image to ocr microservice for conversion", null);
 
-        ResponseEntity<ExtractTextResultDTO> response = sendRequestToOcrMicroservice(contextId, image, responseId);
+        ResponseEntity<ExtractTextResultDTO> response = sendRequestToOcrMicroservice(contextId, image, contextId);
         ExtractTextResultDTO extractTextResult = response.getBody();
 
         if (extractTextResult != null) {
