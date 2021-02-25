@@ -95,8 +95,7 @@ public class OcrApiConsumerService {
             ClassPathResource classPathResource = new ClassPathResource("static/newer-articles-15.tif");
             image = FileCopyUtils.copyToByteArray(classPathResource.getInputStream());
         } catch (IOException e) {
-            e.printStackTrace();
-            LOG.info("See error log");
+            LOG.error("Failed to send request to OCR API",e);
         }
 
         LOG.info("Length of byte array: " + image.length);
