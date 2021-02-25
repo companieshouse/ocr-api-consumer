@@ -8,7 +8,7 @@ There is no error topic processing so far since all clients require this data in
 
 ## Requirements
 
-- Java 8 (drop 2 will use 11)
+- Java 11
 - Maven
 - Docker
 
