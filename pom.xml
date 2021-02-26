@@ -17,7 +17,7 @@
 
     <properties>
 
-        <java.version>1.8</java.version>
+        <java.version>11</java.version>
 
         <included.tests>unit-test</included.tests>
 
@@ -41,6 +41,9 @@
         <!-- Maven -->
         <maven-compiler-plugin.version>3.8.1</maven-compiler-plugin.version>
         <maven-surefire-plugin.version>2.22.2</maven-surefire-plugin.version>
+        <maven.compiler.source>11</maven.compiler.source>
+        <maven.compiler.target>11</maven.compiler.target>
+        <sonar-maven-plugin.version>3.7.0.1746</sonar-maven-plugin.version>
 
     </properties>
 
@@ -163,9 +166,6 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>${maven-compiler-plugin.version}</version>
-                <configuration>
-                    <release>11</release>
-                </configuration>
             </plugin>
              <plugin>
                 <groupId>org.jacoco</groupId>
@@ -181,10 +181,6 @@
                     </container>
                 </configuration>
             </plugin>
-            <plugin>
-              <groupId>org.sonarsource.scanner.maven</groupId>
-              <artifactId>sonar-maven-plugin</artifactId>
-          </plugin>
         </plugins>
     </build>
 
