@@ -17,7 +17,7 @@
 
     <properties>
 
-        <java.version>11</java.version>
+        <java.version>1.8</java.version>
 
         <included.tests>unit-test</included.tests>
 
@@ -41,8 +41,6 @@
         <!-- Maven -->
         <maven-compiler-plugin.version>3.8.1</maven-compiler-plugin.version>
         <maven-surefire-plugin.version>2.22.2</maven-surefire-plugin.version>
-        <maven.compiler.source>11</maven.compiler.source>
-        <maven.compiler.target>11</maven.compiler.target>
         <sonar-maven-plugin.version>3.7.0.1746</sonar-maven-plugin.version>
 
     </properties>
@@ -136,6 +134,7 @@
             <groupId>org.sonarsource.scanner.maven</groupId>
             <artifactId>sonar-maven-plugin</artifactId>
             <version>${sonar-maven-plugin.version}</version>
+            version>${version.sonar-maven-plugin}</version>
         </dependency>
 
     </dependencies>
