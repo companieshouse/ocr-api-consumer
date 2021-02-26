@@ -16,6 +16,7 @@
     <description>Test API consumer for OCR requests</description>
 
     <properties>
+
         <java.version>11</java.version>
 
         <included.tests>unit-test</included.tests>
@@ -153,8 +154,7 @@
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>${maven-compiler-plugin.version}</version>
                 <configuration>
-                    <source>${java.version}</source>
-                    <target>${java.version}</target>
+                    <release>11</release>
                 </configuration>
             </plugin>
              <plugin>
