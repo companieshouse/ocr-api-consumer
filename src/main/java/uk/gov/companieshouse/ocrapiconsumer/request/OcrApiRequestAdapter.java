@@ -1,6 +1,7 @@
 package uk.gov.companieshouse.ocrapiconsumer.request;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -10,8 +11,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
-import uk.gov.companieshouse.environment.EnvironmentReader;
-import uk.gov.companieshouse.environment.impl.EnvironmentReaderImpl;
 import uk.gov.companieshouse.ocrapiconsumer.kafka.exception.RetryableErrorException;
 
 @Component
@@ -19,8 +18,12 @@ public class OcrApiRequestAdapter {
 
     private static final String FILE_REQUEST_PARAMETER_NAME = "file";
     private static final String RESPONSE_ID_REQUEST_PARAMETER_NAME = "responseId";
+    private static final String CONTEXT_ID_REQUEST_PARAMETER_NAME = "contextId";
 
     private final RestTemplate restTemplate;
+
+    @Value("${ocr.api.url}")
+    protected String ocrApiUrl;
 
     @Autowired
     public OcrApiRequestAdapter(RestTemplate restTemplate) {
@@ -29,13 +32,12 @@ public class OcrApiRequestAdapter {
 
     /**
      * Sends the OCR request to the ocr-api
+     * @param   contextId             Context Logging key between microservices
      * @param   tiffContent           The image content retrieved from CHIPS.
      * @param   responseId            The request ID.
      * @return  A response entity containing the extracted text result DTO.
      */
-    public ResponseEntity<ExtractTextResultDTO> sendOcrRequestToOcrApi(byte[] tiffContent, String responseId) {
-        String ocrApiUrl = readOcrApiUrlFromEnv();
-
+    public ResponseEntity<ExtractTextResultDTO> sendOcrRequestToOcrApi(String contextId, byte[] tiffContent, String responseId) {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.MULTIPART_FORM_DATA);
 
@@ -50,24 +52,16 @@ public class OcrApiRequestAdapter {
 
         MultiValueMap<String, Object> params = new LinkedMultiValueMap<>();
         params.add(FILE_REQUEST_PARAMETER_NAME, byteArrayResource);
+        params.add(CONTEXT_ID_REQUEST_PARAMETER_NAME, contextId);
         params.add(RESPONSE_ID_REQUEST_PARAMETER_NAME, responseId);
 
         try {
             HttpEntity<MultiValueMap<String, Object>> entity = new HttpEntity<>(params, headers);
+            
             return restTemplate.postForEntity(ocrApiUrl, entity, ExtractTextResultDTO.class);
 
         } catch (Exception e) {
              throw new RetryableErrorException("Fail calling ocr-api [" + e.getMessage() + "]", e);
         }
-    }
-
-    /**
-     * Reads in the OCR API URL from environment variables using the Environment Reader.
-     * @return  The OCR API URL as a string
-     */
-    public String readOcrApiUrlFromEnv() {
-        // Get the ocr api url from env variables
-        final EnvironmentReader environmentReader = new EnvironmentReaderImpl();
-        return environmentReader.getMandatoryUrl("OCR_API_URL");
     }
 }

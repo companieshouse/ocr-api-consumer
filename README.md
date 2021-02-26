@@ -8,7 +8,7 @@ There is no error topic processing so far since all clients require this data in
 
 ## Requirements
 
-- Java 8 (drop 2 will use 11)
+- Java 11
 - Maven
 - Docker
 
@@ -30,12 +30,17 @@ The service can be run using docker, with the addition of the jib maven plugin.
 
 The following is a list of mandatory environment variables for the service to run:
 
-Name                                        | Description                          | Example Value
-------------------------------------------- | ------------------------------------ | -------------------------------------------------------------------------
-OCR_API_URL                                 | The URL of the ocr-api               | http://localhost:8080/api/ocr/image/tiff/extractText  (default value)
-KAFKA_BROKER_ADDR                           | Address of the Kafka Broker          | localhost:9092
-CONSUMER_CONCURRENCY                        | Number of consumer threads           | 3
-RETRY_THROTTLE_RATE_SECONDS                 | Number of seconds before retrying    | 3
+Name                                        | Description                            | Example Value
+------------------------------------------- | ------------------------------------   | -------------------------------------------------------------------------
+OCR_API_URL                                 | The URL of the ocr-api                            | http://localhost:8080/api/ocr/image/tiff/extractText
+KAFKA_BROKER_ADDR                           | Address of the Kafka Broker                       | localhost:9092
+CONSUMER_CONCURRENCY                        | Number of consumer threads                        | 3
+CONSUMER_CONCURRENCY_RETRY                  | Number of consumer threads for retry topic        | 1 (default value)
+RETRY_THROTTLE_RATE_SECONDS                 | Number of seconds before retrying                 | 3
+OCR_REQUEST_TIMEOUT_SECONDS                 | Optional request timeout for API calls            | 300 (default value)
+OCR_REQUEST_TOPIC                           | The kafka request topic for the ocr-api-consumer  | ocr-request
+OCR_REQUEST_GROUP_NAME                      | The kafka request group name                      | ocr-api-consumer-ocr-request
+MAXIMUM_RETRY_ATTEMPTS                      | The maximum amount of retries for the kafka topic | 3
 
 ## Testing Locally (dev)
 

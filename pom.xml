@@ -17,12 +17,9 @@
 
     <properties>
 
-        <java.version>1.8</java.version>
+        <java.version>11</java.version>
 
         <included.tests>unit-test</included.tests>
-
-        <!-- Environment Reader -->
-        <environment-reader.version>1.3.8</environment-reader.version>
 
         <!-- Structured Logging -->
         <structured-logging.version>1.9.4</structured-logging.version>
@@ -36,7 +33,7 @@
 
         <!-- CH kafka -->
         <ch-kafka.version>1.4.2</ch-kafka.version>
-        <kafka-models.version>1.0.20</kafka-models.version>
+        <kafka-models.version>1.0.21</kafka-models.version>
 
         <!-- Maven -->
         <maven-compiler-plugin.version>3.8.1</maven-compiler-plugin.version>
@@ -78,13 +75,6 @@
             <groupId>uk.gov.companieshouse</groupId>
             <artifactId>kafka-models</artifactId>
             <version>${kafka-models.version}</version>
-        </dependency>
-
-
-        <dependency>
-            <groupId>uk.gov.companieshouse</groupId>
-            <artifactId>environment-reader-library</artifactId>
-            <version>${environment-reader.version}</version>
         </dependency>
 
         <dependency>

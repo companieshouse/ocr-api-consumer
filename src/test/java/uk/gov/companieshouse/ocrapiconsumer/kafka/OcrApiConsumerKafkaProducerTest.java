@@ -5,9 +5,6 @@ import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.Mockito.verify;
-
-import java.util.concurrent.ExecutionException;
-
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -15,7 +12,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-
 import uk.gov.companieshouse.kafka.exceptions.ProducerConfigException;
 import uk.gov.companieshouse.kafka.message.Message;
 import uk.gov.companieshouse.kafka.producer.Acks;
@@ -23,16 +19,19 @@ import uk.gov.companieshouse.kafka.producer.CHKafkaProducer;
 import uk.gov.companieshouse.kafka.producer.ProducerConfig;
 import uk.gov.companieshouse.ocrapiconsumer.groups.Unit;
 
+import java.util.concurrent.ExecutionException;
+
 
 @Unit
 @ExtendWith(MockitoExtension.class)
 class OcrApiConsumerKafkaProducerTest {
 
+    @Mock
+    private CHKafkaProducer chKafkaProducer;
+
     @InjectMocks
     private TestOcrProducer ocrApiConsumerKafkaProducer = new TestOcrProducer();
 
-    @Mock
-    private CHKafkaProducer chKafkaProducer;
 
     private class TestOcrProducer extends OcrApiConsumerKafkaProducer {
         ProducerConfig produceConfig = new ProducerConfig();
@@ -44,6 +43,7 @@ class OcrApiConsumerKafkaProducerTest {
         protected CHKafkaProducer createChKafkaProducer(final ProducerConfig config) {
             return new CHKafkaProducer(config);
         }
+
     }
 
     @Test
@@ -78,7 +78,7 @@ class OcrApiConsumerKafkaProducerTest {
     }
 
     @Test
-    @DisplayName("Sens a Kakfa message using CH Kafka object")
+    @DisplayName("Sends a Kakfa message using CH Kafka object")
     void testSendMessage() throws ExecutionException, InterruptedException {
 
         // Given

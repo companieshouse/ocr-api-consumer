@@ -2,6 +2,10 @@ package uk.gov.companieshouse.ocrapiconsumer.request;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import org.apache.commons.lang.StringUtils;
+
+import uk.gov.companieshouse.ocr.OcrRequestMessage;
+
 import javax.validation.constraints.NotBlank;
 
 public class OcrRequest {
@@ -19,10 +23,30 @@ public class OcrRequest {
     @JsonProperty("response_id")
     private String responseId;
 
-    public OcrRequest(String imageEndpoint, String convertedTextEndpoint, String responseId) {
+    @JsonProperty("context_id")
+    private String contextId;
+
+    public OcrRequest() {
+        // added for jackson deserialising
+    }
+
+    public OcrRequest(String contextId, String imageEndpoint, String convertedTextEndpoint, String responseId) {
+
+        this.contextId = contextId;
         this.imageEndpoint = imageEndpoint;
         this.convertedTextEndpoint = convertedTextEndpoint;
         this.responseId = responseId;
+    }
+
+    public OcrRequest(String imageEndpoint, String convertedTextEndpoint, String responseId) {
+        this(responseId, imageEndpoint, convertedTextEndpoint, responseId);
+    }
+
+    public OcrRequest(OcrRequestMessage ocrRequestMessage) {
+        this(ocrRequestMessage.getContextId(),
+             ocrRequestMessage.getImageEndpoint(), 
+             ocrRequestMessage.getConvertedTextEndpoint(), 
+             ocrRequestMessage.getResponseId());
     }
 
     public String getImageEndpoint() {
@@ -48,4 +72,19 @@ public class OcrRequest {
     public void setResponseId(String responseId) {
         this.responseId = responseId;
     }
+
+    public String getContextId() {
+        if (StringUtils.isNotBlank(contextId)) {
+          return contextId;
+        }
+        else {
+            return responseId;
+        }
+    }
+
+    public void setContextId(String contextId) {
+        this.contextId = contextId;
+    }
+
+    
 }

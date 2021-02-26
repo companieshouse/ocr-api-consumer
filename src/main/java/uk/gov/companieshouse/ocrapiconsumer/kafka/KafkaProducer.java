@@ -1,7 +1,6 @@
 package uk.gov.companieshouse.ocrapiconsumer.kafka;
 
 import static uk.gov.companieshouse.ocrapiconsumer.OcrApiConsumerApplication.APPLICATION_NAME_SPACE;
-
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Value;
 import uk.gov.companieshouse.kafka.exceptions.ProducerConfigException;
@@ -17,13 +16,14 @@ public abstract class KafkaProducer implements InitializingBean {
     + "[Hint: The property 'kafka.broker.addresses' uses the value of this environment variable in live "
     + "environments and that of 'spring.embedded.kafka.brokers' property in test.]";
 
-    protected CHKafkaProducer chKafkaProducer;
 
     private static final int PRODUCER_RETRIES = 10;
 
     private static final Logger LOG = LoggerFactory.getLogger(APPLICATION_NAME_SPACE);
 
-    @Value("${spring.kafka.bootstrap-servers}")
+    protected CHKafkaProducer chKafkaProducer;
+
+    @Value("${kafka.bootstrap-servers}")
     private String brokerAddresses;
 
     @Override
@@ -50,7 +50,6 @@ public abstract class KafkaProducer implements InitializingBean {
 
 
     protected void setBrokerAddress(ProducerConfig config) {
-     
         if (brokerAddresses != null && !brokerAddresses.isEmpty()) {
             config.setBrokerAddresses(brokerAddresses.split(","));
         } else {
@@ -78,5 +77,6 @@ public abstract class KafkaProducer implements InitializingBean {
     protected void setBrokerAddresses(String brokerAddresses) {
         this.brokerAddresses = brokerAddresses;
     }
+
 }
 
