@@ -41,8 +41,6 @@
         <maven-compiler-plugin.version>3.8.1</maven-compiler-plugin.version>
         <maven-surefire-plugin.version>2.22.2</maven-surefire-plugin.version>
 
-        <jacoco-maven-plugin.version>0.8.2</jacoco-maven-plugin.version>
-
     </properties>
 
     <dependencyManagement>
@@ -134,7 +132,6 @@
             <groupId>org.sonarsource.scanner.maven</groupId>
             <artifactId>sonar-maven-plugin</artifactId>
             <version>${sonar-maven-plugin.version}</version>
-            <scope>compile</scope>
         </dependency>
 
     </dependencies>
@@ -173,7 +170,6 @@
              <plugin>
                 <groupId>org.jacoco</groupId>
                 <artifactId>jacoco-maven-plugin</artifactId>
-                <version>${jacoco-maven-plugin.version}</version>
             </plugin>
             <plugin>
                 <groupId>com.google.cloud.tools</groupId>
@@ -185,6 +181,10 @@
                     </container>
                 </configuration>
             </plugin>
+            <plugin>
+              <groupId>org.sonarsource.scanner.maven</groupId>
+              <artifactId>sonar-maven-plugin</artifactId>
+          </plugin>
         </plugins>
     </build>
 
