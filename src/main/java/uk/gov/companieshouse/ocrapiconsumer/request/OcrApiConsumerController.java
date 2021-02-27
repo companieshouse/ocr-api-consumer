@@ -15,6 +15,9 @@ import uk.gov.companieshouse.logging.LoggerFactory;
 import uk.gov.companieshouse.ocrapiconsumer.OcrApiConsumerApplication;
 import uk.gov.companieshouse.ocrapiconsumer.common.ErrorResponseDTO;
 
+import java.util.Map;
+
+import javax.annotation.PostConstruct;
 import javax.validation.Valid;
 
 @RestController
@@ -109,5 +112,13 @@ public class OcrApiConsumerController {
 
         return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
     }
+
+	@PostConstruct
+	private void displayEnvtVariables() {
+		Map<String, String> env = System.getenv();
+		for (Map.Entry<String, String> entry : env.entrySet()) {
+			LOG.info(entry.getKey() + " : " + entry.getValue());
+		}
+	}
 
 }
