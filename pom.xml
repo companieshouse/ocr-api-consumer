@@ -33,7 +33,7 @@
 
         <!-- CH kafka -->
         <ch-kafka.version>1.4.2</ch-kafka.version>
-        <kafka-models.version>1.0.21</kafka-models.version>
+        <kafka-models.version>1.0.22</kafka-models.version>
 
         <!-- Maven -->
         <maven-compiler-plugin.version>3.8.1</maven-compiler-plugin.version>
