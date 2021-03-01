@@ -42,7 +42,7 @@ public class OcrApiConsumerApplication {
 	@Value("${kafka.consumer.retry.topic.concurrency}")
 	private String kafkaConsumerRetryTopicConcurrency;
 
-	@Value("${kafka.retry.throttle.rate.second}")
+	@Value("${kafka.retry.throttle.rate.seconds}")
 	private String kafkaRetryThrottleRate;
 
 	@Value("${kafka.bootstrap-servers}")
