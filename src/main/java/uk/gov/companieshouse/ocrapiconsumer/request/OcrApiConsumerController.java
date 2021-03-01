@@ -1,5 +1,7 @@
 package uk.gov.companieshouse.ocrapiconsumer.request;
 
+import javax.validation.Valid;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -10,15 +12,11 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.RestClientResponseException;
+
 import uk.gov.companieshouse.logging.Logger;
 import uk.gov.companieshouse.logging.LoggerFactory;
 import uk.gov.companieshouse.ocrapiconsumer.OcrApiConsumerApplication;
 import uk.gov.companieshouse.ocrapiconsumer.common.ErrorResponseDTO;
-
-import java.util.Map;
-
-import javax.annotation.PostConstruct;
-import javax.validation.Valid;
 
 @RestController
 public class OcrApiConsumerController {
@@ -112,13 +110,5 @@ public class OcrApiConsumerController {
 
         return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
     }
-
-	@PostConstruct
-	private void displayEnvtVariables() {
-		Map<String, String> env = System.getenv();
-		for (Map.Entry<String, String> entry : env.entrySet()) {
-			LOG.info(entry.getKey() + " : " + entry.getValue());
-		}
-	}
 
 }
