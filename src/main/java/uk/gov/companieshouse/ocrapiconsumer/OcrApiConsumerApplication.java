@@ -48,6 +48,9 @@ public class OcrApiConsumerApplication {
 	@Value("${kafka.bootstrap-servers}")
 	private String kafkaBroker;
 
+    @Value("${kafka.consumer.max.poll.interval.ms}")
+    private int maxPollIntervalMs;
+
 	public static void main(String[] args) {
 		SpringApplication.run(OcrApiConsumerApplication.class, args);
 	}
@@ -68,6 +71,7 @@ public class OcrApiConsumerApplication {
 				+ kafkaConsumerRetryTopicConcurrency);
 		LOG.info("The value of ${kafka.retry.throttle.rate.second} is" + " : " + kafkaRetryThrottleRate);
 		LOG.info("The value of ${kafka.bootstrap-servers} is" + " : " + kafkaBroker);
+		LOG.info("The value of ${kafka.consumer.max.poll.interval.ms} is" + " : " + maxPollIntervalMs);
 
 		LOG.info("-------------------- End displaying Environment variables defined in spring application.properties  ----------------------------------");
 	}

@@ -28,6 +28,9 @@ public class KafkaConfig {
     @Value("${kafka.bootstrap-servers}")
     private String bootstrapServers;
 
+    @Value("${kafka.consumer.max.poll.interval.ms}")
+    private int maxPollIntervalMs;
+
     @Bean
     public ConsumerFactory<String, OcrRequestMessage> consumerFactory() {
         LOG.info("Using Bootstrap servers [" + bootstrapServers + "]");
@@ -56,6 +59,7 @@ public class KafkaConfig {
         props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, OcrKafkaRequestDeserializer.class);
         props.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, false);
         props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
+        props.put(ConsumerConfig.MAX_POLL_INTERVAL_MS_CONFIG, maxPollIntervalMs);
 
         return props;
     }
