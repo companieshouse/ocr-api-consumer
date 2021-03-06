@@ -3,7 +3,7 @@ package uk.gov.companieshouse.ocrapiconsumer.configuration;
 import static uk.gov.companieshouse.ocrapiconsumer.OcrApiConsumerApplication.APPLICATION_NAME_SPACE;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.common.serialization.StringDeserializer;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.kafka.annotation.EnableKafka;
@@ -25,11 +25,21 @@ public class KafkaConfig {
 
     private static final Logger LOG = LoggerFactory.getLogger(APPLICATION_NAME_SPACE);
 
-    @Value("${kafka.bootstrap-servers}")
     private String bootstrapServers;
 
-    @Value("${kafka.consumer.max.poll.interval.ms}")
     private int maxPollIntervalMs;
+
+    @Autowired
+    private final SpringConfiguration springConfiguration;
+
+    @Autowired
+    public KafkaConfig(SpringConfiguration springConfiguration) {
+
+        this.springConfiguration = springConfiguration;
+
+        bootstrapServers = this.springConfiguration.getKafkaBroker();
+        maxPollIntervalMs = this.springConfiguration.getMaxPollIntervalMs();       
+    }
 
     @Bean
     public ConsumerFactory<String, OcrRequestMessage> consumerFactory() {

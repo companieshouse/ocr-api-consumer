@@ -2,7 +2,6 @@ package uk.gov.companieshouse.ocrapiconsumer.kafka;
 
 import static uk.gov.companieshouse.ocrapiconsumer.OcrApiConsumerApplication.APPLICATION_NAME_SPACE;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.listener.adapter.ConsumerRecordMetadata;
 import org.springframework.stereotype.Service;
@@ -13,6 +12,7 @@ import uk.gov.companieshouse.kafka.serialization.SerializerFactory;
 import uk.gov.companieshouse.logging.Logger;
 import uk.gov.companieshouse.logging.LoggerFactory;
 import uk.gov.companieshouse.ocr.OcrRequestMessage;
+import uk.gov.companieshouse.ocrapiconsumer.configuration.SpringConfiguration;
 import uk.gov.companieshouse.ocrapiconsumer.kafka.exception.FatalErrorException;
 import uk.gov.companieshouse.ocrapiconsumer.kafka.exception.MaximumRetriesException;
 import uk.gov.companieshouse.ocrapiconsumer.kafka.exception.RetryableErrorException;
@@ -38,29 +38,30 @@ public class OcrApiConsumerKafkaConsumer {
     private final OcrMessageErrorHandler ocrMessageErrorHandler;
     private final SerializerFactory serializerFactory;
     private final OcrApiConsumerKafkaProducer kafkaProducer;
+    private final SpringConfiguration springConfiguration;
 
-    @Value("${kafka.consumer.main.topic}")
-    protected String ocrRequestTopics;
-
-    @Value("${kafka.consumer.retry.topic}")
-    protected String ocrRequestRetryTopics;
-
-    @Value("${kafka.maximum.retry.attempts}")
-    protected int maximumRetryAttempts;
-
-    @Value("${kafka.retry.throttle.rate.seconds}")
-    protected long retryThrottleRateSeconds;
+    protected  String ocrRequestTopics;
+    protected  String ocrRequestRetryTopics;
+    protected  int maximumRetryAttempts;
+    protected  long retryThrottleRateSeconds;
 
     @Autowired
     public OcrApiConsumerKafkaConsumer(SerializerFactory serializerFactory,
                                        OcrApiConsumerKafkaProducer kafkaProducer,
                                        final OcrApiConsumerService ocrApiConsumerService,
-                                       OcrMessageErrorHandler ocrMessageErrorHandler) {
+                                       OcrMessageErrorHandler ocrMessageErrorHandler,
+                                       SpringConfiguration springConfiguration) {
 
         this.serializerFactory = serializerFactory;
         this.kafkaProducer = kafkaProducer;
         this.ocrApiConsumerService = ocrApiConsumerService;
         this.ocrMessageErrorHandler = ocrMessageErrorHandler;
+        this.springConfiguration = springConfiguration;
+
+        ocrRequestTopics = this.springConfiguration.getOcrRequestTopic();
+        ocrRequestRetryTopics = this.springConfiguration.getOcrRequestTopicRetry();
+        maximumRetryAttempts = this.springConfiguration.getMaximumRetryAttempts();
+        retryThrottleRateSeconds = this.springConfiguration.getRetryThrottleRateSeconds();       
     }
 
     @KafkaListener(

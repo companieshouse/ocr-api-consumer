@@ -22,6 +22,7 @@ import uk.gov.companieshouse.kafka.exceptions.SerializationException;
 import uk.gov.companieshouse.kafka.serialization.AvroSerializer;
 import uk.gov.companieshouse.kafka.serialization.SerializerFactory;
 import uk.gov.companieshouse.ocr.OcrRequestMessage;
+import uk.gov.companieshouse.ocrapiconsumer.configuration.SpringConfiguration;
 import uk.gov.companieshouse.ocrapiconsumer.groups.Unit;
 import uk.gov.companieshouse.ocrapiconsumer.kafka.exception.FatalErrorException;
 import uk.gov.companieshouse.ocrapiconsumer.kafka.exception.RetryableErrorException;
@@ -51,7 +52,8 @@ class OcrApiConsumerKafkaConsumerTest {
     private OcrApiConsumerService ocrApiConsumerService;
     @Mock
     private OcrMessageErrorHandler ocrMessageErrorHandler;
-
+    @Mock
+    private SpringConfiguration springConfiguration;
 
     @InjectMocks
     private OcrApiConsumerKafkaConsumer kafkaConsumer;
@@ -59,7 +61,7 @@ class OcrApiConsumerKafkaConsumerTest {
     @BeforeEach
     public void setup() {
         this.kafkaConsumer = new OcrApiConsumerKafkaConsumer(serializerFactory, kafkaProducer, ocrApiConsumerService,
-                ocrMessageErrorHandler);
+                ocrMessageErrorHandler, springConfiguration);
         kafkaConsumer.retryThrottleRateSeconds = RETRY_THROTTLE_RATE_SECONDS;
         kafkaConsumer.maximumRetryAttempts = MAXIMUM_RETRY_ATTEMPTS;
     }
