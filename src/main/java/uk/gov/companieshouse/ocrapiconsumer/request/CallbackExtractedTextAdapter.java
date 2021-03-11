@@ -1,6 +1,10 @@
 package uk.gov.companieshouse.ocrapiconsumer.request;
 
 import static uk.gov.companieshouse.ocrapiconsumer.OcrApiConsumerApplication.APPLICATION_NAME_SPACE;
+
+import java.util.LinkedHashMap;
+import java.util.Map;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpEntity;
 import org.springframework.stereotype.Component;
@@ -34,7 +38,7 @@ public class CallbackExtractedTextAdapter {
             restTemplate.postForEntity(extractedTextEndpoint, entity, String.class);
 
         } catch (Exception e) {
-             throw new RetryableErrorException("Fail to get OCR Text converted by ocr-api [" + e.getMessage() + "]", e);
+             throw new RetryableErrorException("Fail to send results back to calling application at url [" + extractedTextEndpoint + "], error message [" + e.getMessage() + "]", e);
         }
     }
 
@@ -55,7 +59,9 @@ public class CallbackExtractedTextAdapter {
             restTemplate.postForEntity(extractedTextEndpoint, entity, String.class);
         } catch (Exception e) {
             // Log the exception instead of re-throwing as it could cause an infinite loop of RetryableErrorExceptions
-            LOG.errorContext(contextId, e, null);
+            Map<String, Object> data = new LinkedHashMap<>();
+            data.put("extractedTextEndpoint", extractedTextEndpoint);
+            LOG.errorContext(contextId, e, data);
         }
     }
 
