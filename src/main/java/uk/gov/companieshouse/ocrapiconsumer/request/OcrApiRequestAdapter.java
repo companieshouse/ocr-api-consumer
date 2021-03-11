@@ -61,7 +61,7 @@ public class OcrApiRequestAdapter {
             return restTemplate.postForEntity(ocrApiUrl, entity, ExtractTextResultDTO.class);
 
         } catch (Exception e) {
-             throw new RetryableErrorException("Fail calling ocr-api [" + e.getMessage() + "]", e);
+             throw new RetryableErrorException("Fail calling ocr-api url [" + ocrApiUrl + "], error message [" + e.getMessage() + "]", e);
         }
     }
 }
