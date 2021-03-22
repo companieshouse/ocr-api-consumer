@@ -20,7 +20,7 @@ class OcrApiConsumerServiceTest extends TestParent {
     private OcrApiRequestAdapter ocrApiRequestAdapter;
 
     @Mock
-    private ChipsImageAdapter chipsImageAdapter;
+    private ImageRestClient imageRestClient;
 
     @Mock
     private CallbackExtractedTextAdapter callbackExtractedTextAdapter;
@@ -40,7 +40,7 @@ class OcrApiConsumerServiceTest extends TestParent {
         OcrRequest testOcrRequest = new OcrRequest(IMAGE_ENDPOINT, EXTRACTED_TEXT_ENDPOINT, RESPONSE_ID);
 
         // given
-        when(chipsImageAdapter.getTiffImageFromChips(testOcrRequest.getContextId(), testOcrRequest.getImageEndpoint())).thenReturn(MOCK_TIFF_CONTENT);
+        when(imageRestClient.getImageContentsFromEndpoint(testOcrRequest.getContextId(), testOcrRequest.getImageEndpoint())).thenReturn(MOCK_TIFF_CONTENT);
         when(ocrApiRequestAdapter.sendOcrRequestToOcrApi(testOcrRequest.getContextId(), MOCK_TIFF_CONTENT, testOcrRequest.getResponseId())).thenReturn(response);
 
         // when

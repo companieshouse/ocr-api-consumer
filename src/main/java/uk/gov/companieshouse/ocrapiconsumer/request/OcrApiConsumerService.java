@@ -19,15 +19,15 @@ public class OcrApiConsumerService {
 
     private static final Logger LOG = LoggerFactory.getLogger(OcrApiConsumerApplication.APPLICATION_NAME_SPACE);
     private final OcrApiRequestAdapter ocrApiRequestAdapter;
-    private final ChipsImageAdapter chipsImageAdapter;
+    private final ImageRestClient imageRestClient;
     private final CallbackExtractedTextAdapter callbackExtractedTextAdapter;
 
     @Autowired
     public OcrApiConsumerService(OcrApiRequestAdapter ocrApiRequestAdapter,
-                                 ChipsImageAdapter chipsImageAdapter,
+                                 ImageRestClient imageRestClient,
                                  CallbackExtractedTextAdapter callbackExtractedTextAdapter) {
         this.ocrApiRequestAdapter = ocrApiRequestAdapter;
-        this.chipsImageAdapter = chipsImageAdapter;
+        this.imageRestClient = imageRestClient;
         this.callbackExtractedTextAdapter = callbackExtractedTextAdapter;
     }
 
@@ -50,7 +50,7 @@ public class OcrApiConsumerService {
                     null);
 
         LOG.debugContext(ocrRequest.getContextId(), "Getting the TIFF image", null);
-        byte[] image = getTiffImage(ocrRequest);
+        byte[] image = getImageContents(ocrRequest);
 
         LOG.debugContext(ocrRequest.getContextId(), "Sending image to ocr microservice for conversion", null);
 
@@ -70,8 +70,8 @@ public class OcrApiConsumerService {
 
    
 
-    private byte[] getTiffImage(OcrRequest ocrRequest) {
-        return chipsImageAdapter.getTiffImageFromChips(ocrRequest.getContextId(), ocrRequest.getImageEndpoint());
+    private byte[] getImageContents(OcrRequest ocrRequest) {
+        return imageRestClient.getImageContentsFromEndpoint(ocrRequest.getContextId(), ocrRequest.getImageEndpoint());
     }
 
     private ResponseEntity<ExtractTextResultDTO> sendRequestToOcrMicroservice(String contextId, byte[] image, String responseId) {
