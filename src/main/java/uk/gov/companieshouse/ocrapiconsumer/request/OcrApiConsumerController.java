@@ -82,7 +82,6 @@ public class OcrApiConsumerController {
             errorResponse.setErrorMessage(CLIENT_ERROR_MESSAGE);
             LOG.error(null, e);
 
-            errorResponse.setErrorMessage(CLIENT_ERROR_MESSAGE);
         } else if(e instanceof HttpServerErrorException) {
             HttpServerErrorException cause = (HttpServerErrorException) e.getCause();
             statusCode = cause.getStatusCode();
