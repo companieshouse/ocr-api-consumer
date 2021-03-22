@@ -44,7 +44,7 @@ class OcrApiConsumerServiceTest extends TestParent {
         when(ocrApiRequestAdapter.sendOcrRequestToOcrApi(testOcrRequest.getContextId(), MOCK_TIFF_CONTENT, testOcrRequest.getResponseId())).thenReturn(response);
 
         // when
-        ocrApiConsumerService.logOcrRequest(testOcrRequest);
+        ocrApiConsumerService.processOcrRequest(testOcrRequest);
 
         // then
         verify(callbackExtractedTextAdapter).sendTextResult(testOcrRequest.getConvertedTextEndpoint(), extractTextResultDTO);

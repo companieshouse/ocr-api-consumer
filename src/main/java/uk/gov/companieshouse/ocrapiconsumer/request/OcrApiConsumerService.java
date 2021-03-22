@@ -36,7 +36,7 @@ public class OcrApiConsumerService {
     }
 
     @Async
-    public void logOcrRequest(OcrRequest ocrRequest) {
+    public void processOcrRequest(OcrRequest ocrRequest) {
         orchestrateOcrRequest(ocrRequest);
     }
 
@@ -80,7 +80,7 @@ public class OcrApiConsumerService {
     }
 
     private void sendTextResult(OcrRequest ocrRequest, ExtractTextResultDTO extractedText) {
-        callbackExtractedTextAdapter.sendTextResult( ocrRequest.getConvertedTextEndpoint(), extractedText);
+        callbackExtractedTextAdapter.sendTextResult(ocrRequest.getConvertedTextEndpoint(), extractedText);
     }
 
 

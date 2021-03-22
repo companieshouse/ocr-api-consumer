@@ -46,7 +46,7 @@ public class OcrApiConsumerController {
     @PostMapping(REQUEST_ENDPOINT)
     public ResponseEntity<HttpStatus> receiveOcrRequest(@Valid @RequestBody OcrRequest ocrRequest) {
 
-        service.logOcrRequest(ocrRequest);
+        service.processOcrRequest(ocrRequest);
         return new ResponseEntity<>(HttpStatus.ACCEPTED);
     }
 

@@ -33,7 +33,7 @@ class OcrApiConsumerControllerTest extends TestParent {
                 .receiveOcrRequest(ocrRequest);
 
         // then
-        verify(service).logOcrRequest(ocrRequest);
+        verify(service).processOcrRequest(ocrRequest);
         assertThat(actual, is(expected));
     }
 }
