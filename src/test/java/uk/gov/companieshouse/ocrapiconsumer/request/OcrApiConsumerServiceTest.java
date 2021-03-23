@@ -17,13 +17,13 @@ import uk.gov.companieshouse.ocrapiconsumer.groups.Unit;
 class OcrApiConsumerServiceTest extends TestParent {
 
     @Mock
-    private OcrApiRequestAdapter ocrApiRequestAdapter;
+    private OcrApiRequestRestClient ocrApiRequestRestClient;
 
     @Mock
     private ImageRestClient imageRestClient;
 
     @Mock
-    private CallbackExtractedTextAdapter callbackExtractedTextAdapter;
+    private CallbackExtractedTextRestClient callbackExtractedTextRestClient;
 
     @InjectMocks
     private OcrApiConsumerService ocrApiConsumerService;
@@ -41,12 +41,12 @@ class OcrApiConsumerServiceTest extends TestParent {
 
         // given
         when(imageRestClient.getImageContentsFromEndpoint(testOcrRequest.getContextId(), testOcrRequest.getImageEndpoint())).thenReturn(MOCK_TIFF_CONTENT);
-        when(ocrApiRequestAdapter.sendOcrRequestToOcrApi(testOcrRequest.getContextId(), MOCK_TIFF_CONTENT, testOcrRequest.getResponseId())).thenReturn(response);
+        when(ocrApiRequestRestClient.sendOcrRequestToOcrApi(testOcrRequest.getContextId(), MOCK_TIFF_CONTENT, testOcrRequest.getResponseId())).thenReturn(response);
 
         // when
         ocrApiConsumerService.processOcrRequest(testOcrRequest);
 
         // then
-        verify(callbackExtractedTextAdapter).sendTextResult(testOcrRequest.getConvertedTextEndpoint(), extractTextResultDTO);
+        verify(callbackExtractedTextRestClient).sendTextResult(testOcrRequest.getConvertedTextEndpoint(), extractTextResultDTO);
     }
 }

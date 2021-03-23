@@ -10,7 +10,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import uk.gov.companieshouse.ocrapiconsumer.groups.Unit;
 import uk.gov.companieshouse.ocrapiconsumer.kafka.OcrMessageErrorHandler;
-import uk.gov.companieshouse.ocrapiconsumer.request.CallbackExtractedTextAdapter;
+import uk.gov.companieshouse.ocrapiconsumer.request.CallbackExtractedTextRestClient;
 import uk.gov.companieshouse.ocrapiconsumer.request.TestParent;
 
 @Unit
@@ -18,7 +18,7 @@ import uk.gov.companieshouse.ocrapiconsumer.request.TestParent;
 class OcrMessageErrorHandlerTest extends TestParent {
 
     @Mock
-    private CallbackExtractedTextAdapter callbackExtractedTextAdapter;
+    private CallbackExtractedTextRestClient callbackExtractedTextRestClient;
 
     @InjectMocks
     private OcrMessageErrorHandler ocrMessageErrorHandler;
@@ -34,7 +34,7 @@ class OcrMessageErrorHandlerTest extends TestParent {
                 mre, EXTRACTED_TEXT_ENDPOINT);
 
         // then
-        verify(callbackExtractedTextAdapter, times(1))
+        verify(callbackExtractedTextRestClient, times(1))
                 .sendTextResultError(CONTEXT_ID, RESPONSE_ID, EXTRACTED_TEXT_ENDPOINT);
     }
 
@@ -48,7 +48,7 @@ class OcrMessageErrorHandlerTest extends TestParent {
         ocrMessageErrorHandler.generalExceptionAfterRetry(CONTEXT_ID, RESPONSE_ID, e, EXTRACTED_TEXT_ENDPOINT);
 
         // then
-        verify(callbackExtractedTextAdapter, times(1))
+        verify(callbackExtractedTextRestClient, times(1))
                 .sendTextResultError(CONTEXT_ID, RESPONSE_ID, EXTRACTED_TEXT_ENDPOINT);
     }
 
@@ -62,7 +62,7 @@ class OcrMessageErrorHandlerTest extends TestParent {
         ocrMessageErrorHandler.generalException(CONTEXT_ID, RESPONSE_ID, e, EXTRACTED_TEXT_ENDPOINT);
 
         // then
-        verify(callbackExtractedTextAdapter, times(1))
+        verify(callbackExtractedTextRestClient, times(1))
                 .sendTextResultError(CONTEXT_ID, RESPONSE_ID, EXTRACTED_TEXT_ENDPOINT);
     }
 }

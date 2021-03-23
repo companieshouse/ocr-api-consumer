@@ -22,7 +22,7 @@ import uk.gov.companieshouse.ocrapiconsumer.kafka.exception.RetryableErrorExcept
 
 @Unit
 @ExtendWith(MockitoExtension.class)
-class CallbackExtractedTextAdapterTest extends TestParent {
+class CallbackExtractedTextRestClientTest extends TestParent {
 
     private ExtractTextResultDTO extractTextResultDTO;
 
@@ -30,7 +30,7 @@ class CallbackExtractedTextAdapterTest extends TestParent {
     private RestTemplate restTemplate;
 
     @InjectMocks
-    private CallbackExtractedTextAdapter callbackExtractedTextAdapter;
+    private CallbackExtractedTextRestClient callbackExtractedTextRestClient;
 
     @BeforeEach
     void setupTests() {
@@ -44,7 +44,7 @@ class CallbackExtractedTextAdapterTest extends TestParent {
                 .thenReturn(new ResponseEntity<>(HttpStatus.OK));
 
         // when
-        callbackExtractedTextAdapter.sendTextResult(EXTRACTED_TEXT_ENDPOINT, extractTextResultDTO);
+        callbackExtractedTextRestClient.sendTextResult(EXTRACTED_TEXT_ENDPOINT, extractTextResultDTO);
 
         // then
         verify(restTemplate, times(1)).postForEntity(eq(EXTRACTED_TEXT_ENDPOINT), any(), any());
@@ -58,7 +58,7 @@ class CallbackExtractedTextAdapterTest extends TestParent {
                 .thenThrow(RestClientException.class);
 
         assertThrows(RetryableErrorException.class, () ->
-            callbackExtractedTextAdapter.sendTextResult(EXTRACTED_TEXT_ENDPOINT, extractTextResultDTO));
+            callbackExtractedTextRestClient.sendTextResult(EXTRACTED_TEXT_ENDPOINT, extractTextResultDTO));
     }
 
     @Test
@@ -68,7 +68,7 @@ class CallbackExtractedTextAdapterTest extends TestParent {
                 .thenReturn(new ResponseEntity<>(HttpStatus.OK));
 
         // when
-        callbackExtractedTextAdapter.sendTextResultError(CONTEXT_ID, RESPONSE_ID, EXTRACTED_TEXT_ENDPOINT);
+        callbackExtractedTextRestClient.sendTextResultError(CONTEXT_ID, RESPONSE_ID, EXTRACTED_TEXT_ENDPOINT);
 
         // then
         verify(restTemplate, times(1)).postForEntity(eq(EXTRACTED_TEXT_ENDPOINT), any(), any());

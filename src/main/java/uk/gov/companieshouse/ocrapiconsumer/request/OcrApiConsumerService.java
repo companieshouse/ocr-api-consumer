@@ -18,17 +18,17 @@ import java.util.Map;
 public class OcrApiConsumerService {
 
     private static final Logger LOG = LoggerFactory.getLogger(OcrApiConsumerApplication.APPLICATION_NAME_SPACE);
-    private final OcrApiRequestAdapter ocrApiRequestAdapter;
+    private final OcrApiRequestRestClient ocrApiRequestRestClient;
     private final ImageRestClient imageRestClient;
-    private final CallbackExtractedTextAdapter callbackExtractedTextAdapter;
+    private final CallbackExtractedTextRestClient callbackExtractedTextRestClient;
 
     @Autowired
-    public OcrApiConsumerService(OcrApiRequestAdapter ocrApiRequestAdapter,
+    public OcrApiConsumerService(OcrApiRequestRestClient ocrApiRequestRestClient,
                                  ImageRestClient imageRestClient,
-                                 CallbackExtractedTextAdapter callbackExtractedTextAdapter) {
-        this.ocrApiRequestAdapter = ocrApiRequestAdapter;
+                                 CallbackExtractedTextRestClient callbackExtractedTextRestClient) {
+        this.ocrApiRequestRestClient = ocrApiRequestRestClient;
         this.imageRestClient = imageRestClient;
-        this.callbackExtractedTextAdapter = callbackExtractedTextAdapter;
+        this.callbackExtractedTextRestClient = callbackExtractedTextRestClient;
     }
 
     public void ocrRequest(OcrRequestMessage message) {
@@ -54,7 +54,8 @@ public class OcrApiConsumerService {
 
         LOG.debugContext(ocrRequest.getContextId(), "Sending image to ocr microservice for conversion", null);
 
-        ResponseEntity<ExtractTextResultDTO> response = sendRequestToOcrMicroservice(ocrRequest.getContextId(), image, ocrRequest.getResponseId());
+        ResponseEntity<ExtractTextResultDTO> response
+                = sendRequestToOcrMicroservice(ocrRequest.getContextId(), image, ocrRequest.getResponseId());
 
         ExtractTextResultDTO extractedText = null;
         Map<String, Object> metadata = null;
@@ -75,12 +76,12 @@ public class OcrApiConsumerService {
     }
 
     private ResponseEntity<ExtractTextResultDTO> sendRequestToOcrMicroservice(String contextId, byte[] image, String responseId) {
-        return ocrApiRequestAdapter.sendOcrRequestToOcrApi(contextId, image, responseId);
+        return ocrApiRequestRestClient.sendOcrRequestToOcrApi(contextId, image, responseId);
 
     }
 
     private void sendTextResult(OcrRequest ocrRequest, ExtractTextResultDTO extractedText) {
-        callbackExtractedTextAdapter.sendTextResult(ocrRequest.getConvertedTextEndpoint(), extractedText);
+        callbackExtractedTextRestClient.sendTextResult(ocrRequest.getConvertedTextEndpoint(), extractedText);
     }
 
 

@@ -22,14 +22,14 @@ import uk.gov.companieshouse.ocrapiconsumer.kafka.exception.RetryableErrorExcept
 
 @Unit
 @ExtendWith(MockitoExtension.class)
-class OcrApiRequestAdapterTest extends TestParent {
+class OcrApiRequestRestClientTest extends TestParent {
 
     private static final String DUMMY_OCR_API_URL = "https://dummyurl.com/ocr";
     @Mock
     private RestTemplate restTemplate;
 
     @InjectMocks
-    private OcrApiRequestAdapter ocrApiRequestAdapter;
+    private OcrApiRequestRestClient ocrApiRequestRestClient;
 
     @BeforeEach
     void setupTests() {
@@ -41,11 +41,11 @@ class OcrApiRequestAdapterTest extends TestParent {
     void testSendOcrRequestSuccessful() {
         // given
         ResponseEntity<ExtractTextResultDTO> expected = response;
-        ocrApiRequestAdapter.ocrApiUrl = DUMMY_OCR_API_URL;
+        ocrApiRequestRestClient.ocrApiUrl = DUMMY_OCR_API_URL;
         when(restTemplate.postForEntity(eq(DUMMY_OCR_API_URL), any(), eq(ExtractTextResultDTO.class))).thenReturn(response);
 
         // when
-        ResponseEntity<ExtractTextResultDTO> actual = ocrApiRequestAdapter
+        ResponseEntity<ExtractTextResultDTO> actual = ocrApiRequestRestClient
                 .sendOcrRequestToOcrApi(CONTEXT_ID, MOCK_TIFF_CONTENT, RESPONSE_ID);
 
         // then
@@ -59,6 +59,6 @@ class OcrApiRequestAdapterTest extends TestParent {
                 .thenThrow(RestClientException.class);
 
         assertThrows(RetryableErrorException.class, () ->
-                ocrApiRequestAdapter.sendOcrRequestToOcrApi(CONTEXT_ID, MOCK_TIFF_CONTENT, RESPONSE_ID));
+                ocrApiRequestRestClient.sendOcrRequestToOcrApi(CONTEXT_ID, MOCK_TIFF_CONTENT, RESPONSE_ID));
     }
 }

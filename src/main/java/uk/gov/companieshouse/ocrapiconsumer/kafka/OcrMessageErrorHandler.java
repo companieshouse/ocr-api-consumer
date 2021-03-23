@@ -8,7 +8,7 @@ import org.springframework.stereotype.Component;
 import uk.gov.companieshouse.logging.Logger;
 import uk.gov.companieshouse.logging.LoggerFactory;
 import uk.gov.companieshouse.ocrapiconsumer.kafka.exception.MaximumRetriesException;
-import uk.gov.companieshouse.ocrapiconsumer.request.CallbackExtractedTextAdapter;
+import uk.gov.companieshouse.ocrapiconsumer.request.CallbackExtractedTextRestClient;
 
 /*
    This Spring bean handles the final errors when a request can not be handled.
@@ -18,26 +18,26 @@ import uk.gov.companieshouse.ocrapiconsumer.request.CallbackExtractedTextAdapter
 public class OcrMessageErrorHandler {
     private static final Logger LOG = LoggerFactory.getLogger(APPLICATION_NAME_SPACE);
 
-    private final CallbackExtractedTextAdapter callbackExtractedTextAdapter;
+    private final CallbackExtractedTextRestClient callbackExtractedTextRestClient;
 
     @Autowired
-    public OcrMessageErrorHandler(CallbackExtractedTextAdapter callbackExtractedTextAdapter) {
-        this.callbackExtractedTextAdapter = callbackExtractedTextAdapter;
+    public OcrMessageErrorHandler(CallbackExtractedTextRestClient callbackExtractedTextRestClient) {
+        this.callbackExtractedTextRestClient = callbackExtractedTextRestClient;
     }
 
     public void handleMaximumRetriesException(String contextId, String responseId, MaximumRetriesException mre, String extractedTextEndpoint) {
         LOG.errorContext(contextId, "Maximum Retries reached", mre, null);
-        callbackExtractedTextAdapter.sendTextResultError(contextId, responseId, extractedTextEndpoint);
+        callbackExtractedTextRestClient.sendTextResultError(contextId, responseId, extractedTextEndpoint);
     }
 
     public void generalExceptionAfterRetry(String contextId, String responseId, Exception mre, String extractedTextEndpoint) {
         LOG.errorContext(contextId, "Unexpected Error when retrying message", mre, null);
-        callbackExtractedTextAdapter.sendTextResultError(contextId, responseId, extractedTextEndpoint);
+        callbackExtractedTextRestClient.sendTextResultError(contextId, responseId, extractedTextEndpoint);
     }
 
 	public void generalException(String contextId, String responseId, Exception exception, String extractedTextEndpoint) {
         LOG.errorContext(contextId, "Unexpected Error ", exception, null);
-        callbackExtractedTextAdapter.sendTextResultError(contextId, responseId, extractedTextEndpoint);
+        callbackExtractedTextRestClient.sendTextResultError(contextId, responseId, extractedTextEndpoint);
     }
     
 }
