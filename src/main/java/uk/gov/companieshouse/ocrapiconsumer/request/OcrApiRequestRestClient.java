@@ -37,7 +37,27 @@ public class OcrApiRequestRestClient {
      * @param   responseId            The request ID.
      * @return  A response entity containing the extracted text result DTO.
      */
-    public ResponseEntity<ExtractTextResultDTO> sendOcrRequestToOcrApi(String contextId, byte[] imageContent, String responseId) {
+    public ResponseEntity<ExtractTextResultDTO> obtainExtractTextResult(String contextId, byte[] imageContent, String responseId) {
+        HttpEntity<MultiValueMap<String, Object>> entity = createHttpEntity(contextId, imageContent, responseId);
+
+        try {
+            return restTemplate.postForEntity(ocrApiUrl, entity, ExtractTextResultDTO.class);
+
+        } catch (Exception e) {
+             throw new RetryableErrorException("Fail calling ocr-api url ["
+                     + ocrApiUrl + "], error message [" + e.getMessage() + "]", e);
+        }
+    }
+
+    /**
+     * Creates a HTTP entity for the OCR post request.
+     * @param contextId     The context ID of the application.
+     * @param imageContent  The image content for the ocr conversion.
+     * @param responseId    The response ID of the application
+     * @return              A new http entity containing the headers and params.
+     */
+    private HttpEntity<MultiValueMap<String, Object>> createHttpEntity(String contextId,
+                                                                       byte[] imageContent, String responseId) {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.MULTIPART_FORM_DATA);
 
@@ -54,15 +74,6 @@ public class OcrApiRequestRestClient {
         params.add(FILE_REQUEST_PARAMETER_NAME, byteArrayResource);
         params.add(CONTEXT_ID_REQUEST_PARAMETER_NAME, contextId);
         params.add(RESPONSE_ID_REQUEST_PARAMETER_NAME, responseId);
-
-        try {
-            HttpEntity<MultiValueMap<String, Object>> entity = new HttpEntity<>(params, headers);
-            
-            return restTemplate.postForEntity(ocrApiUrl, entity, ExtractTextResultDTO.class);
-
-        } catch (Exception e) {
-             throw new RetryableErrorException("Fail calling ocr-api url ["
-                     + ocrApiUrl + "], error message [" + e.getMessage() + "]", e);
-        }
+        return new HttpEntity<>(params, headers);
     }
 }

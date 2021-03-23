@@ -46,7 +46,7 @@ class OcrApiRequestRestClientTest extends TestParent {
 
         // when
         ResponseEntity<ExtractTextResultDTO> actual = ocrApiRequestRestClient
-                .sendOcrRequestToOcrApi(CONTEXT_ID, MOCK_TIFF_CONTENT, RESPONSE_ID);
+                .obtainExtractTextResult(CONTEXT_ID, MOCK_TIFF_CONTENT, RESPONSE_ID);
 
         // then
         assertThat(actual, is(expected));
@@ -59,6 +59,6 @@ class OcrApiRequestRestClientTest extends TestParent {
                 .thenThrow(RestClientException.class);
 
         assertThrows(RetryableErrorException.class, () ->
-                ocrApiRequestRestClient.sendOcrRequestToOcrApi(CONTEXT_ID, MOCK_TIFF_CONTENT, RESPONSE_ID));
+                ocrApiRequestRestClient.obtainExtractTextResult(CONTEXT_ID, MOCK_TIFF_CONTENT, RESPONSE_ID));
     }
 }

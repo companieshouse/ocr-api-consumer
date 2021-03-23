@@ -76,7 +76,7 @@ public class OcrApiConsumerService {
     }
 
     private ResponseEntity<ExtractTextResultDTO> sendRequestToOcrMicroservice(String contextId, byte[] image, String responseId) {
-        return ocrApiRequestRestClient.sendOcrRequestToOcrApi(contextId, image, responseId);
+        return ocrApiRequestRestClient.obtainExtractTextResult(contextId, image, responseId);
 
     }
 
