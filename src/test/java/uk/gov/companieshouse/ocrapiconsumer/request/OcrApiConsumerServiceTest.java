@@ -37,16 +37,16 @@ class OcrApiConsumerServiceTest extends TestParent {
     @Test
     void testOcrApiServiceLogsSuccessfully() {
 
-        OcrRequest testOcrRequest = new OcrRequest(IMAGE_ENDPOINT, EXTRACTED_TEXT_ENDPOINT, RESPONSE_ID);
+        OcrRequestDTO testOcrRequestDTO = new OcrRequestDTO(IMAGE_ENDPOINT, EXTRACTED_TEXT_ENDPOINT, RESPONSE_ID);
 
         // given
-        when(imageRestClient.getImageContentsFromEndpoint(testOcrRequest.getContextId(), testOcrRequest.getImageEndpoint())).thenReturn(MOCK_TIFF_CONTENT);
-        when(ocrApiRequestRestClient.obtainExtractTextResult(testOcrRequest.getContextId(), MOCK_TIFF_CONTENT, testOcrRequest.getResponseId())).thenReturn(response);
+        when(imageRestClient.getImageContentsFromEndpoint(testOcrRequestDTO.getContextId(), testOcrRequestDTO.getImageEndpoint())).thenReturn(MOCK_TIFF_CONTENT);
+        when(ocrApiRequestRestClient.obtainExtractTextResult(testOcrRequestDTO.getContextId(), MOCK_TIFF_CONTENT, testOcrRequestDTO.getResponseId())).thenReturn(response);
 
         // when
-        ocrApiConsumerService.processOcrRequest(testOcrRequest);
+        ocrApiConsumerService.processOcrRequest(testOcrRequestDTO);
 
         // then
-        verify(callbackExtractedTextRestClient).sendTextResult(testOcrRequest.getConvertedTextEndpoint(), extractTextResultDTO);
+        verify(callbackExtractedTextRestClient).sendTextResult(testOcrRequestDTO.getConvertedTextEndpoint(), extractTextResultDTO);
     }
 }

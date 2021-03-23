@@ -26,14 +26,14 @@ class OcrApiConsumerControllerTest extends TestParent {
     void testReceiveOcrRequestReturns202() {
         // given
         ResponseEntity<HttpStatus> expected = new ResponseEntity<HttpStatus>(HttpStatus.ACCEPTED);
-        ocrRequest = createMockOcrRequest();
+        ocrRequestDTO = createMockOcrRequest();
 
         // when
         ResponseEntity<HttpStatus> actual = controller
-                .receiveOcrRequest(ocrRequest);
+                .receiveOcrRequest(ocrRequestDTO);
 
         // then
-        verify(service).processOcrRequest(ocrRequest);
+        verify(service).processOcrRequest(ocrRequestDTO);
         assertThat(actual, is(expected));
     }
 }

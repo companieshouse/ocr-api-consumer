@@ -32,30 +32,30 @@ public class OcrApiConsumerService {
     }
 
     public void ocrRequest(OcrRequestMessage message) {
-        orchestrateOcrRequest(new OcrRequest(message));
+        orchestrateOcrRequest(new OcrRequestDTO(message));
     }
 
     @Async
-    public void processOcrRequest(OcrRequest ocrRequest) {
-        orchestrateOcrRequest(ocrRequest);
+    public void processOcrRequest(OcrRequestDTO ocrRequestDTO) {
+        orchestrateOcrRequest(ocrRequestDTO);
     }
 
 
-    private void orchestrateOcrRequest(OcrRequest ocrRequest) {
+    private void orchestrateOcrRequest(OcrRequestDTO ocrRequestDTO) {
 
-        LOG.infoContext(ocrRequest.getContextId(),
+        LOG.infoContext(ocrRequestDTO.getContextId(),
                 String.format("Request received with Image Endpoint: %s, Extracted Text Endpoint: %s",
-                    ocrRequest.getImageEndpoint(), 
-                    ocrRequest.getConvertedTextEndpoint()),
+                    ocrRequestDTO.getImageEndpoint(),
+                    ocrRequestDTO.getConvertedTextEndpoint()),
                     null);
 
-        LOG.debugContext(ocrRequest.getContextId(), "Getting the TIFF image", null);
-        byte[] image = getImageContents(ocrRequest);
+        LOG.debugContext(ocrRequestDTO.getContextId(), "Getting the TIFF image", null);
+        byte[] image = getImageContents(ocrRequestDTO);
 
-        LOG.debugContext(ocrRequest.getContextId(), "Sending image to ocr microservice for conversion", null);
+        LOG.debugContext(ocrRequestDTO.getContextId(), "Sending image to ocr microservice for conversion", null);
 
         ResponseEntity<ExtractTextResultDTO> response
-                = sendRequestToOcrMicroservice(ocrRequest.getContextId(), image, ocrRequest.getResponseId());
+                = sendRequestToOcrMicroservice(ocrRequestDTO.getContextId(), image, ocrRequestDTO.getResponseId());
 
         ExtractTextResultDTO extractedText = null;
         Map<String, Object> metadata = null;
@@ -64,15 +64,14 @@ public class OcrApiConsumerService {
             metadata = extractedText != null ? extractedText.metadataMap() : null;
         }
 
-        LOG.debugContext(ocrRequest.getContextId(),
+        LOG.debugContext(ocrRequestDTO.getContextId(),
                 "Sending the extracted text response for the articles of association", metadata);
-        sendTextResult(ocrRequest, extractedText);
+        sendTextResult(ocrRequestDTO, extractedText);
     }
 
-   
 
-    private byte[] getImageContents(OcrRequest ocrRequest) {
-        return imageRestClient.getImageContentsFromEndpoint(ocrRequest.getContextId(), ocrRequest.getImageEndpoint());
+    private byte[] getImageContents(OcrRequestDTO ocrRequestDTO) {
+        return imageRestClient.getImageContentsFromEndpoint(ocrRequestDTO.getContextId(), ocrRequestDTO.getImageEndpoint());
     }
 
     private ResponseEntity<ExtractTextResultDTO> sendRequestToOcrMicroservice(String contextId, byte[] image, String responseId) {
@@ -80,8 +79,8 @@ public class OcrApiConsumerService {
 
     }
 
-    private void sendTextResult(OcrRequest ocrRequest, ExtractTextResultDTO extractedText) {
-        callbackExtractedTextRestClient.sendTextResult(ocrRequest.getConvertedTextEndpoint(), extractedText);
+    private void sendTextResult(OcrRequestDTO ocrRequestDTO, ExtractTextResultDTO extractedText) {
+        callbackExtractedTextRestClient.sendTextResult(ocrRequestDTO.getConvertedTextEndpoint(), extractedText);
     }
 
 

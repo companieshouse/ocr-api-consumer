@@ -15,7 +15,7 @@ public class TestParent {
     protected static final int AVERAGE_CONFIDENCE_SCORE = 75;
     protected ExtractTextResultDTO extractTextResultDTO;
     protected ResponseEntity<ExtractTextResultDTO> response;
-    protected OcrRequest ocrRequest;
+    protected OcrRequestDTO ocrRequestDTO;
 
     protected ExtractTextResultDTO createMockTextResult() {
         ExtractTextResultDTO extractTextResultDTO = new ExtractTextResultDTO();
@@ -28,9 +28,9 @@ public class TestParent {
         return extractTextResultDTO;
     }
 
-    protected OcrRequest createMockOcrRequest() {
-        ocrRequest = new OcrRequest(IMAGE_ENDPOINT, EXTRACTED_TEXT_ENDPOINT, CONTEXT_ID);
-        return ocrRequest;
+    protected OcrRequestDTO createMockOcrRequest() {
+        ocrRequestDTO = new OcrRequestDTO(IMAGE_ENDPOINT, EXTRACTED_TEXT_ENDPOINT, CONTEXT_ID);
+        return ocrRequestDTO;
     }
 
 }

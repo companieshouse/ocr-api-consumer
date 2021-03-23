@@ -8,7 +8,7 @@ import uk.gov.companieshouse.ocr.OcrRequestMessage;
 
 import javax.validation.constraints.NotBlank;
 
-public class OcrRequest {
+public class OcrRequestDTO {
 
     // Use the NotBlank annotation as each field is required and cannot be blank or null
     @NotBlank(message = "Missing required value image_endpoint")
@@ -26,11 +26,11 @@ public class OcrRequest {
     @JsonProperty("context_id")
     private String contextId;
 
-    public OcrRequest() {
+    public OcrRequestDTO() {
         // added for jackson deserialising
     }
 
-    public OcrRequest(String contextId, String imageEndpoint, String convertedTextEndpoint, String responseId) {
+    public OcrRequestDTO(String contextId, String imageEndpoint, String convertedTextEndpoint, String responseId) {
 
         this.contextId = contextId;
         this.imageEndpoint = imageEndpoint;
@@ -38,11 +38,11 @@ public class OcrRequest {
         this.responseId = responseId;
     }
 
-    public OcrRequest(String imageEndpoint, String convertedTextEndpoint, String responseId) {
+    public OcrRequestDTO(String imageEndpoint, String convertedTextEndpoint, String responseId) {
         this(responseId, imageEndpoint, convertedTextEndpoint, responseId);
     }
 
-    public OcrRequest(OcrRequestMessage ocrRequestMessage) {
+    public OcrRequestDTO(OcrRequestMessage ocrRequestMessage) {
         this(ocrRequestMessage.getContextId(),
              ocrRequestMessage.getImageEndpoint(), 
              ocrRequestMessage.getConvertedTextEndpoint(), 
