@@ -21,7 +21,6 @@ import uk.gov.companieshouse.ocrapiconsumer.request.TestParent;
 @SpringBootTest(classes = OcrApiConsumerApplication.class, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 class IntegrationTest extends TestParent {
 
-    private static final String APPLICATION_URL = "/internal/ocr-requests";
     private static final String HEALTHCHECK_URL = "/internal/ocr-api-consumer/healthcheck";
 
     @LocalServerPort
@@ -29,59 +28,6 @@ class IntegrationTest extends TestParent {
 
     @Autowired
     TestRestTemplate restTemplate = new TestRestTemplate();
-
-    @Test
-    void verifyControllerReturns202AcceptedWhenCalled() {
-        HttpStatus expected = HttpStatus.ACCEPTED;
-
-        String uri = "http://localhost:" + port + APPLICATION_URL;
-
-        String jsonBody =
-                "{\n" +
-                "  \"image_endpoint\": \"http://testurl.com/cff/servlet/viewArticles?transaction_id=9613245852\",\n" +
-                "  \"converted_text_endpoint\": \"http://testurl.com/ocr-results/\",\n" +
-                "  \"response_id\": \"9613245852\"\n" +
-                "}";
-
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        HttpEntity<String> entity = new HttpEntity<>(jsonBody, headers);
-
-        HttpStatus actual = this.restTemplate
-                .postForEntity(uri, entity, HttpStatus.class).getStatusCode();
-
-        assertThat(actual, is(expected));
-    }
-
-    @Test
-    void verifyControllerThrowsRestClientExceptionWhenRequiredBodyMissing() {
-        String uri = "http://localhost:" + port + APPLICATION_URL;
-
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        HttpEntity<String> entity = new HttpEntity<>("", headers);
-
-        assertThrows(RestClientException.class, () -> this.restTemplate
-                .postForEntity(uri, entity, HttpStatus.class));
-    }
-
-    @Test
-    void verifyControllerThrowsRestClientExceptionWhenPartOfRequiredBodyMissing() {
-        String uri = "http://localhost:" + port + APPLICATION_URL;
-
-        String jsonBody =
-                "{\n" +
-                "  \"image_endpoint\": \"http://testurl.com/cff/servlet/viewArticles?transaction_id=9613245852\",\n" +
-                "  \"converted_text_endpoint\": \"http://testurl.com/ocr-results/\"" +
-                "}";
-
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        HttpEntity<String> entity = new HttpEntity<>(jsonBody, headers);
-
-        assertThrows(RestClientException.class, () -> this.restTemplate
-                .postForEntity(uri, entity, HttpStatus.class));
-    }
 
     @Test
     void verifyHealthCheckControllerReturns200Alive() {
