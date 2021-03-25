@@ -102,7 +102,13 @@ public class OcrApiConsumerKafkaConsumer {
 
         try {
 
-            ocrApiConsumerService.ocrRequest(ocrRequestMessage);
+            if (ocrRequestMessage.getAttempt().intValue() <= getMaximumRetryAttempts()) {
+
+                 ocrApiConsumerService.ocrRequest(ocrRequestMessage);
+            } else {
+                LOG.infoContext(contextId, "Max attempts reached (has MAXIMUM_RETRY_ATTEMPTS  value been changed and we are rerunning?", null);      
+                throw new MaximumRetriesException();      
+            }
 
         } catch (RetryableErrorException ree) {
 
