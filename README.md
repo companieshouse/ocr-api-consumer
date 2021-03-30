@@ -34,35 +34,21 @@ Name                                        | Description                       
 ------------------------------------------- | ------------------------------------   | -------------------------------------------------------------------------
 OCR_API_URL                                 | The URL of the ocr-api                            | http://localhost:8080/api/ocr/image/tiff/extractText
 KAFKA_BROKER_ADDR                           | Address of the Kafka Broker                       | localhost:9092
+KAFKA_MAX_POLL_INTERVAL_MS                  | The interval for Kafka polling in milliseconds    | 10000
 CONSUMER_CONCURRENCY                        | Number of consumer threads                        | 3
 CONSUMER_CONCURRENCY_RETRY                  | Number of consumer threads for retry topic        | 1 (default value)
 RETRY_THROTTLE_RATE_SECONDS                 | Number of seconds before retrying                 | 3
 OCR_REQUEST_TIMEOUT_SECONDS                 | Optional request timeout for API calls            | 300 (default value)
-OCR_REQUEST_TOPIC                           | The kafka request topic for the ocr-api-consumer  | ocr-request
-OCR_REQUEST_GROUP_NAME                      | The kafka request group name                      | ocr-api-consumer-ocr-request
-MAXIMUM_RETRY_ATTEMPTS                      | The maximum amount of retries for the kafka topic | 3
+OCR_REQUEST_TOPIC                           | The Kafka request topic for the ocr-api-consumer  | ocr-request
+OCR_REQUEST_GROUP_NAME                      | The Kafka request group name                      | ocr-api-consumer-ocr-request
+MAXIMUM_RETRY_ATTEMPTS                      | The maximum amount of retries for the Kafka topic | 3
 
 ## Testing Locally (dev)
-
-### Testing with postman
-
-Send a post request to `http://localhost:9090/internal/ocr-requests` with the following JSON body (each field is mandatory):
-
-``` json
-{
-  "image_endpoint": "http://testurl.com/cff/servlet/viewArticles?transaction_id=9613245852",
-  "converted_text_endpoint": "http://testurl.com/ocr-results/",
-  "response_id": "9613245852"
-}
-```
 
 ### Testing with curl
 
 ``` json
-curl --header "Content-Type: application/json" \
---request POST \
---data '{"image_endpoint": "http://testurl.com/cff/servlet/viewArticles?transaction_id=9613245852", "converted_text_endpoint": "http://testurl.com/ocr-results/", "response_id": "9613245852"}' \
-http://localhost:9090/internal/ocr-requests
+curl --noproxy "*" --header "Content-Type: application/json" --request POST --data '{"app_id":"CURL_TEST_X", "response_id":"9616660641","image_endpoint":"http://test.image/endpoint","converted_text_endpoint":"http://test.converted.text/endpoint"}' --write-out '%{http_code}' http://kafka-url/
 ```
 
 ### Running tests with Maven
