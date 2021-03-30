@@ -1,17 +1,14 @@
 package uk.gov.companieshouse.ocrapiconsumer.request;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.io.ClassPathResource;
 import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
-import org.springframework.util.FileCopyUtils;
 import uk.gov.companieshouse.logging.Logger;
 import uk.gov.companieshouse.logging.LoggerFactory;
 import uk.gov.companieshouse.ocr.OcrRequestMessage;
 import uk.gov.companieshouse.ocrapiconsumer.OcrApiConsumerApplication;
 
-import java.io.IOException;
 import java.util.Map;
 
 @Service
@@ -83,38 +80,4 @@ public class OcrApiConsumerService {
         callbackExtractedTextRestClient.sendTextResult(ocrRequestDTO.getConvertedTextEndpoint(), extractedText);
     }
 
-
-    public void sendOcrApiRequestForStandardTiff(String responseId) {
-
-        String contextId = responseId;
-
-        LOG.debugContext(contextId, "Creating byte array from test image", null);
-
-        byte[] image = new byte[0];
-        try {
-            ClassPathResource classPathResource = new ClassPathResource("static/newer-articles-15.tif");
-            image = FileCopyUtils.copyToByteArray(classPathResource.getInputStream());
-        } catch (IOException e) {
-            e.printStackTrace();
-            LOG.info("See error log");
-        }
-
-        LOG.info("Length of byte array: " + image.length);
-        LOG.debugContext(contextId, "Sending image to ocr microservice for conversion", null);
-
-        ResponseEntity<ExtractTextResultDTO> response = sendRequestToOcrMicroservice(contextId, image, responseId);
-        ExtractTextResultDTO extractTextResult = response.getBody();
-
-        if (extractTextResult != null) {
-            LOG.debugContext(contextId, "Processing time: " + extractTextResult.getOcrProcessingTimeMs(), null);
-            LOG.debugContext(contextId, "Total processing time: " + extractTextResult.getTotalProcessingTimeMs(),
-                    null);
-            LOG.debugContext(contextId, "Lowest confidence score: " + extractTextResult.getLowestConfidenceScore(),
-                    null);
-            LOG.debugContext(contextId, "Average confidence score: " + extractTextResult.getAverageConfidenceScore(),
-                    null);
-        } else {
-            LOG.debugContext(contextId, "Null response body", null);
-        }
-    }
 }
