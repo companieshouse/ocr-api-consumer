@@ -14,9 +14,9 @@ public class ExtractTextResultDTO {
 
     /**
      * Creates an extracted text result with default values and the context id, for use in non-retryable errors.
-     * @param contextId The context ID of the application.
-     * @param responseId2
-     * @return          An ExtractTextResultDTO object with default values.
+     * @param contextId     The context ID of the application.
+     * @param responseId    The response ID of the application.
+     * @return              An ExtractTextResultDTO object with default values.
      */
     static ExtractTextResultDTO createErrorExtractTextResultDTOFromContextId(String contextId, String responseId) {
         ExtractTextResultDTO extractedTextError = new ExtractTextResultDTO();

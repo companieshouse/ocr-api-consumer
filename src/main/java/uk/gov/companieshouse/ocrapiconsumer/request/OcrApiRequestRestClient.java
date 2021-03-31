@@ -14,7 +14,7 @@ import org.springframework.web.client.RestTemplate;
 import uk.gov.companieshouse.ocrapiconsumer.kafka.exception.RetryableErrorException;
 
 @Component
-public class OcrApiRequestAdapter {
+public class OcrApiRequestRestClient {
 
     private static final String FILE_REQUEST_PARAMETER_NAME = "file";
     private static final String RESPONSE_ID_REQUEST_PARAMETER_NAME = "responseId";
@@ -26,24 +26,44 @@ public class OcrApiRequestAdapter {
     protected String ocrApiUrl;
 
     @Autowired
-    public OcrApiRequestAdapter(RestTemplate restTemplate) {
+    public OcrApiRequestRestClient(RestTemplate restTemplate) {
         this.restTemplate = restTemplate;
     }
 
     /**
      * Sends the OCR request to the ocr-api
      * @param   contextId             Context Logging key between microservices
-     * @param   tiffContent           The image content retrieved from CHIPS.
+     * @param   imageContent          The image content retrieved from the image endpoint.
      * @param   responseId            The request ID.
      * @return  A response entity containing the extracted text result DTO.
      */
-    public ResponseEntity<ExtractTextResultDTO> sendOcrRequestToOcrApi(String contextId, byte[] tiffContent, String responseId) {
+    public ResponseEntity<ExtractTextResultDTO> obtainExtractTextResult(String contextId, byte[] imageContent, String responseId) {
+        HttpEntity<MultiValueMap<String, Object>> entity = createHttpEntity(contextId, imageContent, responseId);
+
+        try {
+            return restTemplate.postForEntity(ocrApiUrl, entity, ExtractTextResultDTO.class);
+
+        } catch (Exception e) {
+             throw new RetryableErrorException("Fail calling ocr-api url ["
+                     + ocrApiUrl + "], error message [" + e.getMessage() + "]", e);
+        }
+    }
+
+    /**
+     * Creates a HTTP entity for the OCR post request.
+     * @param contextId     The context ID of the application.
+     * @param imageContent  The image content for the ocr conversion.
+     * @param responseId    The response ID of the application
+     * @return              A new http entity containing the headers and params.
+     */
+    private HttpEntity<MultiValueMap<String, Object>> createHttpEntity(String contextId,
+                                                                       byte[] imageContent, String responseId) {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.MULTIPART_FORM_DATA);
 
         // Filename is required to send the byte array as a file to the MultipartFile parameter.
         String filename = responseId + ".tif";
-        ByteArrayResource byteArrayResource = new ByteArrayResource(tiffContent) {
+        ByteArrayResource byteArrayResource = new ByteArrayResource(imageContent) {
             @Override
             public String getFilename() {
                 return filename;
@@ -54,14 +74,6 @@ public class OcrApiRequestAdapter {
         params.add(FILE_REQUEST_PARAMETER_NAME, byteArrayResource);
         params.add(CONTEXT_ID_REQUEST_PARAMETER_NAME, contextId);
         params.add(RESPONSE_ID_REQUEST_PARAMETER_NAME, responseId);
-
-        try {
-            HttpEntity<MultiValueMap<String, Object>> entity = new HttpEntity<>(params, headers);
-            
-            return restTemplate.postForEntity(ocrApiUrl, entity, ExtractTextResultDTO.class);
-
-        } catch (Exception e) {
-             throw new RetryableErrorException("Fail calling ocr-api url [" + ocrApiUrl + "], error message [" + e.getMessage() + "]", e);
-        }
+        return new HttpEntity<>(params, headers);
     }
 }

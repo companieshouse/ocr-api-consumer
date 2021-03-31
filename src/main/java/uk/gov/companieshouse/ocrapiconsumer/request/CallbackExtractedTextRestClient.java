@@ -15,14 +15,14 @@ import uk.gov.companieshouse.logging.LoggerFactory;
 import uk.gov.companieshouse.ocrapiconsumer.kafka.exception.RetryableErrorException;
 
 @Component
-public class CallbackExtractedTextAdapter {
+public class CallbackExtractedTextRestClient {
 
     private static final Logger LOG = LoggerFactory.getLogger(APPLICATION_NAME_SPACE);
 
     private final RestTemplate restTemplate;
 
     @Autowired
-    public CallbackExtractedTextAdapter(RestTemplate restTemplate) {
+    public CallbackExtractedTextRestClient(RestTemplate restTemplate) {
         this.restTemplate = restTemplate;
     }
 

@@ -17,13 +17,13 @@ import uk.gov.companieshouse.ocrapiconsumer.groups.Unit;
 class OcrApiConsumerServiceTest extends TestParent {
 
     @Mock
-    private OcrApiRequestAdapter ocrApiRequestAdapter;
+    private OcrApiRequestRestClient ocrApiRequestRestClient;
 
     @Mock
-    private ChipsImageAdapter chipsImageAdapter;
+    private ImageRestClient imageRestClient;
 
     @Mock
-    private CallbackExtractedTextAdapter callbackExtractedTextAdapter;
+    private CallbackExtractedTextRestClient callbackExtractedTextRestClient;
 
     @InjectMocks
     private OcrApiConsumerService ocrApiConsumerService;
@@ -37,16 +37,16 @@ class OcrApiConsumerServiceTest extends TestParent {
     @Test
     void testOcrApiServiceLogsSuccessfully() {
 
-        OcrRequest testOcrRequest = new OcrRequest(IMAGE_ENDPOINT, EXTRACTED_TEXT_ENDPOINT, RESPONSE_ID);
+        OcrRequestDTO testOcrRequestDTO = new OcrRequestDTO(IMAGE_ENDPOINT, EXTRACTED_TEXT_ENDPOINT, RESPONSE_ID);
 
         // given
-        when(chipsImageAdapter.getTiffImageFromChips(testOcrRequest.getContextId(), testOcrRequest.getImageEndpoint())).thenReturn(MOCK_TIFF_CONTENT);
-        when(ocrApiRequestAdapter.sendOcrRequestToOcrApi(testOcrRequest.getContextId(), MOCK_TIFF_CONTENT, testOcrRequest.getResponseId())).thenReturn(response);
+        when(imageRestClient.getImageContentsFromEndpoint(testOcrRequestDTO.getContextId(), testOcrRequestDTO.getImageEndpoint())).thenReturn(MOCK_TIFF_CONTENT);
+        when(ocrApiRequestRestClient.obtainExtractTextResult(testOcrRequestDTO.getContextId(), MOCK_TIFF_CONTENT, testOcrRequestDTO.getResponseId())).thenReturn(response);
 
         // when
-        ocrApiConsumerService.logOcrRequest(testOcrRequest);
+        ocrApiConsumerService.processOcrRequest(testOcrRequestDTO);
 
         // then
-        verify(callbackExtractedTextAdapter).sendTextResult(testOcrRequest.getConvertedTextEndpoint(), extractTextResultDTO);
+        verify(callbackExtractedTextRestClient).sendTextResult(testOcrRequestDTO.getConvertedTextEndpoint(), extractTextResultDTO);
     }
 }

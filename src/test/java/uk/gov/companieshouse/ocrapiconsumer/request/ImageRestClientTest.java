@@ -15,13 +15,13 @@ import uk.gov.companieshouse.ocrapiconsumer.groups.Unit;
 
 @Unit
 @ExtendWith(MockitoExtension.class)
-class ChipsImageAdapterTest extends TestParent {
+class ImageRestClientTest extends TestParent {
 
     @Mock
     private RestTemplate restTemplate;
 
     @InjectMocks
-    private ChipsImageAdapter chipsImageAdapter;
+    private ImageRestClient imageRestClient;
 
     @Test
     void testGetTiffImageSuccessfully() {
@@ -31,7 +31,7 @@ class ChipsImageAdapterTest extends TestParent {
                 .thenReturn(new ResponseEntity<>(MOCK_TIFF_CONTENT, HttpStatus.OK));
 
         // when
-        byte[] actual = chipsImageAdapter.getTiffImageFromChips(CONTEXT_ID, IMAGE_ENDPOINT);
+        byte[] actual = imageRestClient.getImageContentsFromEndpoint(CONTEXT_ID, IMAGE_ENDPOINT);
 
         // then
         assertThat(actual, is(expected));
