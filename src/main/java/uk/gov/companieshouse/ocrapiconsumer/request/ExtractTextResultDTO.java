@@ -11,6 +11,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 public class ExtractTextResultDTO {
 
     protected static final String OCR_CONVERSION_ERROR_TEXT = "UNABLE_TO_PROCESS_OCR_CONVERSION";
+    protected static final int OCR_CONVERSION_ERROR_CODE = 1;
 
     /**
      * Creates an extracted text result with default values and the context id, for use in non-retryable errors.
@@ -27,6 +28,7 @@ public class ExtractTextResultDTO {
         extractedTextError.setTotalProcessingTimeMs(0L);
         extractedTextError.setResponseId(responseId);
         extractedTextError.setExtractedText(OCR_CONVERSION_ERROR_TEXT);
+        extractedTextError.setResultCode(OCR_CONVERSION_ERROR_CODE);
         return extractedTextError;
     }
 
@@ -68,6 +70,15 @@ public class ExtractTextResultDTO {
      */
     @JsonProperty("response_id")
     private String responseId;
+
+	/**
+	 * To store the error code/result of the OCR Service. The values will be:
+	 *  0 = SUCCESS
+	 * -1 = TIMEOUT BY CHIPS
+	 * >0 = ERROR FROM ocr service
+	 */
+	@JsonProperty("result_code")
+	private int resultCode;
 
     public String getContextId() {
         return contextId;
@@ -125,7 +136,15 @@ public class ExtractTextResultDTO {
         this.responseId = responseId;
     }
 
-    public Map<String,Object>  metadataMap() {
+    public int getResultCode() {
+		return resultCode;
+	}
+
+	public void setResultCode(int resultCode) {
+		this.resultCode = resultCode;
+	}
+
+	public Map<String,Object>  metadataMap() {
 
         Map<String,Object> map = new LinkedHashMap<>();
 
@@ -135,6 +154,7 @@ public class ExtractTextResultDTO {
         map.put("total_processing_time_ms", totalProcessingTimeMs);
         map.put("response_id", responseId);
         map.put("context_id", contextId);
+        map.put("result_code", resultCode);
 
         return map;        
     }

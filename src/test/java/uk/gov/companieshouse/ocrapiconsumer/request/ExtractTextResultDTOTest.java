@@ -17,5 +17,6 @@ class ExtractTextResultDTOTest extends TestParent {
         assertThat(extractTextResultDTO.getContextId(), is(CONTEXT_ID));
         assertThat(extractTextResultDTO.getResponseId(), is(RESPONSE_ID));
         assertThat(extractTextResultDTO.getExtractedText(), is(ExtractTextResultDTO.OCR_CONVERSION_ERROR_TEXT));
+        assertThat(extractTextResultDTO.getResultCode(), is(ExtractTextResultDTO.OCR_CONVERSION_ERROR_CODE));
     }
 }
