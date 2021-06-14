@@ -4,6 +4,7 @@ import static uk.gov.companieshouse.ocrapiconsumer.OcrApiConsumerApplication.APP
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.listener.adapter.ConsumerRecordMetadata;
+import org.springframework.kafka.support.Acknowledgment;
 import org.springframework.stereotype.Service;
 import uk.gov.companieshouse.kafka.exceptions.SerializationException;
 import uk.gov.companieshouse.kafka.message.Message;
@@ -70,11 +71,13 @@ public class OcrApiConsumerKafkaConsumer {
             groupId = "${kafka.ocr.request.group.name}",
             concurrency = "${kafka.consumer.main.topic.concurrency}",
             containerFactory = KAFKA_LISTENER_CONTAINER_FACTORY)
-    public void consumeOcrApiRequestMessage(org.springframework.messaging.Message<OcrRequestMessage> message, ConsumerRecordMetadata metadata) {
+    public void consumeOcrApiRequestMessage(org.springframework.messaging.Message<OcrRequestMessage> message, ConsumerRecordMetadata metadata, Acknowledgment acknowledgment) {
 
         logConsumeKafkaMessage(message.getPayload(), metadata);
 
         handleOcrRequestMessage(message, metadata.topic());
+
+        acknowledgment.acknowledge();
     }
 
     @KafkaListener(
@@ -83,13 +86,15 @@ public class OcrApiConsumerKafkaConsumer {
             groupId = "${kafka.ocr.request.retry.group.name}",
             concurrency = "${kafka.consumer.retry.topic.concurrency}",
             containerFactory = KAFKA_LISTENER_CONTAINER_FACTORY)
-    public void consumeOcrApiRequestRetryMessage(org.springframework.messaging.Message<OcrRequestMessage> message, ConsumerRecordMetadata metadata) {
+    public void consumeOcrApiRequestRetryMessage(org.springframework.messaging.Message<OcrRequestMessage> message, ConsumerRecordMetadata metadata, Acknowledgment acknowledgment) {
 
         logConsumeKafkaMessage(message.getPayload(), metadata);
 
         delayRetry(message.getPayload().getContextId());
 
         handleOcrRequestMessage(message, metadata.topic());
+
+        acknowledgment.acknowledge();
     }
 
     private void handleOcrRequestMessage(org.springframework.messaging.Message<OcrRequestMessage> message,

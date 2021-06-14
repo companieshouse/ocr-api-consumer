@@ -17,6 +17,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.kafka.listener.adapter.ConsumerRecordMetadata;
+import org.springframework.kafka.support.Acknowledgment;
 import org.springframework.messaging.MessageHeaders;
 import uk.gov.companieshouse.kafka.exceptions.SerializationException;
 import uk.gov.companieshouse.kafka.serialization.AvroSerializer;
@@ -42,6 +43,8 @@ class OcrApiConsumerKafkaConsumerTest {
 
     private static final int MAXIMUM_RETRY_ATTEMPTS = 3;
 
+    @Mock
+    private Acknowledgment acknowledgment;
     @Mock
     private SerializerFactory serializerFactory;
     @Mock
@@ -74,7 +77,7 @@ class OcrApiConsumerKafkaConsumerTest {
         org.springframework.messaging.Message<OcrRequestMessage> message = createTestMessage(kafkaConsumer.getMainTopicName(), 0);
 
         // When
-        kafkaConsumer.consumeOcrApiRequestMessage(message, metadataWithTopic(kafkaConsumer.getMainTopicName()));
+        kafkaConsumer.consumeOcrApiRequestMessage(message, metadataWithTopic(kafkaConsumer.getMainTopicName()), acknowledgment);
 
         // Then
         verify(ocrApiConsumerService).ocrRequest(message.getPayload());
@@ -96,7 +99,7 @@ class OcrApiConsumerKafkaConsumerTest {
         when(serializer.toBinary(any())).thenReturn(new byte[4]);
 
         // When
-        kafkaConsumer.consumeOcrApiRequestMessage(message, metadataWithTopic(kafkaConsumer.getMainTopicName()));
+        kafkaConsumer.consumeOcrApiRequestMessage(message, metadataWithTopic(kafkaConsumer.getMainTopicName()), acknowledgment);
 
         // Then
         verify(kafkaProducer).sendMessage(any());
@@ -113,7 +116,7 @@ class OcrApiConsumerKafkaConsumerTest {
         watch.start();
 
         // When
-        kafkaConsumer.consumeOcrApiRequestRetryMessage(message, metadataWithTopic(kafkaConsumer.getRetryTopicName()));
+        kafkaConsumer.consumeOcrApiRequestRetryMessage(message, metadataWithTopic(kafkaConsumer.getRetryTopicName()), acknowledgment);
 
         watch.stop();
 
@@ -138,7 +141,7 @@ class OcrApiConsumerKafkaConsumerTest {
         when(serializer.toBinary(any())).thenReturn(new byte[4]);
 
         // When
-        kafkaConsumer.consumeOcrApiRequestRetryMessage(message, metadataWithTopic(kafkaConsumer.getRetryTopicName()));
+        kafkaConsumer.consumeOcrApiRequestRetryMessage(message, metadataWithTopic(kafkaConsumer.getRetryTopicName()), acknowledgment);
 
         // Then
         verify(kafkaProducer).sendMessage(any());
@@ -157,7 +160,7 @@ class OcrApiConsumerKafkaConsumerTest {
         doThrow(newRetryableError()).when(ocrApiConsumerService).ocrRequest(message.getPayload());
 
         // When
-        kafkaConsumer.consumeOcrApiRequestRetryMessage(message, metadataWithTopic(kafkaConsumer.getRetryTopicName()));
+        kafkaConsumer.consumeOcrApiRequestRetryMessage(message, metadataWithTopic(kafkaConsumer.getRetryTopicName()), acknowledgment);
 
         // Then
         verify(kafkaProducer, never()).sendMessage(any());
@@ -177,7 +180,7 @@ class OcrApiConsumerKafkaConsumerTest {
                 .when(ocrApiConsumerService).ocrRequest(message.getPayload());
 
         // When
-        kafkaConsumer.consumeOcrApiRequestRetryMessage(message, metadataWithTopic(kafkaConsumer.getRetryTopicName()));
+        kafkaConsumer.consumeOcrApiRequestRetryMessage(message, metadataWithTopic(kafkaConsumer.getRetryTopicName()), acknowledgment);
 
         // Then
         verify(kafkaProducer, never()).sendMessage(any());

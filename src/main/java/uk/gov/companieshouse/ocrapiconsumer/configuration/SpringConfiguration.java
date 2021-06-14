@@ -52,6 +52,9 @@ public class SpringConfiguration {
     @Value("${kafka.consumer.max.poll.interval.ms}")
     private int maxPollIntervalMs;
 
+	@Value("${kafka.consumer.max.poll.records}")
+	private int maxPollRecords;
+
     @Value("${ocr.request.timeout.seconds}")
     protected int ocrRequestTimeoutSeconds;
 
@@ -92,6 +95,10 @@ public class SpringConfiguration {
         return maxPollIntervalMs;
     }
 
+	public int getMaxPollRecords() {
+        return maxPollRecords;
+    }
+
 
     @Bean
     RestTemplate restTemplate(final RestTemplateBuilder restTemplateBuilder) {
@@ -123,6 +130,7 @@ public class SpringConfiguration {
 		LOG.info("The value of ${kafka.retry.throttle.rate.second} is :         " + kafkaRetryThrottleRateSeconds);
 		LOG.info("The value of ${kafka.bootstrap-servers} is :                  " + kafkaBroker);
 		LOG.info("The value of ${kafka.consumer.max.poll.interval.ms} is :      " + maxPollIntervalMs);
+		LOG.info("The value of ${kafka.consumer.max.poll.records} is :          " + maxPollRecords);
 
 		LOG.info("-------------------- End displaying Environment variables defined in spring application.properties  ----------------------------------");
 	}
