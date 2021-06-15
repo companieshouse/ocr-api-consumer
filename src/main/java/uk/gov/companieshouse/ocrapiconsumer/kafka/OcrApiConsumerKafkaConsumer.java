@@ -75,9 +75,13 @@ public class OcrApiConsumerKafkaConsumer {
 
         logConsumeKafkaMessage(message.getPayload(), metadata);
 
-        handleOcrRequestMessage(message, metadata.topic());
-
-        acknowledgment.acknowledge();
+        try {
+            handleOcrRequestMessage(message, metadata.topic());
+        }
+        finally {
+            acknowledgment.acknowledge();
+            LOG.debugContext(contextFromMessage(message), "Offset committed", null);
+        }
     }
 
     @KafkaListener(
@@ -92,9 +96,18 @@ public class OcrApiConsumerKafkaConsumer {
 
         delayRetry(message.getPayload().getContextId());
 
-        handleOcrRequestMessage(message, metadata.topic());
+        try {
+            handleOcrRequestMessage(message, metadata.topic());
+        }
+        finally {
+            acknowledgment.acknowledge();
+            LOG.debugContext(contextFromMessage(message), "Offset committed", null);
+        }
+    }
 
-        acknowledgment.acknowledge();
+    private String contextFromMessage(org.springframework.messaging.Message<OcrRequestMessage> message) {
+        OcrRequestMessage ocrRequestMessage = message.getPayload();
+        return ocrRequestMessage.getContextId();
     }
 
     private void handleOcrRequestMessage(org.springframework.messaging.Message<OcrRequestMessage> message,

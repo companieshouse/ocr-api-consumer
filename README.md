@@ -35,6 +35,7 @@ Name                                        | Description                       
 OCR_API_URL                                 | The URL of the ocr-api                            | http://localhost:8080/api/ocr/image/tiff/extractText
 KAFKA_BROKER_ADDR                           | Address of the Kafka Broker                       | localhost:9092
 KAFKA_MAX_POLL_INTERVAL_MS                  | The interval for Kafka polling in milliseconds    | 10000
+KAFKA_MAX_POLL_RECORDS                      | Number of records Kafka gets in a Poll            | 1
 CONSUMER_CONCURRENCY                        | Number of consumer threads                        | 3
 CONSUMER_CONCURRENCY_RETRY                  | Number of consumer threads for retry topic        | 1 (default value)
 RETRY_THROTTLE_RATE_SECONDS                 | Number of seconds before retrying                 | 3
