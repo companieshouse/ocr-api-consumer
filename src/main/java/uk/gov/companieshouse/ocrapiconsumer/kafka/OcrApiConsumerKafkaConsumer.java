@@ -81,9 +81,12 @@ public class OcrApiConsumerKafkaConsumer {
         catch (Exception e) {
             LOG.errorContext("Unexpected Exception on Main Consumer", e, null);
         }
+        catch (Error er) {
+            LOG.errorContext("Unexpected Error on Main Consumer " + er.getMessage(), new Exception("Unexpected Error on Main Consumer"), null);
+        }
         finally {
             acknowledgment.acknowledge();
-            LOG.debugContext(contextFromMessage(message), "Offset committed", null);
+            LOG.infoContext(contextFromMessage(message), "Offset committed", null);
         }
     }
 
@@ -105,9 +108,12 @@ public class OcrApiConsumerKafkaConsumer {
         catch (Exception e) {
             LOG.errorContext("Unexpected Exception on Retry Consumer", e, null);
         }
+        catch (Error er) {
+            LOG.errorContext("Unexpected Error on Retry Consumer " + er.getMessage(), new Exception("Unexpected Error on Retry Consumer"), null);
+        }
         finally {
             acknowledgment.acknowledge();
-            LOG.debugContext(contextFromMessage(message), "Offset committed", null);
+            LOG.infoContext(contextFromMessage(message), "Offset committed", null);
         }
     }
 

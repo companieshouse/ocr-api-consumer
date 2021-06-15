@@ -81,6 +81,7 @@ class OcrApiConsumerKafkaConsumerTest {
 
         // Then
         verify(ocrApiConsumerService).ocrRequest(message.getPayload());
+        verify(acknowledgment).acknowledge();
     }
 
 
@@ -103,6 +104,7 @@ class OcrApiConsumerKafkaConsumerTest {
 
         // Then
         verify(kafkaProducer).sendMessage(any());
+        verify(acknowledgment).acknowledge();
     }
 
     @Test
@@ -123,6 +125,7 @@ class OcrApiConsumerKafkaConsumerTest {
         // Then
         assertTrue(watch.getTime() > (RETRY_THROTTLE_RATE_SECONDS * 1000));
         verify(ocrApiConsumerService).ocrRequest(message.getPayload());
+        verify(acknowledgment).acknowledge();
     }
 
     // Test that we re-try a message when we get a RetryableErrorException
@@ -145,7 +148,7 @@ class OcrApiConsumerKafkaConsumerTest {
 
         // Then
         verify(kafkaProducer).sendMessage(any());
-
+        verify(acknowledgment).acknowledge();
     }
 
     @Test
@@ -165,6 +168,7 @@ class OcrApiConsumerKafkaConsumerTest {
         // Then
         verify(kafkaProducer, never()).sendMessage(any());
         verify(ocrMessageErrorHandler).handleMaximumRetriesException(any(), any(), any(), any());
+        verify(acknowledgment).acknowledge();
     }
 
     @Test
@@ -185,6 +189,7 @@ class OcrApiConsumerKafkaConsumerTest {
         // Then
         verify(kafkaProducer, never()).sendMessage(any());
         verify(ocrMessageErrorHandler).generalException(any(), any(), any(), any());
+        verify(acknowledgment).acknowledge();
     }
 
     private RetryableErrorException newRetryableError() {

@@ -4,7 +4,16 @@ Service to consume requests for extraction of text from images and manage the re
 
 When this application starts up it will consume messages on both the Main and Retry Topic.
 
-There is no error topic processing so far since all clients require this data in a timely manner and so errors need to be sent back to the calling system in this case
+There is no error topic processing since all clients require this data in a timely manner and so errors are sent back to the calling system directly in the client callback method.
+
+With this Kafka consumer we want to explicitly commit each Kafka message after we have finished processing it (i.e. sent results back to the client that sent the original `ocr-request` message). This is done by as described in [Fault-tolerant and reliable messaging with Kafka and Spring Boot](https://arnoldgalovics.com/fault-tolerant-and-reliable-messaging-with-kafka-and-spring-boot/):
+
+- using manual commits
+- using acknowledge mode of MANUAL_IMMEDIATE
+- adding an `Acknowledgement` parameter in the @KafkaListener consume methods
+- calling `acknowledgment.acknowledge()` after the results of the `ocr-request` have been sent back to the client system (either successful or in error)
+
+A difference with this Kafka consumers to most others in CH is that processing of each method takes significantly longer (rather than sub second it takes over a minute) since it blocks on a call to the `ocr-api` which does an image to text conversion (this itself will take over a minute for a 20 page articles of association). Therefore the number of records Kafka reads on each poll is made a configurable parameter using the KAFKA_MAX_POLL_RECORDS environmental variable.
 
 ## Requirements
 
