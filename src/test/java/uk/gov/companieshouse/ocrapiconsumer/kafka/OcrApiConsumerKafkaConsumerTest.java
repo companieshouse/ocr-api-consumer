@@ -17,6 +17,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.kafka.listener.adapter.ConsumerRecordMetadata;
+import org.springframework.kafka.support.Acknowledgment;
 import org.springframework.messaging.MessageHeaders;
 import uk.gov.companieshouse.kafka.exceptions.SerializationException;
 import uk.gov.companieshouse.kafka.serialization.AvroSerializer;
@@ -42,6 +43,8 @@ class OcrApiConsumerKafkaConsumerTest {
 
     private static final int MAXIMUM_RETRY_ATTEMPTS = 3;
 
+    @Mock
+    private Acknowledgment acknowledgment;
     @Mock
     private SerializerFactory serializerFactory;
     @Mock
@@ -74,10 +77,11 @@ class OcrApiConsumerKafkaConsumerTest {
         org.springframework.messaging.Message<OcrRequestMessage> message = createTestMessage(kafkaConsumer.getMainTopicName(), 0);
 
         // When
-        kafkaConsumer.consumeOcrApiRequestMessage(message, metadataWithTopic(kafkaConsumer.getMainTopicName()));
+        kafkaConsumer.consumeOcrApiRequestMessage(message, metadataWithTopic(kafkaConsumer.getMainTopicName()), acknowledgment);
 
         // Then
         verify(ocrApiConsumerService).ocrRequest(message.getPayload());
+        verify(acknowledgment).acknowledge();
     }
 
 
@@ -96,10 +100,11 @@ class OcrApiConsumerKafkaConsumerTest {
         when(serializer.toBinary(any())).thenReturn(new byte[4]);
 
         // When
-        kafkaConsumer.consumeOcrApiRequestMessage(message, metadataWithTopic(kafkaConsumer.getMainTopicName()));
+        kafkaConsumer.consumeOcrApiRequestMessage(message, metadataWithTopic(kafkaConsumer.getMainTopicName()), acknowledgment);
 
         // Then
         verify(kafkaProducer).sendMessage(any());
+        verify(acknowledgment).acknowledge();
     }
 
     @Test
@@ -113,13 +118,14 @@ class OcrApiConsumerKafkaConsumerTest {
         watch.start();
 
         // When
-        kafkaConsumer.consumeOcrApiRequestRetryMessage(message, metadataWithTopic(kafkaConsumer.getRetryTopicName()));
+        kafkaConsumer.consumeOcrApiRequestRetryMessage(message, metadataWithTopic(kafkaConsumer.getRetryTopicName()), acknowledgment);
 
         watch.stop();
 
         // Then
         assertTrue(watch.getTime() > (RETRY_THROTTLE_RATE_SECONDS * 1000));
         verify(ocrApiConsumerService).ocrRequest(message.getPayload());
+        verify(acknowledgment).acknowledge();
     }
 
     // Test that we re-try a message when we get a RetryableErrorException
@@ -138,11 +144,11 @@ class OcrApiConsumerKafkaConsumerTest {
         when(serializer.toBinary(any())).thenReturn(new byte[4]);
 
         // When
-        kafkaConsumer.consumeOcrApiRequestRetryMessage(message, metadataWithTopic(kafkaConsumer.getRetryTopicName()));
+        kafkaConsumer.consumeOcrApiRequestRetryMessage(message, metadataWithTopic(kafkaConsumer.getRetryTopicName()), acknowledgment);
 
         // Then
         verify(kafkaProducer).sendMessage(any());
-
+        verify(acknowledgment).acknowledge();
     }
 
     @Test
@@ -157,11 +163,12 @@ class OcrApiConsumerKafkaConsumerTest {
         doThrow(newRetryableError()).when(ocrApiConsumerService).ocrRequest(message.getPayload());
 
         // When
-        kafkaConsumer.consumeOcrApiRequestRetryMessage(message, metadataWithTopic(kafkaConsumer.getRetryTopicName()));
+        kafkaConsumer.consumeOcrApiRequestRetryMessage(message, metadataWithTopic(kafkaConsumer.getRetryTopicName()), acknowledgment);
 
         // Then
         verify(kafkaProducer, never()).sendMessage(any());
         verify(ocrMessageErrorHandler).handleMaximumRetriesException(any(), any(), any(), any());
+        verify(acknowledgment).acknowledge();
     }
 
     @Test
@@ -177,11 +184,12 @@ class OcrApiConsumerKafkaConsumerTest {
                 .when(ocrApiConsumerService).ocrRequest(message.getPayload());
 
         // When
-        kafkaConsumer.consumeOcrApiRequestRetryMessage(message, metadataWithTopic(kafkaConsumer.getRetryTopicName()));
+        kafkaConsumer.consumeOcrApiRequestRetryMessage(message, metadataWithTopic(kafkaConsumer.getRetryTopicName()), acknowledgment);
 
         // Then
         verify(kafkaProducer, never()).sendMessage(any());
         verify(ocrMessageErrorHandler).generalException(any(), any(), any(), any());
+        verify(acknowledgment).acknowledge();
     }
 
     private RetryableErrorException newRetryableError() {

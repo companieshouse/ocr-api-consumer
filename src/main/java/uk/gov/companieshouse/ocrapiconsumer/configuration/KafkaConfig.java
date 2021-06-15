@@ -10,6 +10,7 @@ import org.springframework.kafka.annotation.EnableKafka;
 import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
 import org.springframework.kafka.core.ConsumerFactory;
 import org.springframework.kafka.core.DefaultKafkaConsumerFactory;
+import org.springframework.kafka.listener.ContainerProperties;
 import org.springframework.kafka.support.LogIfLevelEnabled;
 import uk.gov.companieshouse.logging.Logger;
 import uk.gov.companieshouse.logging.LoggerFactory;
@@ -30,6 +31,8 @@ public class KafkaConfig {
 
     private int maxPollIntervalMs;
 
+    private int maxPollRecords;
+
     @Autowired
     private final SpringConfiguration springConfiguration;
 
@@ -40,6 +43,7 @@ public class KafkaConfig {
 
         bootstrapServers = this.springConfiguration.getKafkaBroker();
         maxPollIntervalMs = this.springConfiguration.getMaxPollIntervalMs();       
+        maxPollRecords = this.springConfiguration.getMaxPollRecords();
     }
 
     @Bean
@@ -58,6 +62,7 @@ public class KafkaConfig {
 
         factory.setConsumerFactory(consumerFactory());
         factory.getContainerProperties().setCommitLogLevel(LogIfLevelEnabled.Level.INFO);
+        factory.getContainerProperties().setAckMode(ContainerProperties.AckMode.MANUAL_IMMEDIATE);
 
         return factory;
     }
@@ -72,6 +77,7 @@ public class KafkaConfig {
         props.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, false);
         props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
         props.put(ConsumerConfig.MAX_POLL_INTERVAL_MS_CONFIG, maxPollIntervalMs);
+        props.put(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, maxPollRecords);
 
         return props;
     }

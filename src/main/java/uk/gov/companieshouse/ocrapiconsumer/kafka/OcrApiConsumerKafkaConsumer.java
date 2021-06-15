@@ -4,6 +4,7 @@ import static uk.gov.companieshouse.ocrapiconsumer.OcrApiConsumerApplication.APP
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.listener.adapter.ConsumerRecordMetadata;
+import org.springframework.kafka.support.Acknowledgment;
 import org.springframework.stereotype.Service;
 import uk.gov.companieshouse.kafka.exceptions.SerializationException;
 import uk.gov.companieshouse.kafka.message.Message;
@@ -70,11 +71,23 @@ public class OcrApiConsumerKafkaConsumer {
             groupId = "${kafka.ocr.request.group.name}",
             concurrency = "${kafka.consumer.main.topic.concurrency}",
             containerFactory = KAFKA_LISTENER_CONTAINER_FACTORY)
-    public void consumeOcrApiRequestMessage(org.springframework.messaging.Message<OcrRequestMessage> message, ConsumerRecordMetadata metadata) {
+    public void consumeOcrApiRequestMessage(org.springframework.messaging.Message<OcrRequestMessage> message, ConsumerRecordMetadata metadata, Acknowledgment acknowledgment) {
 
         logConsumeKafkaMessage(message.getPayload(), metadata);
 
-        handleOcrRequestMessage(message, metadata.topic());
+        try {
+            handleOcrRequestMessage(message, metadata.topic());
+        }
+        catch (Exception e) {
+            LOG.errorContext("Unexpected Exception on Main Consumer", e, null);
+        }
+        catch (Error er) {
+            LOG.errorContext("Unexpected Error on Main Consumer " + er.getMessage(), new Exception("Unexpected Error on Main Consumer"), null);
+        }
+        finally {
+            acknowledgment.acknowledge();
+            LOG.infoContext(contextFromMessage(message), "Offset committed", null);
+        }
     }
 
     @KafkaListener(
@@ -83,13 +96,30 @@ public class OcrApiConsumerKafkaConsumer {
             groupId = "${kafka.ocr.request.retry.group.name}",
             concurrency = "${kafka.consumer.retry.topic.concurrency}",
             containerFactory = KAFKA_LISTENER_CONTAINER_FACTORY)
-    public void consumeOcrApiRequestRetryMessage(org.springframework.messaging.Message<OcrRequestMessage> message, ConsumerRecordMetadata metadata) {
+    public void consumeOcrApiRequestRetryMessage(org.springframework.messaging.Message<OcrRequestMessage> message, ConsumerRecordMetadata metadata, Acknowledgment acknowledgment) {
 
         logConsumeKafkaMessage(message.getPayload(), metadata);
 
         delayRetry(message.getPayload().getContextId());
 
-        handleOcrRequestMessage(message, metadata.topic());
+        try {
+            handleOcrRequestMessage(message, metadata.topic());
+        }
+        catch (Exception e) {
+            LOG.errorContext("Unexpected Exception on Retry Consumer", e, null);
+        }
+        catch (Error er) {
+            LOG.errorContext("Unexpected Error on Retry Consumer " + er.getMessage(), new Exception("Unexpected Error on Retry Consumer"), null);
+        }
+        finally {
+            acknowledgment.acknowledge();
+            LOG.infoContext(contextFromMessage(message), "Offset committed", null);
+        }
+    }
+
+    private String contextFromMessage(org.springframework.messaging.Message<OcrRequestMessage> message) {
+        OcrRequestMessage ocrRequestMessage = message.getPayload();
+        return ocrRequestMessage.getContextId();
     }
 
     private void handleOcrRequestMessage(org.springframework.messaging.Message<OcrRequestMessage> message,
