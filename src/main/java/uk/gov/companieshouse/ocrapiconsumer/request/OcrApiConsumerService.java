@@ -9,6 +9,7 @@ import uk.gov.companieshouse.logging.LoggerFactory;
 import uk.gov.companieshouse.ocr.OcrRequestMessage;
 import uk.gov.companieshouse.ocrapiconsumer.OcrApiConsumerApplication;
 
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 @Service
@@ -49,7 +50,7 @@ public class OcrApiConsumerService {
         LOG.debugContext(ocrRequestDTO.getContextId(), "Getting the TIFF image", null);
         byte[] image = getImageContents(ocrRequestDTO);
 
-        LOG.debugContext(ocrRequestDTO.getContextId(), "Sending image to ocr microservice for conversion", null);
+        LOG.debugContext(ocrRequestDTO.getContextId(), "Sending image to ocr microservice for conversion", imageLogMap(image));
 
         ResponseEntity<ExtractTextResultDTO> response
                 = sendRequestToOcrMicroservice(ocrRequestDTO.getContextId(), image, ocrRequestDTO.getResponseId());
@@ -66,6 +67,15 @@ public class OcrApiConsumerService {
         sendTextResult(ocrRequestDTO, extractedText);
     }
 
+
+    private Map<String, Object> imageLogMap(byte[] image) {
+
+        Map<String,Object> map = new LinkedHashMap<>();
+
+        map.put("image_length", image.length);
+  
+        return map;
+    }
 
     private byte[] getImageContents(OcrRequestDTO ocrRequestDTO) {
         return imageRestClient.getImageContentsFromEndpoint(ocrRequestDTO.getContextId(), ocrRequestDTO.getImageEndpoint());

@@ -78,6 +78,9 @@ public class OcrApiConsumerKafkaConsumer {
         try {
             handleOcrRequestMessage(message, metadata.topic());
         }
+        catch (Exception e) {
+            LOG.errorContext("Unexpected Exception on Main Consumer", e, null);
+        }
         finally {
             acknowledgment.acknowledge();
             LOG.debugContext(contextFromMessage(message), "Offset committed", null);
@@ -98,6 +101,9 @@ public class OcrApiConsumerKafkaConsumer {
 
         try {
             handleOcrRequestMessage(message, metadata.topic());
+        }
+        catch (Exception e) {
+            LOG.errorContext("Unexpected Exception on Retry Consumer", e, null);
         }
         finally {
             acknowledgment.acknowledge();
