@@ -22,7 +22,10 @@
         <included.tests>unit-test</included.tests>
 
         <!-- Structured Logging -->
-        <structured-logging.version>1.9.4</structured-logging.version>
+        <structured-logging.version>1.9.12</structured-logging.version>
+
+        <!-- log4j -->
+        <log4j.version>2.17.1</log4j.version>
 
         <!-- Apache Commons -->
         <apache-commons-lang.version>2.6</apache-commons-lang.version>
@@ -124,6 +127,18 @@
             <groupId>org.sonarsource.scanner.maven</groupId>
             <artifactId>sonar-maven-plugin</artifactId>
             <version>${sonar-maven-plugin.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-to-slf4j</artifactId>
+            <version>${log4j.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-api</artifactId>
+            <version>${log4j.version}</version>
         </dependency>
 
     </dependencies>
